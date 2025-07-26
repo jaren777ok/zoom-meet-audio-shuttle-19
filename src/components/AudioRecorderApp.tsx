@@ -21,9 +21,11 @@ interface MeetingInfo {
 }
 
 const AudioRecorderApp = () => {
+  console.log('🔄 AudioRecorderApp rendering...');
+  
   const { user, signOut } = useAuth();
   const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook/audio');
-  const [intervalSeconds] = useState(20);
+  const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
   const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
@@ -33,6 +35,10 @@ const AudioRecorderApp = () => {
 
   // AI Messages context for clearing messages when recording stops
   const { clearAllMessages } = useAIMessagesContext();
+
+  // Create stable objects to prevent re-renders
+  const meetingInfoForHook = meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' };
+  const userInfoForHook = { userId: user?.id || '', userEmail: user?.email || '' };
 
   const { 
     isRecording, 
@@ -49,11 +55,8 @@ const AudioRecorderApp = () => {
   } = useSystemAudioRecorder({
     webhookUrl, 
     intervalSeconds,
-    meetingInfo: meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' },
-    userInfo: {
-      userId: user?.id || '',
-      userEmail: user?.email || ''
-    },
+    meetingInfo: meetingInfoForHook,
+    userInfo: userInfoForHook,
     captureSystemAudio
   });
 

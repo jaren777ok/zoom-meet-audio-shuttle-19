@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { toast } from '@/hooks/use-toast';
+
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { AudioMixer } from '@/lib/AudioMixer';
 
 interface MeetingInfo {
@@ -13,7 +13,7 @@ interface UserInfo {
   userEmail: string;
 }
 
-interface SystemAudioRecorderConfig {
+interface UseSystemAudioRecorderProps {
   webhookUrl: string;
   intervalSeconds: number;
   meetingInfo: MeetingInfo;
@@ -21,251 +21,180 @@ interface SystemAudioRecorderConfig {
   captureSystemAudio?: boolean;
 }
 
-export const useSystemAudioRecorder = ({ 
-  webhookUrl, 
-  intervalSeconds, 
-  meetingInfo, 
+export const useSystemAudioRecorder = ({
+  webhookUrl,
+  intervalSeconds,
+  meetingInfo,
   userInfo,
-  captureSystemAudio = false 
-}: SystemAudioRecorderConfig) => {
+  captureSystemAudio = false
+}: UseSystemAudioRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
+  const [recordingTime, setRecordingTime] = useState('00:00:00');
   const [segmentCount, setSegmentCount] = useState(0);
-  const [microphoneVolume, setMicrophoneVolume] = useState(1.0);
-  const [systemVolume, setSystemVolume] = useState(0.7);
   const [hasSystemAudio, setHasSystemAudio] = useState(false);
-  const [isSystemAudioSupported, setIsSystemAudioSupported] = useState(false);
+  const [isSystemAudioSupported] = useState(() => {
+    return typeof navigator !== 'undefined' && 
+           'mediaDevices' in navigator && 
+           'getDisplayMedia' in navigator.mediaDevices;
+  });
+  const [microphoneVolume, setMicrophoneVolume] = useState(1);
+  const [systemVolume, setSystemVolume] = useState(1);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
-  const systemStreamRef = useRef<MediaStream | null>(null);
   const audioMixerRef = useRef<AudioMixer | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const currentChunks = useRef<Blob[]>([]);
+  const startTimeRef = useRef<number>(0);
 
-  // Check system audio support
-  const checkSystemAudioSupport = useCallback(() => {
-    const isSupported = 'getDisplayMedia' in navigator.mediaDevices && 
-                       typeof navigator.mediaDevices.getDisplayMedia === 'function';
-    setIsSystemAudioSupported(isSupported);
-    return isSupported;
+  const formatTime = useCallback((seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  const sendAudioToWebhook = async (audioBlob: Blob, segmentNumber: number) => {
-    try {
-      const formData = new FormData();
-      const fileName = `audio_segment_${segmentNumber}_${Date.now()}.mp3`;
-      formData.append('audio', audioBlob, fileName);
-      formData.append('timestamp', new Date().toISOString());
-      formData.append('segmentNumber', segmentNumber.toString());
-      formData.append('numberOfPeople', meetingInfo.numberOfPeople.toString());
-      formData.append('companyInfo', meetingInfo.companyInfo);
-      formData.append('meetingObjective', meetingInfo.meetingObjective);
-      formData.append('userId', userInfo.userId);
-      formData.append('userEmail', userInfo.userEmail);
-      formData.append('captureSystemAudio', hasSystemAudio.toString());
+  const sendAudioChunk = useCallback(async (audioBlob: Blob, segmentNumber: number) => {
+    if (!webhookUrl.trim()) return;
 
+    const formData = new FormData();
+    formData.append('audio', audioBlob, `segment_${segmentNumber}.mp3`);
+    formData.append('segment_number', segmentNumber.toString());
+    formData.append('user_id', userInfo.userId);
+    formData.append('user_email', userInfo.userEmail);
+    formData.append('meeting_info', JSON.stringify(meetingInfo));
+    formData.append('has_system_audio', hasSystemAudio.toString());
+
+    try {
+      console.log(`📤 Sending audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
-        console.log(`Segmento ${segmentNumber} enviado exitosamente`);
-        toast({
-          title: "Audio enviado",
-          description: `Segmento ${segmentNumber} enviado (${hasSystemAudio ? 'Mic + Sistema' : 'Solo Mic'})`,
-        });
+        console.log(`✅ Successfully sent segment ${segmentNumber}`);
       } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.error(`❌ Failed to send segment ${segmentNumber}:`, response.statusText);
       }
     } catch (error) {
-      console.error('Error enviando audio:', error);
-      toast({
-        title: "Error",
-        description: "Error enviando audio a la webhook",
-        variant: "destructive",
-      });
+      console.error(`❌ Error sending segment ${segmentNumber}:`, error);
     }
-  };
+  }, [webhookUrl, userInfo.userId, userInfo.userEmail, meetingInfo, hasSystemAudio]);
 
-  const convertToMp3 = async (audioBlob: Blob): Promise<Blob> => {
-    return audioBlob;
-  };
-
-  const startRecordingSegment = useCallback(() => {
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state !== 'inactive') {
-      return;
-    }
-
-    currentChunks.current = [];
-    mediaRecorderRef.current.start();
-
-    setTimeout(() => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
-      }
-    }, intervalSeconds * 1000);
-  }, [intervalSeconds]);
-
-  const getMicrophoneStream = async (): Promise<MediaStream> => {
-    return await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        sampleRate: 44100
-      } 
-    });
-  };
-
-  const getSystemStream = async (): Promise<MediaStream | null> => {
-    if (!checkSystemAudioSupport()) {
-      console.warn('⚠️ System audio not supported in this browser');
-      return null;
-    }
-
+  const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: false,
-        audio: {
-          // @ts-ignore - systemAudio is experimental but supported in Chrome
-          systemAudio: 'include',
-          echoCancellation: false,
-          noiseSuppression: false
-        }
-      });
-
-      // Check if we actually got audio tracks
-      const audioTracks = stream.getAudioTracks();
-      if (audioTracks.length === 0) {
-        console.warn('⚠️ No system audio tracks available');
-        return null;
-      }
-
-      console.log('🔊 System audio stream obtained:', audioTracks.length, 'tracks');
-      return stream;
-    } catch (error) {
-      console.warn('⚠️ Failed to get system audio:', error);
-      toast({
-        title: "Aviso",
-        description: "No se pudo capturar audio del sistema. Continuando solo con micrófono.",
-        variant: "default",
-      });
-      return null;
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      // Get microphone stream
-      const micStream = await getMicrophoneStream();
-      micStreamRef.current = micStream;
+      console.log('🎤 Starting recording with system audio:', captureSystemAudio);
 
       let finalStream: MediaStream;
 
-      if (captureSystemAudio) {
-        // Try to get system audio
-        const systemStream = await getSystemStream();
-        
-        if (systemStream) {
-          // Create mixer for combining streams
-          const mixer = new AudioMixer();
-          audioMixerRef.current = mixer;
-          
-          mixer.addMicrophoneStream(micStream);
-          mixer.addSystemStream(systemStream);
-          mixer.setMicrophoneVolume(microphoneVolume);
-          mixer.setSystemVolume(systemVolume);
-          
-          systemStreamRef.current = systemStream;
-          finalStream = mixer.getMixedStream();
-          setHasSystemAudio(true);
-          
-          console.log('🎤🔊 Recording with microphone + system audio');
-          toast({
-            title: "Grabación dual iniciada",
-            description: "Capturando micrófono y audio del sistema",
+      if (captureSystemAudio && isSystemAudioSupported) {
+        // Get microphone stream
+        const micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+
+        try {
+          // Get system audio stream
+          const systemStream = await navigator.mediaDevices.getDisplayMedia({
+            video: false,
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            } as any,
           });
-        } else {
-          // Fallback to mic only
-          finalStream = micStream;
+
+          const audioTracks = systemStream.getAudioTracks();
+          if (audioTracks.length > 0) {
+            console.log('🔊 System audio captured successfully');
+            setHasSystemAudio(true);
+
+            // Mix both audio sources
+            const mixer = new AudioMixer();
+            await mixer.addSource(micStream, microphoneVolume);
+            await mixer.addSource(systemStream, systemVolume);
+            finalStream = mixer.getMixedStream();
+            audioMixerRef.current = mixer;
+          } else {
+            console.log('⚠️ No system audio available, using microphone only');
+            setHasSystemAudio(false);
+            finalStream = micStream;
+          }
+        } catch (systemError) {
+          console.log('⚠️ System audio not available, using microphone only:', systemError);
           setHasSystemAudio(false);
-          console.log('🎤 Recording with microphone only (system audio failed)');
+          finalStream = micStream;
         }
       } else {
-        // Mic only mode
-        finalStream = micStream;
+        // Microphone only
+        finalStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
         setHasSystemAudio(false);
-        console.log('🎤 Recording with microphone only');
       }
 
+      // Set up MediaRecorder
       const mediaRecorder = new MediaRecorder(finalStream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: 'audio/webm;codecs=opus',
       });
 
-      mediaRecorderRef.current = mediaRecorder;
+      let currentSegment = 0;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          currentChunks.current.push(event.data);
+          currentSegment++;
+          setSegmentCount(currentSegment);
+          sendAudioChunk(event.data, currentSegment);
         }
       };
 
-      mediaRecorder.onstop = async () => {
-        if (currentChunks.current.length > 0) {
-          const audioBlob = new Blob(currentChunks.current, { type: 'audio/webm' });
-          const mp3Blob = await convertToMp3(audioBlob);
-          
-          setSegmentCount(prev => {
-            const newCount = prev + 1;
-            sendAudioToWebhook(mp3Blob, newCount);
-            return newCount;
-          });
-        }
-      };
-
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
-      setSegmentCount(0);
-      setRecordingTime(0);
+      startTimeRef.current = Date.now();
 
-      // Start first segment
-      startRecordingSegment();
-
-      // Set up automatic intervals
+      // Set up interval for creating segments
       intervalRef.current = setInterval(() => {
-        if (mediaRecorderRef.current) {
-          startRecordingSegment();
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.requestData();
         }
       }, intervalSeconds * 1000);
 
-      // Timer for recording time
+      // Set up time tracking
       timeIntervalRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setRecordingTime(formatTime(elapsed));
       }, 1000);
 
-      toast({
-        title: "Grabación iniciada",
-        description: hasSystemAudio ? "Capturando micrófono y sistema" : "Capturando solo micrófono",
-      });
-
+      console.log('✅ Recording started successfully');
     } catch (error) {
-      console.error('Error iniciando grabación:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo iniciar la grabación",
-        variant: "destructive",
-      });
+      console.error('❌ Error starting recording:', error);
+      setIsRecording(false);
+      setHasSystemAudio(false);
     }
-  };
+  }, [captureSystemAudio, isSystemAudioSupported, microphoneVolume, systemVolume, intervalSeconds, sendAudioChunk, formatTime]);
 
-  const stopRecording = () => {
-    // Stop MediaRecorder
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+  const stopRecording = useCallback(() => {
+    console.log('🛑 Stopping recording...');
+
+    if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
     }
 
-    // Clear intervals
+    if (audioMixerRef.current) {
+      audioMixerRef.current.destroy();
+      audioMixerRef.current = null;
+    }
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -276,56 +205,37 @@ export const useSystemAudioRecorder = ({
       timeIntervalRef.current = null;
     }
 
-    // Stop streams
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach(track => track.stop());
-      micStreamRef.current = null;
-    }
-
-    if (systemStreamRef.current) {
-      systemStreamRef.current.getTracks().forEach(track => track.stop());
-      systemStreamRef.current = null;
-    }
-
-    // Dispose mixer
-    if (audioMixerRef.current) {
-      audioMixerRef.current.dispose();
-      audioMixerRef.current = null;
-    }
-
     setIsRecording(false);
+    setSegmentCount(0);
+    setRecordingTime('00:00:00');
     setHasSystemAudio(false);
     
-    toast({
-      title: "Grabación finalizada",
-      description: `Se enviaron ${segmentCount} segmentos de audio`,
-    });
-  };
+    console.log('✅ Recording stopped successfully');
+  }, []);
 
-  const updateVolumes = useCallback(() => {
+  // Update mixer volumes when they change
+  useEffect(() => {
     if (audioMixerRef.current) {
-      audioMixerRef.current.setMicrophoneVolume(microphoneVolume);
-      audioMixerRef.current.setSystemVolume(systemVolume);
+      audioMixerRef.current.updateVolume('microphone', microphoneVolume);
     }
-  }, [microphoneVolume, systemVolume]);
+  }, [microphoneVolume]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  useEffect(() => {
+    if (audioMixerRef.current) {
+      audioMixerRef.current.updateVolume('system', systemVolume);
+    }
+  }, [systemVolume]);
 
   return {
     isRecording,
-    recordingTime: formatTime(recordingTime),
+    recordingTime,
     segmentCount,
     hasSystemAudio,
-    isSystemAudioSupported: checkSystemAudioSupport(),
+    isSystemAudioSupported,
     microphoneVolume,
     systemVolume,
     setMicrophoneVolume,
     setSystemVolume,
-    updateVolumes,
     startRecording,
     stopRecording,
   };
