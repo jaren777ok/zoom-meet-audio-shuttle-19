@@ -72,10 +72,10 @@ const MeetingInfoForm = ({ onSubmit }: MeetingInfoFormProps) => {
       <CardHeader className="text-center pb-4">
         <CardTitle className="flex items-center justify-center gap-2 text-foreground">
           <Target className="h-5 w-5 text-neon-cyan" />
-          Información de la Reunión
+          Configuración de tu Sesión de Coaching
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Completa los datos antes de iniciar la grabación
+          Prepara tu entrenamiento de ventas personalizado
         </p>
       </CardHeader>
       <CardContent>
@@ -85,7 +85,7 @@ const MeetingInfoForm = ({ onSubmit }: MeetingInfoFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="numberOfPeople" className="flex items-start gap-2">
               <Users className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">Cuántas Personas Estarán en la Reunión</span>
+              <span className="line-clamp-2">¿Cuántos prospectos/clientes estarán presentes?</span>
             </Label>
             <Input
               id="numberOfPeople"
@@ -105,13 +105,13 @@ const MeetingInfoForm = ({ onSubmit }: MeetingInfoFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="companyInfo" className="flex items-start gap-2">
               <Building className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">Información de la Empresa</span>
+              <span className="line-clamp-2">Contexto de tu Empresa y Productos</span>
             </Label>
             <Textarea
               id="companyInfo"
               value={companyInfo}
               onChange={(e) => setCompanyInfo(e.target.value)}
-              placeholder="Describe tu empresa, sector, productos/servicios, valores, cultura organizacional y cualquier contexto relevante que la IA deba conocer para entender mejor tu negocio..."
+              placeholder="Describe tus productos, mercado objetivo, propuesta de valor única, precios, competencia y cualquier información que ayude a la IA a potenciar tu estrategia de ventas..."
               className={`bg-input border-border min-h-[120px] resize-y ${errors.companyInfo ? 'border-destructive' : ''}`}
             />
             {errors.companyInfo && (
@@ -123,13 +123,13 @@ const MeetingInfoForm = ({ onSubmit }: MeetingInfoFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="meetingObjective" className="flex items-start gap-2">
               <Target className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">Objetivo de la Reunión</span>
+              <span className="line-clamp-2">Meta de Ventas de esta Sesión</span>
             </Label>
             <Textarea
               id="meetingObjective"
               value={meetingObjective}
               onChange={(e) => setMeetingObjective(e.target.value)}
-              placeholder="Describe el propósito y objetivos principales de esta reunión..."
+              placeholder="¿Qué quieres lograr? (cerrar venta, generar interés, seguimiento, etc.)"
               className={`bg-input border-border min-h-[100px] ${errors.meetingObjective ? 'border-destructive' : ''}`}
             />
             {errors.meetingObjective && (
@@ -143,7 +143,7 @@ const MeetingInfoForm = ({ onSubmit }: MeetingInfoFormProps) => {
             disabled={isLoading}
             className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 disabled:opacity-50"
           >
-            {isLoading ? 'Cargando configuración...' : 'Continuar a Grabación'}
+            {isLoading ? 'Cargando configuración...' : 'Iniciar Coaching de Ventas'}
           </Button>
         </form>
       </CardContent>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, UserCheck, UserPlus, Waves } from 'lucide-react';
+import { Eye, EyeOff, UserCheck, UserPlus, DollarSign, TrendingUp } from 'lucide-react';
 
 const Auth = () => {
   const { user, signIn, signUp, loading } = useAuth();
@@ -42,13 +42,13 @@ const Auth = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Waves className="h-8 w-8 text-neon-cyan" />
+            <DollarSign className="h-8 w-8 text-neon-cyan" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              LIVE IA COACHING
+              SALES COACH AI 10X
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Sistema inteligente de grabación para coaching
+            Tu entrenador de ventas personal impulsado por IA
           </p>
         </div>
 
@@ -147,9 +147,12 @@ const Auth = () => {
         <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="text-center space-y-2">
-              <h3 className="font-semibold text-foreground">Sistema Inteligente</h3>
+              <h3 className="font-semibold text-foreground flex items-center justify-center gap-2">
+                <TrendingUp className="h-5 w-5 text-neon-cyan" />
+                Coaching AI 10X
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Graba y analiza sesiones de coaching con IA para mejorar tus resultados
+                Multiplica tus ventas hasta 10X con análisis de IA en tiempo real
               </p>
             </div>
           </CardContent>
