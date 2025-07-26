@@ -68,23 +68,35 @@ export const useSystemAudioRecorder = ({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Send audio chunk to webhook
-  const sendAudioChunk = useCallback(async (audioBlob: Blob, segmentNumber: number, audioType: 'microphone' | 'system') => {
+  // Store audio chunks temporarily for combined sending
+  const audioChunksRef = useRef<{
+    microphone?: { blob: Blob; segmentNumber: number };
+    system?: { blob: Blob; segmentNumber: number };
+  }>({});
+
+  // Send combined audio chunks to webhook
+  const sendCombinedAudioChunk = useCallback(async (micBlob: Blob | null, systemBlob: Blob | null, segmentNumber: number) => {
     if (!webhookUrl.trim()) {
-      console.log(`⚠️ No webhook URL, skipping ${audioType} segment ${segmentNumber}`);
+      console.log(`⚠️ No webhook URL, skipping segment ${segmentNumber}`);
       return;
     }
 
-    const chunkId = `${audioType}_${segmentNumber}`;
-    pendingChunks.current.add(chunkId);
-
     const formData = new FormData();
     
-    // Use different field names for each audio type
-    if (audioType === 'microphone') {
-      formData.append('microphone_audio', audioBlob, `mic_segment_${segmentNumber}.webm`);
-    } else {
-      formData.append('system_audio', audioBlob, `system_segment_${segmentNumber}.webm`);
+    // Add microphone audio with correct extension and MIME type
+    if (micBlob) {
+      const micFile = new File([micBlob], `mic_segment_${segmentNumber}.weba`, {
+        type: 'audio/webm'
+      });
+      formData.append('audio', micFile); // Using 'audio' as original field name
+    }
+    
+    // Add system audio with correct extension and MIME type
+    if (systemBlob) {
+      const systemFile = new File([systemBlob], `system_segment_${segmentNumber}.weba`, {
+        type: 'audio/webm'
+      });
+      formData.append('system_audio', systemFile);
     }
     
     formData.append('segment_number', segmentNumber.toString());
@@ -92,26 +104,53 @@ export const useSystemAudioRecorder = ({
     formData.append('user_email', userInfo.userEmail);
     formData.append('meeting_info', JSON.stringify(meetingInfo));
     formData.append('has_system_audio', hasSystemAudio.toString());
-    formData.append('audio_type', audioType);
 
     try {
-      console.log(`📤 Sending ${audioType} audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
+      console.log(`📤 Sending combined audio segment ${segmentNumber} to webhook (mic: ${micBlob?.size || 0} bytes, system: ${systemBlob?.size || 0} bytes)`);
       const response = await fetch(webhookUrl, {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
-        console.log(`✅ Successfully sent ${audioType} segment ${segmentNumber}`);
+        console.log(`✅ Successfully sent combined segment ${segmentNumber}`);
       } else {
-        console.error(`❌ Failed to send ${audioType} segment ${segmentNumber}:`, response.statusText);
+        console.error(`❌ Failed to send combined segment ${segmentNumber}:`, response.statusText);
       }
     } catch (error) {
-      console.error(`❌ Error sending ${audioType} segment ${segmentNumber}:`, error);
-    } finally {
-      pendingChunks.current.delete(chunkId);
+      console.error(`❌ Error sending combined segment ${segmentNumber}:`, error);
     }
   }, [webhookUrl, userInfo.userId, userInfo.userEmail, meetingInfo, hasSystemAudio]);
+
+  // Handle individual audio chunk and combine when both are ready
+  const handleAudioChunk = useCallback(async (audioBlob: Blob, segmentNumber: number, audioType: 'microphone' | 'system') => {
+    console.log(`🎯 ${audioType} data available for segment ${segmentNumber} (${audioBlob.size} bytes)`);
+    
+    // Store the chunk
+    audioChunksRef.current[audioType] = { blob: audioBlob, segmentNumber };
+    
+    const chunks = audioChunksRef.current;
+    const hasMicrophone = chunks.microphone?.segmentNumber === segmentNumber;
+    const hasSystem = chunks.system?.segmentNumber === segmentNumber;
+    const expectsSystem = hasSystemAudio && systemRecorderRef.current;
+    
+    // Send when we have the microphone and either don't need system audio or have it
+    if (hasMicrophone && (!expectsSystem || hasSystem)) {
+      await sendCombinedAudioChunk(
+        chunks.microphone?.blob || null,
+        chunks.system?.blob || null,
+        segmentNumber
+      );
+      
+      // Clear processed chunks
+      if (chunks.microphone?.segmentNumber === segmentNumber) {
+        delete chunks.microphone;
+      }
+      if (chunks.system?.segmentNumber === segmentNumber) {
+        delete chunks.system;
+      }
+    }
+  }, [sendCombinedAudioChunk, hasSystemAudio]);
 
   // Create MediaRecorder with proper event handling
   const createMediaRecorder = useCallback((stream: MediaStream, audioType: 'microphone' | 'system') => {
@@ -122,8 +161,7 @@ export const useSystemAudioRecorder = ({
     recorder.ondataavailable = async (event) => {
       if (event.data.size > 0 && isRecordingRef.current) {
         const segmentNumber = currentSegmentRef.current;
-        console.log(`🎯 ${audioType} data available for segment ${segmentNumber} (${event.data.size} bytes)`);
-        await sendAudioChunk(event.data, segmentNumber, audioType);
+        await handleAudioChunk(event.data, segmentNumber, audioType);
       }
     };
 
@@ -136,7 +174,7 @@ export const useSystemAudioRecorder = ({
     };
 
     return recorder;
-  }, [sendAudioChunk]);
+  }, [handleAudioChunk]);
 
   const startRecording = useCallback(async () => {
     try {
