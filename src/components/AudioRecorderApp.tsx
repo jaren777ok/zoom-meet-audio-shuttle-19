@@ -3,12 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
-import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User, MessageSquare } from 'lucide-react';
+import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square } from 'lucide-react';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -25,6 +29,7 @@ const AudioRecorderApp = () => {
   const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [captureSystemAudio, setCaptureSystemAudio] = useState(false);
 
   // AI Messages context for clearing messages when recording stops
   const { clearAllMessages } = useAIMessagesContext();
@@ -32,17 +37,24 @@ const AudioRecorderApp = () => {
   const { 
     isRecording, 
     recordingTime, 
-    segmentCount, 
+    segmentCount,
+    hasSystemAudio,
+    isSystemAudioSupported,
+    microphoneVolume,
+    systemVolume,
+    setMicrophoneVolume,
+    setSystemVolume,
     startRecording, 
     stopRecording
-  } = useAudioRecorder({
+  } = useSystemAudioRecorder({
     webhookUrl, 
     intervalSeconds,
     meetingInfo: meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' },
     userInfo: {
       userId: user?.id || '',
       userEmail: user?.email || ''
-    }
+    },
+    captureSystemAudio
   });
 
   const handleMeetingInfoSubmit = (info: MeetingInfo) => {
@@ -196,6 +208,20 @@ const AudioRecorderApp = () => {
                 )}
               </div>
               
+              {/* Audio Source Indicators */}
+              <div className="flex gap-2 mt-4">
+                <Badge variant={isRecording ? "default" : "secondary"} className="flex items-center gap-1">
+                  <Mic className="w-3 h-3" />
+                  Micrófono
+                </Badge>
+                {captureSystemAudio && (
+                  <Badge variant={hasSystemAudio && isRecording ? "default" : "secondary"} className="flex items-center gap-1">
+                    <Volume2 className="w-3 h-3" />
+                    Sistema
+                  </Badge>
+                )}
+              </div>
+              
               <div className="text-center space-y-2">
                 <div className={`text-2xl font-mono font-bold ${
                   isRecording ? 'text-neon-cyan' : 'text-muted-foreground'
@@ -278,7 +304,7 @@ const AudioRecorderApp = () => {
                 Configuración
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="webhook">URL del Webhook</Label>
                 <div className="flex gap-2">
@@ -295,9 +321,73 @@ const AudioRecorderApp = () => {
                 </div>
               </div>
               
+              <Separator />
+              
+              {/* System Audio Settings */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="system-audio">Capturar Audio del Sistema</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Graba tanto micrófono como audio de la computadora
+                    </p>
+                  </div>
+                  <Switch
+                    id="system-audio"
+                    checked={captureSystemAudio}
+                    onCheckedChange={setCaptureSystemAudio}
+                    disabled={isRecording || !isSystemAudioSupported}
+                  />
+                </div>
+                
+                {!isSystemAudioSupported && (
+                  <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg dark:bg-amber-950/20 dark:text-amber-400">
+                    ⚠️ Captura de audio del sistema no disponible en este navegador
+                  </div>
+                )}
+                
+                {captureSystemAudio && (
+                  <div className="space-y-4 pl-4 border-l-2 border-muted">
+                    <div>
+                      <Label className="flex items-center gap-2">
+                        <Mic className="w-4 h-4" />
+                        Volumen Micrófono: {Math.round(microphoneVolume * 100)}%
+                      </Label>
+                      <Slider
+                        value={[microphoneVolume]}
+                        onValueChange={(value) => setMicrophoneVolume(value[0])}
+                        max={2}
+                        min={0}
+                        step={0.1}
+                        className="mt-2"
+                        disabled={isRecording}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4" />
+                        Volumen Sistema: {Math.round(systemVolume * 100)}%
+                      </Label>
+                      <Slider
+                        value={[systemVolume]}
+                        onValueChange={(value) => setSystemVolume(value[0])}
+                        max={2}
+                        min={0}
+                        step={0.1}
+                        className="mt-2"
+                        disabled={isRecording}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <div className="text-sm text-muted-foreground p-3 bg-dark-surface rounded-lg">
-                <strong>💡 Tip:</strong> Para capturar audio de Zoom/Meet, usa "Compartir pantalla" 
-                con audio habilitado en tu navegador.
+                <strong>💡 Tip:</strong> {captureSystemAudio 
+                  ? "Con captura del sistema activada, puedes grabar audio de Zoom/Meet directamente."
+                  : "Para capturar audio de Zoom/Meet, activa la captura del sistema arriba."
+                }
               </div>
             </CardContent>
           </Card>
