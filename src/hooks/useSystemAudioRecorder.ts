@@ -47,7 +47,7 @@ export const useSystemAudioRecorder = ({
            'getDisplayMedia' in navigator.mediaDevices;
   }, []);
 
-  // Dual recording refs
+  // Recording refs and state
   const micRecorderRef = useRef<MediaRecorder | null>(null);
   const systemRecorderRef = useRef<MediaRecorder | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
@@ -55,7 +55,11 @@ export const useSystemAudioRecorder = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-  const isRestartingRef = useRef<boolean>(false);
+  
+  // Use refs for critical state that needs to be stable across async operations
+  const isRecordingRef = useRef<boolean>(false);
+  const currentSegmentRef = useRef<number>(0);
+  const pendingChunks = useRef<Set<string>>(new Set());
 
   const formatTime = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -64,91 +68,84 @@ export const useSystemAudioRecorder = ({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Enhanced sendAudioChunk function to handle separate audio types
-  const sendAudioChunk = useMemo(() => {
-    return async (audioBlob: Blob, segmentNumber: number, audioType: 'microphone' | 'system') => {
-      if (!webhookUrl.trim()) return;
+  // Send audio chunk to webhook
+  const sendAudioChunk = useCallback(async (audioBlob: Blob, segmentNumber: number, audioType: 'microphone' | 'system') => {
+    if (!webhookUrl.trim()) {
+      console.log(`⚠️ No webhook URL, skipping ${audioType} segment ${segmentNumber}`);
+      return;
+    }
 
-      const formData = new FormData();
-      
-      // Use different field names for each audio type
-      if (audioType === 'microphone') {
-        formData.append('microphone_audio', audioBlob, `mic_segment_${segmentNumber}.webm`);
+    const chunkId = `${audioType}_${segmentNumber}`;
+    pendingChunks.current.add(chunkId);
+
+    const formData = new FormData();
+    
+    // Use different field names for each audio type
+    if (audioType === 'microphone') {
+      formData.append('microphone_audio', audioBlob, `mic_segment_${segmentNumber}.webm`);
+    } else {
+      formData.append('system_audio', audioBlob, `system_segment_${segmentNumber}.webm`);
+    }
+    
+    formData.append('segment_number', segmentNumber.toString());
+    formData.append('user_id', userInfo.userId);
+    formData.append('user_email', userInfo.userEmail);
+    formData.append('meeting_info', JSON.stringify(meetingInfo));
+    formData.append('has_system_audio', hasSystemAudio.toString());
+    formData.append('audio_type', audioType);
+
+    try {
+      console.log(`📤 Sending ${audioType} audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        console.log(`✅ Successfully sent ${audioType} segment ${segmentNumber}`);
       } else {
-        formData.append('system_audio', audioBlob, `system_segment_${segmentNumber}.webm`);
+        console.error(`❌ Failed to send ${audioType} segment ${segmentNumber}:`, response.statusText);
       }
-      
-      formData.append('segment_number', segmentNumber.toString());
-      formData.append('user_id', userInfo.userId);
-      formData.append('user_email', userInfo.userEmail);
-      formData.append('meeting_info', JSON.stringify(meetingInfo));
-      formData.append('has_system_audio', hasSystemAudio.toString());
-      formData.append('audio_type', audioType);
-
-      try {
-        console.log(`📤 Sending ${audioType} audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
-        const response = await fetch(webhookUrl, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (response.ok) {
-          console.log(`✅ Successfully sent ${audioType} segment ${segmentNumber}`);
-        } else {
-          console.error(`❌ Failed to send ${audioType} segment ${segmentNumber}:`, response.statusText);
-        }
-      } catch (error) {
-        console.error(`❌ Error sending ${audioType} segment ${segmentNumber}:`, error);
-      }
-    };
+    } catch (error) {
+      console.error(`❌ Error sending ${audioType} segment ${segmentNumber}:`, error);
+    } finally {
+      pendingChunks.current.delete(chunkId);
+    }
   }, [webhookUrl, userInfo.userId, userInfo.userEmail, meetingInfo, hasSystemAudio]);
 
-  // Create a MediaRecorder with restart functionality
-  const createRecorderWithRestart = useCallback((
-    stream: MediaStream, 
-    audioType: 'microphone' | 'system',
-    segmentCountRef: { current: number }
-  ) => {
+  // Create MediaRecorder with proper event handling
+  const createMediaRecorder = useCallback((stream: MediaStream, audioType: 'microphone' | 'system') => {
     const recorder = new MediaRecorder(stream, {
       mimeType: 'audio/webm;codecs=opus',
     });
 
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0 && !isRestartingRef.current) {
-        segmentCountRef.current++;
-        setSegmentCount(segmentCountRef.current);
-        sendAudioChunk(event.data, segmentCountRef.current, audioType);
-        console.log(`🎯 ${audioType} segment ${segmentCountRef.current} completed and sent (${event.data.size} bytes)`);
+    recorder.ondataavailable = async (event) => {
+      if (event.data.size > 0 && isRecordingRef.current) {
+        const segmentNumber = currentSegmentRef.current;
+        console.log(`🎯 ${audioType} data available for segment ${segmentNumber} (${event.data.size} bytes)`);
+        await sendAudioChunk(event.data, segmentNumber, audioType);
       }
     };
 
     recorder.onstop = () => {
-      if (isRestartingRef.current && isRecording) {
-        console.log(`🔄 Restarting ${audioType} MediaRecorder for next segment...`);
-        setTimeout(() => {
-          if (isRestartingRef.current && isRecording) {
-            const newRecorder = createRecorderWithRestart(stream, audioType, segmentCountRef);
-            newRecorder.start();
-            
-            if (audioType === 'microphone') {
-              micRecorderRef.current = newRecorder;
-            } else {
-              systemRecorderRef.current = newRecorder;
-            }
-          }
-        }, 100);
-      }
+      console.log(`🛑 ${audioType} recorder stopped`);
+    };
+
+    recorder.onerror = (event) => {
+      console.error(`❌ ${audioType} recorder error:`, event);
     };
 
     return recorder;
-  }, [sendAudioChunk, isRecording]);
+  }, [sendAudioChunk]);
 
   const startRecording = useCallback(async () => {
     try {
       console.log('🎤 Starting dual recording with system audio:', captureSystemAudio);
-
-      let micSegmentCount = { current: 0 };
-      let systemSegmentCount = { current: 0 };
+      
+      // Reset state
+      currentSegmentRef.current = 0;
+      isRecordingRef.current = true;
+      pendingChunks.current.clear();
 
       // Always get microphone stream
       const micStream = await navigator.mediaDevices.getUserMedia({
@@ -163,7 +160,7 @@ export const useSystemAudioRecorder = ({
       console.log('🎤 Microphone stream captured successfully');
 
       // Set up microphone recorder
-      const micRecorder = createRecorderWithRestart(micStream, 'microphone', micSegmentCount);
+      const micRecorder = createMediaRecorder(micStream, 'microphone');
       micRecorderRef.current = micRecorder;
 
       // Try to get system audio if requested
@@ -185,7 +182,7 @@ export const useSystemAudioRecorder = ({
             systemStreamRef.current = systemStream;
 
             // Set up system audio recorder
-            const systemRecorder = createRecorderWithRestart(systemStream, 'system', systemSegmentCount);
+            const systemRecorder = createMediaRecorder(systemStream, 'system');
             systemRecorderRef.current = systemRecorder;
           } else {
             console.log('⚠️ No system audio tracks available');
@@ -200,6 +197,7 @@ export const useSystemAudioRecorder = ({
       }
 
       // Start both recorders
+      console.log('🔄 Starting recorders...');
       micRecorder.start();
       if (systemRecorderRef.current) {
         systemRecorderRef.current.start();
@@ -208,13 +206,14 @@ export const useSystemAudioRecorder = ({
       setIsRecording(true);
       startTimeRef.current = Date.now();
 
-      // Set up interval for restarting segments (synchronized)
+      // Set up interval for creating segments
       intervalRef.current = setInterval(() => {
-        if (!isRestartingRef.current) {
-          console.log('🔄 Triggering synchronized segment restart...');
-          isRestartingRef.current = true;
+        if (isRecordingRef.current) {
+          currentSegmentRef.current++;
+          setSegmentCount(currentSegmentRef.current);
+          console.log(`🔄 Creating segment ${currentSegmentRef.current}...`);
 
-          // Stop both recorders simultaneously
+          // Stop both recorders to generate segments
           if (micRecorderRef.current && micRecorderRef.current.state === 'recording') {
             micRecorderRef.current.stop();
           }
@@ -222,10 +221,20 @@ export const useSystemAudioRecorder = ({
             systemRecorderRef.current.stop();
           }
 
-          // Reset restart flag after a brief delay
+          // Restart recorders after a brief delay
           setTimeout(() => {
-            isRestartingRef.current = false;
-          }, 200);
+            if (isRecordingRef.current && micStreamRef.current) {
+              const newMicRecorder = createMediaRecorder(micStreamRef.current, 'microphone');
+              micRecorderRef.current = newMicRecorder;
+              newMicRecorder.start();
+            }
+
+            if (isRecordingRef.current && systemStreamRef.current) {
+              const newSystemRecorder = createMediaRecorder(systemStreamRef.current, 'system');
+              systemRecorderRef.current = newSystemRecorder;
+              newSystemRecorder.start();
+            }
+          }, 100);
         }
       }, intervalSeconds * 1000);
 
@@ -238,17 +247,20 @@ export const useSystemAudioRecorder = ({
       console.log('✅ Dual recording started successfully');
     } catch (error) {
       console.error('❌ Error starting recording:', error);
+      isRecordingRef.current = false;
       setIsRecording(false);
       setHasSystemAudio(false);
     }
-  }, [captureSystemAudio, isSystemAudioSupported, intervalSeconds, createRecorderWithRestart, formatTime]);
+  }, [captureSystemAudio, isSystemAudioSupported, intervalSeconds, createMediaRecorder, formatTime]);
 
   const stopRecording = useCallback(() => {
     console.log('🛑 Stopping dual recording...');
 
-    // Stop the restart cycle
-    isRestartingRef.current = false;
+    // Set recording state to false
+    isRecordingRef.current = false;
+    setIsRecording(false);
 
+    // Clear intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -286,10 +298,12 @@ export const useSystemAudioRecorder = ({
       systemStreamRef.current = null;
     }
 
-    setIsRecording(false);
+    // Reset state
     setSegmentCount(0);
     setRecordingTime('00:00:00');
     setHasSystemAudio(false);
+    currentSegmentRef.current = 0;
+    pendingChunks.current.clear();
     
     console.log('✅ Dual recording stopped successfully');
   }, []);
