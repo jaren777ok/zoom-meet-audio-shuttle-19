@@ -46,10 +46,14 @@ const AudioRecorderApp = () => {
     segmentCount,
     hasSystemAudio,
     isSystemAudioSupported,
+    isScreenShared,
+    systemStreamReady,
+    isRequestingPermissions,
     microphoneVolume,
     systemVolume,
     setMicrophoneVolume,
     setSystemVolume,
+    requestScreenPermissions,
     startRecording, 
     stopRecording
   } = useSystemAudioRecorder({
@@ -65,11 +69,25 @@ const AudioRecorderApp = () => {
     setCurrentStep('recording');
   };
 
+  const handleRequestScreenPermissions = async () => {
+    const success = await requestScreenPermissions();
+    if (!success) {
+      alert('No se pudo obtener acceso al audio del sistema. Asegúrate de seleccionar "Compartir audio" en el diálogo.');
+    }
+  };
+
   const handleStartRecording = () => {
     if (!webhookUrl.trim()) {
       alert('Por favor configura la URL del webhook');
       return;
     }
+    
+    // Check if system audio is required but not ready
+    if (captureSystemAudio && !systemStreamReady) {
+      alert('Primero debes compartir la pantalla para capturar audio del sistema.');
+      return;
+    }
+    
     startRecording();
     setShowFloatingChat(true);
   };
@@ -218,9 +236,9 @@ const AudioRecorderApp = () => {
                   Micrófono
                 </Badge>
                 {captureSystemAudio && (
-                  <Badge variant={hasSystemAudio && isRecording ? "default" : "secondary"} className="flex items-center gap-1">
+                  <Badge variant={hasSystemAudio && isRecording ? "default" : isScreenShared ? "outline" : "secondary"} className="flex items-center gap-1">
                     <Volume2 className="w-3 h-3" />
-                    Sistema
+                    Sistema {isScreenShared && !isRecording ? '(Listo)' : ''}
                   </Badge>
                 )}
               </div>
@@ -254,14 +272,32 @@ const AudioRecorderApp = () => {
             {/* Control Buttons */}
             <div className="flex gap-4 justify-center">
               {!isRecording ? (
-                <Button 
-                  onClick={handleStartRecording}
-                  size="lg"
-                  className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8"
-                >
-                  <Mic className="mr-2 h-5 w-5" />
-                  Iniciar Grabación
-                </Button>
+                <div className="flex gap-2">
+                  {/* Screen Sharing Button - Only show if system audio is enabled and not shared yet */}
+                  {captureSystemAudio && !isScreenShared && (
+                    <Button 
+                      onClick={handleRequestScreenPermissions}
+                      size="lg"
+                      variant="outline"
+                      disabled={isRequestingPermissions}
+                      className="px-6"
+                    >
+                      <Square className="mr-2 h-5 w-5" />
+                      {isRequestingPermissions ? 'Solicitando...' : 'Compartir Pantalla'}
+                    </Button>
+                  )}
+                  
+                  {/* Start Recording Button */}
+                  <Button 
+                    onClick={handleStartRecording}
+                    size="lg"
+                    className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8"
+                    disabled={captureSystemAudio && !systemStreamReady}
+                  >
+                    <Mic className="mr-2 h-5 w-5" />
+                    Iniciar Grabación
+                  </Button>
+                </div>
               ) : (
                 <Button 
                   onClick={handleStopRecording}
