@@ -8,7 +8,8 @@ import {
   X, 
   PictureInPicture2,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { useAIMessages } from '@/hooks/useAIMessages';
 import { usePictureInPicture } from '@/hooks/usePictureInPicture';
@@ -37,7 +38,8 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     error, 
     unreadCount, 
     markAsRead,
-    clearAllMessages 
+    clearAllMessages,
+    forceRefresh
   } = useAIMessages({ enabled: true }); // Always keep subscription active
 
   const { 
@@ -120,6 +122,18 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
                 error={error} 
                 className="mr-2" 
               />
+              
+              {!isConnected && !isMinimized && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={forceRefresh}
+                  className="h-6 w-6 p-0 hover:bg-primary/20"
+                  title="Refresh messages"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </Button>
+              )}
               
               {isPiPSupported && !isMinimized && (
                 <Button
