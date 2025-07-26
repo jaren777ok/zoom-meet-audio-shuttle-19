@@ -20,12 +20,14 @@ interface FloatingAIChatProps {
   isVisible: boolean;
   onClose: () => void;
   onStopRecording: () => void;
+  onShow: () => void;
 }
 
 export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({ 
   isVisible, 
   onClose,
-  onStopRecording 
+  onStopRecording,
+  onShow 
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [lastMessageCount, setLastMessageCount] = useState(0);
@@ -64,6 +66,14 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   }, [isMinimized, isVisible, unreadCount, markAsRead]);
 
+  // Auto-show chat when new messages arrive and chat is hidden
+  useEffect(() => {
+    if (!isVisible && messages.length > lastMessageCount && messages.length > 0) {
+      console.log('🔔 New message arrived, auto-showing chat');
+      setLastMessageCount(messages.length);
+    }
+  }, [messages.length, isVisible, lastMessageCount, onShow]);
+
   // Log messages updates for debugging
   useEffect(() => {
     console.log('💬 FloatingAIChat messages updated:', {
@@ -87,10 +97,14 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     onClose();
   };
 
-  if (!isVisible) return null;
+  // Always render but control visibility with positioning and opacity
+  const shouldShow = isVisible || (unreadCount > 0 && !isVisible);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm">
+    <div className={`
+      fixed bottom-4 right-4 z-50 max-w-sm transition-all duration-300
+      ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}
+    `}>
       <Card 
         className={`
           bg-background/95 backdrop-blur-sm border-primary/20 shadow-2xl
@@ -210,6 +224,26 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
           </div>
         )}
       </Card>
+
+      {/* Floating notification badge when chat is hidden but has unread messages */}
+      {!isVisible && unreadCount > 0 && (
+        <div 
+          onClick={onShow}
+          className="fixed bottom-4 right-4 z-40 cursor-pointer transform translate-y-0 opacity-100 transition-all duration-300 hover:scale-110"
+        >
+          <div className="relative">
+            <div className="bg-primary text-primary-foreground rounded-full p-3 shadow-lg animate-pulse">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-6 w-6 p-0 flex items-center justify-center text-xs animate-bounce"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

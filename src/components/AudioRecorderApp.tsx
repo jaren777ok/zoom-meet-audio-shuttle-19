@@ -326,11 +326,12 @@ const AudioRecorderApp = () => {
           </CardContent>
         </Card>
         
-        {/* Floating AI Chat Widget */}
+        {/* Floating AI Chat Widget - Always mounted, visibility controlled */}
         <FloatingAIChat
           isVisible={showFloatingChat}
           onClose={() => setShowFloatingChat(false)}
           onStopRecording={handleStopRecording}
+          onShow={() => setShowFloatingChat(true)}
         />
       </div>
     </div>
