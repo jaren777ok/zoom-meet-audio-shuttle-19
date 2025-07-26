@@ -12,7 +12,7 @@ import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
-import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Trophy, Zap, Monitor, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Zap, Monitor, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -183,12 +183,11 @@ const AudioRecorderApp = () => {
           <div className="flex items-center justify-center gap-3 mb-2">
             <DollarSign className="h-10 w-10 text-neon-cyan" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              SALES COACH AI 10X
+              SALES COACH AI
             </h1>
-            <Trophy className="h-10 w-10 text-neon-cyan" />
           </div>
           <p className="text-muted-foreground">
-            Entrena tu pitch, cierra más deals - Análisis cada {intervalSeconds} segundos
+            Tu Camino a Ventas 10X - Análisis cada {intervalSeconds} segundos
           </p>
         </div>
 
