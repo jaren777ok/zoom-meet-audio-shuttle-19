@@ -22,7 +22,6 @@ export type Database = {
           message: string
           message_type: string
           metadata: Json | null
-          session_id: string
           updated_at: string
           user_id: string
         }
@@ -33,7 +32,6 @@ export type Database = {
           message: string
           message_type?: string
           metadata?: Json | null
-          session_id: string
           updated_at?: string
           user_id: string
         }
@@ -44,7 +42,6 @@ export type Database = {
           message?: string
           message_type?: string
           metadata?: Json | null
-          session_id?: string
           updated_at?: string
           user_id?: string
         }

@@ -29,10 +29,8 @@ const AudioRecorderApp = () => {
     recordingTime, 
     segmentCount, 
     startRecording, 
-    stopRecording,
-    sessionId,
-    clearSession
-  } = useAudioRecorder({ 
+    stopRecording
+  } = useAudioRecorder({
     webhookUrl, 
     intervalSeconds,
     meetingInfo: meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' },
@@ -60,16 +58,15 @@ const AudioRecorderApp = () => {
     if (!isRecording) {
       setCurrentStep('form');
       setShowFloatingChat(false);
-      clearSession();
     }
   };
 
-  const handleStopRecording = () => {
+  const handleStopRecording = async () => {
     stopRecording();
-    // Keep chat visible for a moment after recording stops
+    // Keep chat visible for a moment after recording stops, then clear all messages
     setTimeout(() => {
       setShowFloatingChat(false);
-    }, 5000);
+    }, 3000);
   };
 
   return (
@@ -232,16 +229,14 @@ const AudioRecorderApp = () => {
                 <Settings className="h-5 w-5" />
               </Button>
               
-              {sessionId && (
-                <Button 
-                  onClick={() => setShowFloatingChat(!showFloatingChat)}
-                  variant="outline"
-                  size="lg"
-                  className={showFloatingChat ? 'bg-primary/20' : ''}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </Button>
-              )}
+              <Button 
+                onClick={() => setShowFloatingChat(!showFloatingChat)}
+                variant="outline"
+                size="lg"
+                className={showFloatingChat ? 'bg-primary/20' : ''}
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
             </div>
           </CardContent>
             </Card>
@@ -306,10 +301,10 @@ const AudioRecorderApp = () => {
         </Card>
         
         {/* Floating AI Chat Widget */}
-        <FloatingAIChat 
-          sessionId={sessionId}
+        <FloatingAIChat
           isVisible={showFloatingChat}
           onClose={() => setShowFloatingChat(false)}
+          onStopRecording={handleStopRecording}
         />
       </div>
     </div>

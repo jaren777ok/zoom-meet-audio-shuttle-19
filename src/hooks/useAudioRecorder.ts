@@ -17,14 +17,13 @@ interface AudioRecorderConfig {
   intervalSeconds: number;
   meetingInfo: MeetingInfo;
   userInfo: UserInfo;
-  sessionId?: string;
 }
 
-export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo, userInfo, sessionId }: AudioRecorderConfig) => {
+export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo, userInfo }: AudioRecorderConfig) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [segmentCount, setSegmentCount] = useState(0);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionId || null);
+  
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -44,9 +43,6 @@ export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo, use
       formData.append('meetingObjective', meetingInfo.meetingObjective);
       formData.append('userId', userInfo.userId);
       formData.append('userEmail', userInfo.userEmail);
-      if (currentSessionId) {
-        formData.append('sessionId', currentSessionId);
-      }
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -94,9 +90,6 @@ export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo, use
   }, [intervalSeconds]);
 
   const startRecording = async () => {
-    // Generate session ID if not provided
-    const newSessionId = currentSessionId || `session_${Date.now()}_${userInfo.userId}`;
-    setCurrentSessionId(newSessionId);
     
     try {
       // Solicitar acceso al micrófono
@@ -212,7 +205,5 @@ export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo, use
     segmentCount,
     startRecording,
     stopRecording,
-    sessionId: currentSessionId,
-    clearSession: () => setCurrentSessionId(null),
   };
 };

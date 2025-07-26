@@ -16,15 +16,15 @@ import { MessageBubble } from './MessageBubble';
 import { ConnectionStatus } from './ConnectionStatus';
 
 interface FloatingAIChatProps {
-  sessionId: string | null;
   isVisible: boolean;
   onClose: () => void;
+  onStopRecording: () => void;
 }
 
-export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
-  sessionId,
-  isVisible,
+export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({ 
+  isVisible, 
   onClose,
+  onStopRecording 
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [lastMessageCount, setLastMessageCount] = useState(0);
@@ -36,11 +36,9 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     isConnected, 
     error, 
     unreadCount, 
-    markAsRead 
-  } = useAIMessages({ 
-    sessionId, 
-    enabled: isVisible 
-  });
+    markAsRead,
+    clearAllMessages 
+  } = useAIMessages({ enabled: isVisible });
 
   const { 
     isPiPSupported, 
@@ -70,6 +68,11 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     } else if (chatContainerRef.current) {
       openPictureInPicture(chatContainerRef.current);
     }
+  };
+
+  const handleClose = async () => {
+    await clearAllMessages();
+    onClose();
   };
 
   if (!isVisible) return null;
@@ -128,7 +131,10 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
+                onClick={() => {
+                  clearAllMessages();
+                  onClose();
+                }}
                 className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
               >
                 <X className="w-3 h-3" />
