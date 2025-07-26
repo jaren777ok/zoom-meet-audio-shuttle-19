@@ -1,6 +1,4 @@
-
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { AudioMixer } from '@/lib/AudioMixer';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -49,12 +47,14 @@ export const useSystemAudioRecorder = ({
            'getDisplayMedia' in navigator.mediaDevices;
   }, []);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioMixerRef = useRef<AudioMixer | null>(null);
+  // Dual recording refs
+  const micRecorderRef = useRef<MediaRecorder | null>(null);
+  const systemRecorderRef = useRef<MediaRecorder | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const systemStreamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-  const streamRef = useRef<MediaStream | null>(null);
   const isRestartingRef = useRef<boolean>(false);
 
   const formatTime = useCallback((seconds: number) => {
@@ -64,55 +64,111 @@ export const useSystemAudioRecorder = ({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  // Stabilize the sendAudioChunk function with useMemo to prevent re-creation
+  // Enhanced sendAudioChunk function to handle separate audio types
   const sendAudioChunk = useMemo(() => {
-    return async (audioBlob: Blob, segmentNumber: number) => {
+    return async (audioBlob: Blob, segmentNumber: number, audioType: 'microphone' | 'system') => {
       if (!webhookUrl.trim()) return;
 
       const formData = new FormData();
-      formData.append('audio', audioBlob, `segment_${segmentNumber}.mp3`);
+      
+      // Use different field names for each audio type
+      if (audioType === 'microphone') {
+        formData.append('microphone_audio', audioBlob, `mic_segment_${segmentNumber}.webm`);
+      } else {
+        formData.append('system_audio', audioBlob, `system_segment_${segmentNumber}.webm`);
+      }
+      
       formData.append('segment_number', segmentNumber.toString());
       formData.append('user_id', userInfo.userId);
       formData.append('user_email', userInfo.userEmail);
       formData.append('meeting_info', JSON.stringify(meetingInfo));
       formData.append('has_system_audio', hasSystemAudio.toString());
+      formData.append('audio_type', audioType);
 
       try {
-        console.log(`📤 Sending audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
+        console.log(`📤 Sending ${audioType} audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
         const response = await fetch(webhookUrl, {
           method: 'POST',
           body: formData,
         });
 
         if (response.ok) {
-          console.log(`✅ Successfully sent segment ${segmentNumber}`);
+          console.log(`✅ Successfully sent ${audioType} segment ${segmentNumber}`);
         } else {
-          console.error(`❌ Failed to send segment ${segmentNumber}:`, response.statusText);
+          console.error(`❌ Failed to send ${audioType} segment ${segmentNumber}:`, response.statusText);
         }
       } catch (error) {
-        console.error(`❌ Error sending segment ${segmentNumber}:`, error);
+        console.error(`❌ Error sending ${audioType} segment ${segmentNumber}:`, error);
       }
     };
   }, [webhookUrl, userInfo.userId, userInfo.userEmail, meetingInfo, hasSystemAudio]);
 
+  // Create a MediaRecorder with restart functionality
+  const createRecorderWithRestart = useCallback((
+    stream: MediaStream, 
+    audioType: 'microphone' | 'system',
+    segmentCountRef: { current: number }
+  ) => {
+    const recorder = new MediaRecorder(stream, {
+      mimeType: 'audio/webm;codecs=opus',
+    });
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0 && !isRestartingRef.current) {
+        segmentCountRef.current++;
+        setSegmentCount(segmentCountRef.current);
+        sendAudioChunk(event.data, segmentCountRef.current, audioType);
+        console.log(`🎯 ${audioType} segment ${segmentCountRef.current} completed and sent (${event.data.size} bytes)`);
+      }
+    };
+
+    recorder.onstop = () => {
+      if (isRestartingRef.current && isRecording) {
+        console.log(`🔄 Restarting ${audioType} MediaRecorder for next segment...`);
+        setTimeout(() => {
+          if (isRestartingRef.current && isRecording) {
+            const newRecorder = createRecorderWithRestart(stream, audioType, segmentCountRef);
+            newRecorder.start();
+            
+            if (audioType === 'microphone') {
+              micRecorderRef.current = newRecorder;
+            } else {
+              systemRecorderRef.current = newRecorder;
+            }
+          }
+        }, 100);
+      }
+    };
+
+    return recorder;
+  }, [sendAudioChunk, isRecording]);
+
   const startRecording = useCallback(async () => {
     try {
-      console.log('🎤 Starting recording with system audio:', captureSystemAudio);
+      console.log('🎤 Starting dual recording with system audio:', captureSystemAudio);
 
-      let finalStream: MediaStream;
+      let micSegmentCount = { current: 0 };
+      let systemSegmentCount = { current: 0 };
 
+      // Always get microphone stream
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      
+      micStreamRef.current = micStream;
+      console.log('🎤 Microphone stream captured successfully');
+
+      // Set up microphone recorder
+      const micRecorder = createRecorderWithRestart(micStream, 'microphone', micSegmentCount);
+      micRecorderRef.current = micRecorder;
+
+      // Try to get system audio if requested
       if (captureSystemAudio && isSystemAudioSupported) {
-        // Get microphone stream
-        const micStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
-
         try {
-          // Get system audio stream
           const systemStream = await navigator.mediaDevices.getDisplayMedia({
             video: false,
             audio: {
@@ -126,107 +182,50 @@ export const useSystemAudioRecorder = ({
           if (audioTracks.length > 0) {
             console.log('🔊 System audio captured successfully');
             setHasSystemAudio(true);
+            systemStreamRef.current = systemStream;
 
-            // Mix both audio sources
-            const mixer = new AudioMixer();
-            await mixer.addSource(micStream, microphoneVolume);
-            await mixer.addSource(systemStream, systemVolume);
-            finalStream = mixer.getMixedStream();
-            audioMixerRef.current = mixer;
+            // Set up system audio recorder
+            const systemRecorder = createRecorderWithRestart(systemStream, 'system', systemSegmentCount);
+            systemRecorderRef.current = systemRecorder;
           } else {
-            console.log('⚠️ No system audio available, using microphone only');
+            console.log('⚠️ No system audio tracks available');
             setHasSystemAudio(false);
-            finalStream = micStream;
           }
         } catch (systemError) {
-          console.log('⚠️ System audio not available, using microphone only:', systemError);
+          console.log('⚠️ System audio not available:', systemError);
           setHasSystemAudio(false);
-          finalStream = micStream;
         }
       } else {
-        // Microphone only
-        finalStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
         setHasSystemAudio(false);
       }
 
-      // Store the stream for restarts
-      streamRef.current = finalStream;
+      // Start both recorders
+      micRecorder.start();
+      if (systemRecorderRef.current) {
+        systemRecorderRef.current.start();
+      }
 
-      // Set up initial MediaRecorder
-      const mediaRecorder = new MediaRecorder(finalStream, {
-        mimeType: 'audio/webm;codecs=opus',
-      });
-
-      let currentSegment = 0;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0 && !isRestartingRef.current) {
-          currentSegment++;
-          setSegmentCount(currentSegment);
-          sendAudioChunk(event.data, currentSegment);
-          console.log(`🎯 Segment ${currentSegment} completed and sent (${event.data.size} bytes)`);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        if (isRestartingRef.current && streamRef.current) {
-          console.log('🔄 Restarting MediaRecorder for next segment...');
-          restartMediaRecorder();
-        }
-      };
-
-      const restartMediaRecorder = () => {
-        if (!streamRef.current || !isRecording) return;
-
-        try {
-          const newRecorder = new MediaRecorder(streamRef.current, {
-            mimeType: 'audio/webm;codecs=opus',
-          });
-
-          newRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0 && !isRestartingRef.current) {
-              currentSegment++;
-              setSegmentCount(currentSegment);
-              sendAudioChunk(event.data, currentSegment);
-              console.log(`🎯 Segment ${currentSegment} completed and sent (${event.data.size} bytes)`);
-            }
-          };
-
-          newRecorder.onstop = () => {
-            if (isRestartingRef.current && streamRef.current) {
-              console.log('🔄 Restarting MediaRecorder for next segment...');
-              restartMediaRecorder();
-            }
-          };
-
-          newRecorder.start();
-          mediaRecorderRef.current = newRecorder;
-          isRestartingRef.current = false;
-        } catch (error) {
-          console.error('❌ Error restarting MediaRecorder:', error);
-          isRestartingRef.current = false;
-        }
-      };
-
-      mediaRecorder.start();
-      mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
       startTimeRef.current = Date.now();
 
-      // Set up interval for restarting segments (stop + start cycle)
+      // Set up interval for restarting segments (synchronized)
       intervalRef.current = setInterval(() => {
-        if (mediaRecorderRef.current && 
-            mediaRecorderRef.current.state === 'recording' && 
-            !isRestartingRef.current) {
-          console.log('🔄 Triggering segment restart...');
+        if (!isRestartingRef.current) {
+          console.log('🔄 Triggering synchronized segment restart...');
           isRestartingRef.current = true;
-          mediaRecorderRef.current.stop();
+
+          // Stop both recorders simultaneously
+          if (micRecorderRef.current && micRecorderRef.current.state === 'recording') {
+            micRecorderRef.current.stop();
+          }
+          if (systemRecorderRef.current && systemRecorderRef.current.state === 'recording') {
+            systemRecorderRef.current.stop();
+          }
+
+          // Reset restart flag after a brief delay
+          setTimeout(() => {
+            isRestartingRef.current = false;
+          }, 200);
         }
       }, intervalSeconds * 1000);
 
@@ -236,16 +235,16 @@ export const useSystemAudioRecorder = ({
         setRecordingTime(formatTime(elapsed));
       }, 1000);
 
-      console.log('✅ Recording started successfully');
+      console.log('✅ Dual recording started successfully');
     } catch (error) {
       console.error('❌ Error starting recording:', error);
       setIsRecording(false);
       setHasSystemAudio(false);
     }
-  }, [captureSystemAudio, isSystemAudioSupported, microphoneVolume, systemVolume, intervalSeconds, sendAudioChunk, formatTime]);
+  }, [captureSystemAudio, isSystemAudioSupported, intervalSeconds, createRecorderWithRestart, formatTime]);
 
   const stopRecording = useCallback(() => {
-    console.log('🛑 Stopping recording...');
+    console.log('🛑 Stopping dual recording...');
 
     // Stop the restart cycle
     isRestartingRef.current = false;
@@ -260,19 +259,31 @@ export const useSystemAudioRecorder = ({
       timeIntervalRef.current = null;
     }
 
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
+    // Stop and cleanup microphone recorder
+    if (micRecorderRef.current) {
+      if (micRecorderRef.current.state === 'recording') {
+        micRecorderRef.current.stop();
+      }
+      micRecorderRef.current = null;
     }
 
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+    // Stop and cleanup system recorder
+    if (systemRecorderRef.current) {
+      if (systemRecorderRef.current.state === 'recording') {
+        systemRecorderRef.current.stop();
+      }
+      systemRecorderRef.current = null;
     }
 
-    if (audioMixerRef.current) {
-      audioMixerRef.current.destroy();
-      audioMixerRef.current = null;
+    // Stop and cleanup streams
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(track => track.stop());
+      micStreamRef.current = null;
+    }
+
+    if (systemStreamRef.current) {
+      systemStreamRef.current.getTracks().forEach(track => track.stop());
+      systemStreamRef.current = null;
     }
 
     setIsRecording(false);
@@ -280,21 +291,19 @@ export const useSystemAudioRecorder = ({
     setRecordingTime('00:00:00');
     setHasSystemAudio(false);
     
-    console.log('✅ Recording stopped successfully');
+    console.log('✅ Dual recording stopped successfully');
   }, []);
 
-  // Update mixer volumes when they change - using useEffect with proper dependencies
+  // Volume control effects (for future WebAudio API integration if needed)
   useEffect(() => {
-    if (audioMixerRef.current && isRecording) {
-      audioMixerRef.current.updateVolume('microphone', microphoneVolume);
-      console.log('🎤 Updated microphone volume to:', microphoneVolume);
+    if (isRecording) {
+      console.log('🎤 Microphone volume set to:', microphoneVolume);
     }
   }, [microphoneVolume, isRecording]);
 
   useEffect(() => {
-    if (audioMixerRef.current && isRecording) {
-      audioMixerRef.current.updateVolume('system', systemVolume);
-      console.log('🔊 Updated system volume to:', systemVolume);
+    if (isRecording) {
+      console.log('🔊 System volume set to:', systemVolume);
     }
   }, [systemVolume, isRecording]);
 
