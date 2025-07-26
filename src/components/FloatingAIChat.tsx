@@ -38,7 +38,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     unreadCount, 
     markAsRead,
     clearAllMessages 
-  } = useAIMessages({ enabled: isVisible });
+  } = useAIMessages({ enabled: true }); // Always keep subscription active
 
   const { 
     isPiPSupported, 
@@ -49,18 +49,29 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messagesEndRef.current && messages.length > lastMessageCount) {
+    if (isVisible && messagesEndRef.current) {
+      console.log('🔄 Auto-scrolling to latest message. Total messages:', messages.length);
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      setLastMessageCount(messages.length);
     }
-  }, [messages.length, lastMessageCount]);
+  }, [messages.length, isVisible]);
 
-  // Mark messages as read when chat is expanded
+  // Mark messages as read when chat is visible and expanded
   useEffect(() => {
-    if (!isMinimized && isVisible) {
+    if (!isMinimized && isVisible && unreadCount > 0) {
+      console.log('✅ Marking messages as read. Unread count:', unreadCount);
       markAsRead();
     }
-  }, [isMinimized, isVisible, markAsRead]);
+  }, [isMinimized, isVisible, unreadCount, markAsRead]);
+
+  // Log messages updates for debugging
+  useEffect(() => {
+    console.log('💬 FloatingAIChat messages updated:', {
+      count: messages.length,
+      isVisible,
+      isConnected,
+      unreadCount
+    });
+  }, [messages.length, isVisible, isConnected, unreadCount]);
 
   const handlePictureInPicture = () => {
     if (isPiPActive) {
@@ -71,6 +82,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
   };
 
   const handleClose = async () => {
+    console.log('🚪 Closing FloatingAIChat and clearing messages');
     await clearAllMessages();
     onClose();
   };
@@ -93,6 +105,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
               <div className="flex items-center gap-1">
                 <Sparkles className="w-4 h-4 text-primary" />
                 <span className="font-semibold text-sm">IA Coach Live</span>
+                <span className="text-xs text-muted-foreground">({messages.length})</span>
               </div>
               {unreadCount > 0 && !isMinimized && (
                 <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
@@ -164,9 +177,9 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
                   <>
                     {messages.map((message, index) => (
                       <MessageBubble
-                        key={message.id}
+                        key={`${message.id}-${index}`}
                         message={message}
-                        isNew={index === messages.length - 1 && messages.length > lastMessageCount}
+                        isNew={index === messages.length - 1}
                       />
                     ))}
                     <div ref={messagesEndRef} />

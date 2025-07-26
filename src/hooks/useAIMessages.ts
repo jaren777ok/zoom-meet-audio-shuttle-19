@@ -46,16 +46,21 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps) => {
 
   // Subscribe to real-time updates
   useEffect(() => {
-    if (!user || !enabled) {
+    if (!user) {
       setMessages([]);
       setIsConnected(false);
       return;
     }
 
-    fetchMessages();
+    console.log('🔄 Setting up AI messages subscription for user:', user.id);
+
+    // Initial fetch if enabled
+    if (enabled) {
+      fetchMessages();
+    }
 
     const channel = supabase
-      .channel('ai_messages_realtime')
+      .channel(`ai_messages_realtime_${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -65,12 +70,18 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps) => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
+          console.log('📨 New AI message received:', payload.new);
           const newMessage = payload.new as AIMessage;
-          setMessages(prev => [...prev, newMessage]);
+          setMessages(prev => {
+            const updated = [...prev, newMessage];
+            console.log('📝 Messages updated. Total count:', updated.length);
+            return updated;
+          });
           setUnreadCount(prev => prev + 1);
         }
       )
       .subscribe((status) => {
+        console.log('🔗 Subscription status:', status);
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
           setError(null);
@@ -81,10 +92,11 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps) => {
       });
 
     return () => {
+      console.log('🔌 Cleaning up AI messages subscription');
       supabase.removeChannel(channel);
       setIsConnected(false);
     };
-  }, [user, enabled, fetchMessages]);
+  }, [user, enabled]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
