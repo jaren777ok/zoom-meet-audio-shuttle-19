@@ -12,7 +12,7 @@ import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
-import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Trophy, Zap } from 'lucide-react';
+import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Trophy, Zap, Monitor, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -32,7 +32,8 @@ const AudioRecorderApp = () => {
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const captureSystemAudio = true; // Always true for better AI performance
-  const [isPreparingRecording, setIsPreparingRecording] = useState(false);
+  const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
+  const [isRequestingMicPermission, setIsRequestingMicPermission] = useState(false);
 
   // AI Messages context for clearing messages when recording stops
   const { clearAllMessages } = useAIMessagesContext();
@@ -55,6 +56,7 @@ const AudioRecorderApp = () => {
     setMicrophoneVolume,
     setSystemVolume,
     requestScreenPermissions,
+    requestMicrophonePermissions,
     startRecording, 
     stopRecording
   } = useSystemAudioRecorder({
@@ -70,34 +72,55 @@ const AudioRecorderApp = () => {
     setCurrentStep('recording');
   };
 
-  // New function to handle complete recording setup with automatic permissions
-  const handleStartCompleteRecording = async () => {
-    setIsPreparingRecording(true);
-    
+  // Handle system audio permission request
+  const handleRequestSystemAudio = async () => {
     try {
-      // Step 1: Request system audio permissions first
-      console.log('🔊 Paso 1: Solicitando permisos de audio del sistema...');
-      const systemSuccess = await requestScreenPermissions();
+      console.log('🔊 Solicitando permisos de audio del sistema...');
+      const success = await requestScreenPermissions();
       
-      if (!systemSuccess) {
+      if (!success) {
         alert('⚠️ No se pudo obtener acceso al audio del sistema.\n\nAsegúrate de:\n1. Hacer clic en "Compartir"\n2. Seleccionar "Compartir audio" en el diálogo\n\nEsto es necesario para que la IA funcione correctamente.');
-        setIsPreparingRecording(false);
-        return;
       }
+    } catch (error) {
+      console.error('❌ Error al solicitar permisos del sistema:', error);
+      alert('❌ Error al solicitar permisos del sistema.');
+    }
+  };
 
-      // Step 2: Small delay to ensure system stream is ready
-      await new Promise(resolve => setTimeout(resolve, 500));
+  // Handle microphone permission request
+  const handleRequestMicrophone = async () => {
+    setIsRequestingMicPermission(true);
+    try {
+      console.log('🎤 Solicitando permisos de micrófono...');
+      const success = await requestMicrophonePermissions();
+      
+      if (success) {
+        setHasMicrophonePermission(true);
+      } else {
+        alert('⚠️ No se pudo obtener acceso al micrófono.\n\nEsto es necesario para grabar tu voz durante el coaching.');
+      }
+    } catch (error) {
+      console.error('❌ Error al solicitar permisos del micrófono:', error);
+      alert('❌ Error al solicitar permisos del micrófono.');
+    } finally {
+      setIsRequestingMicPermission(false);
+    }
+  };
 
-      // Step 3: Start recording (this will automatically request microphone permissions)
-      console.log('🎤 Paso 2: Iniciando grabación completa...');
+  // Start recording when both permissions are ready
+  const handleStartRecording = async () => {
+    if (!hasSystemAudio || !hasMicrophonePermission) {
+      alert('⚠️ Se requieren ambos permisos para iniciar el entrenamiento.');
+      return;
+    }
+
+    try {
+      console.log('🚀 Iniciando grabación...');
       await startRecording();
       setShowFloatingChat(true);
-      
     } catch (error) {
-      console.error('❌ Error durante la preparación de grabación:', error);
+      console.error('❌ Error al iniciar grabación:', error);
       alert('❌ Error al iniciar la grabación. Por favor, intenta de nuevo.');
-    } finally {
-      setIsPreparingRecording(false);
     }
   };
 
@@ -245,13 +268,13 @@ const AudioRecorderApp = () => {
               
               {/* Audio Source Indicators */}
               <div className="flex gap-2 mt-4">
-                <Badge variant={isRecording ? "default" : "secondary"} className="flex items-center gap-1">
+                <Badge variant={hasMicrophonePermission && isRecording ? "default" : hasMicrophonePermission ? "outline" : "secondary"} className="flex items-center gap-1">
                   <Mic className="w-3 h-3" />
-                  Tu Voz
+                  Tu Voz {hasMicrophonePermission && !isRecording ? '(Listo)' : ''}
                 </Badge>
-                <Badge variant={hasSystemAudio && isRecording ? "default" : isScreenShared ? "outline" : "secondary"} className="flex items-center gap-1">
+                <Badge variant={hasSystemAudio && isRecording ? "default" : hasSystemAudio ? "outline" : "secondary"} className="flex items-center gap-1">
                   <Volume2 className="w-3 h-3" />
-                  Cliente {isScreenShared && !isRecording ? '(Conectado)' : ''}
+                  Cliente {hasSystemAudio && !isRecording ? '(Listo)' : ''}
                 </Badge>
               </div>
               
@@ -262,9 +285,8 @@ const AudioRecorderApp = () => {
                   {recordingTime}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {isPreparingRecording ? 'Configurando entrenamiento...' : 
-                   isRecording ? '🚀 Analizando tu técnica de ventas...' : 
-                   isScreenShared ? '💰 Listo para entrenar tus habilidades' : '🎯 Configura permisos para comenzar'}
+                  {isRecording ? '🚀 Analizando tu técnica de ventas...' : 
+                   hasSystemAudio && hasMicrophonePermission ? '💰 Listo para entrenar tus habilidades' : '🎯 Configura permisos para comenzar'}
                 </div>
               </div>
             </div>
@@ -286,36 +308,113 @@ const AudioRecorderApp = () => {
             {/* Control Buttons */}
             <div className="flex gap-4 justify-center">
               {!isRecording ? (
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-col items-center gap-6 w-full max-w-md">
+                  
+                  {/* Permissions Section */}
+                  <Card className="bg-dark-surface border-border w-full">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-center text-lg flex items-center justify-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-neon-cyan" />
+                        Permisos Requeridos
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      
+                      {/* System Audio Permission */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
+                        <div className="flex items-center gap-3">
+                          <Monitor className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <div className="font-medium text-sm">Audio del Sistema</div>
+                            <div className="text-xs text-muted-foreground">Para escuchar al cliente</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {hasSystemAudio ? (
+                            <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-400/30">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Activo
+                            </Badge>
+                          ) : (
+                            <>
+                              <Badge variant="secondary" className="bg-red-500/20 text-red-400 border-red-400/30">
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Inactivo
+                              </Badge>
+                              <Button
+                                onClick={handleRequestSystemAudio}
+                                size="sm"
+                                variant="outline"
+                                disabled={isRequestingPermissions}
+                                className="ml-2"
+                              >
+                                {isRequestingPermissions ? 'Solicitando...' : 'Activar'}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Microphone Permission */}
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
+                        <div className="flex items-center gap-3">
+                          <Mic className="h-5 w-5 text-muted-foreground" />
+                          <div>
+                            <div className="font-medium text-sm">Micrófono</div>
+                            <div className="text-xs text-muted-foreground">Para grabar tu voz</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {hasMicrophonePermission ? (
+                            <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-400/30">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Activo
+                            </Badge>
+                          ) : (
+                            <>
+                              <Badge variant="secondary" className="bg-red-500/20 text-red-400 border-red-400/30">
+                                <XCircle className="w-3 h-3 mr-1" />
+                                Inactivo
+                              </Badge>
+                              <Button
+                                onClick={handleRequestMicrophone}
+                                size="sm"
+                                variant="outline"
+                                disabled={isRequestingMicPermission}
+                                className="ml-2"
+                              >
+                                {isRequestingMicPermission ? 'Solicitando...' : 'Activar'}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Help Text */}
+                      {(!hasSystemAudio || !hasMicrophonePermission) && (
+                        <div className="text-center space-y-2 pt-2">
+                          <div className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-yellow-400" />
+                            Activa ambos permisos para comenzar
+                          </div>
+                          <div className="text-xs text-muted-foreground max-w-sm mx-auto">
+                            💡 La IA necesita escuchar tanto tu voz como la del cliente para proporcionar coaching efectivo
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
                   {/* Main Start Recording Button */}
-                  <Button 
-                    onClick={handleStartCompleteRecording}
-                    size="lg"
-                    className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8 text-lg"
-                    disabled={isPreparingRecording || isRequestingPermissions}
-                  >
-                    <DollarSign className="mr-2 h-6 w-6" />
-                    {isPreparingRecording ? 'Preparando Coaching...' : 'Comenzar Entrenamiento de Ventas'}
-                  </Button>
-                  
-                  {/* Permission Status Indicator */}
-                  {!isScreenShared && !isPreparingRecording && (
-                    <div className="text-center space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        🎯 Se configurarán permisos para analizar tu interacción de ventas
-                      </div>
-                      <div className="text-xs text-muted-foreground max-w-md">
-                        💡 La IA analizará tu tono, ritmo y técnicas de persuasión para ayudarte a cerrar más deals
-                      </div>
-                    </div>
-                  )}
-                  
-                  {isScreenShared && !isRecording && (
-                    <div className="text-center">
-                      <div className="text-sm text-green-400 flex items-center gap-2">
-                        ✅ Sistema conectado - Listo para coaching de ventas
-                      </div>
-                    </div>
+                  {hasSystemAudio && hasMicrophonePermission && (
+                    <Button 
+                      onClick={handleStartRecording}
+                      size="lg"
+                      className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8 text-lg w-full"
+                    >
+                      <DollarSign className="mr-2 h-6 w-6" />
+                      Comenzar Entrenamiento de Ventas
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -332,16 +431,20 @@ const AudioRecorderApp = () => {
               )}
               
               {/* Secondary Buttons */}
+              {!isRecording && (
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => setShowSettings(!showSettings)}
+                    variant="outline"
+                    size="lg"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </div>
+              )}
+              
+              {/* Chat Button (always available) */}
               <div className="flex gap-2">
-                <Button 
-                  onClick={() => setShowSettings(!showSettings)}
-                  variant="outline"
-                  size="lg"
-                  disabled={isRecording}
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
-                
                 <Button 
                   onClick={() => setShowFloatingChat(!showFloatingChat)}
                   variant="outline"

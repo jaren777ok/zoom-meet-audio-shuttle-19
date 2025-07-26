@@ -50,6 +50,9 @@ export const useSystemAudioRecorder = ({
            'getDisplayMedia' in navigator.mediaDevices;
   }, []);
 
+  // Add state for separate microphone stream management
+  const microphoneStreamRef = useRef<MediaStream | null>(null);
+
   // Recording refs and state
   const micRecorderRef = useRef<MediaRecorder | null>(null);
   const systemRecorderRef = useRef<MediaRecorder | null>(null);
@@ -288,6 +291,30 @@ export const useSystemAudioRecorder = ({
     }
   }, [isRequestingPermissions]);
 
+  // Function to request microphone permissions separately
+  const requestMicrophonePermissions = useCallback(async (): Promise<boolean> => {
+    console.log('🎤 Requesting microphone permissions...');
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false 
+      });
+      
+      console.log('✅ Microphone access granted');
+      microphoneStreamRef.current = stream;
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Failed to get microphone access:', error);
+      return false;
+    }
+  }, []);
+
   const startRecording = useCallback(async () => {
     try {
       console.log('🎤 Starting dual recording with system audio:', captureSystemAudio);
@@ -297,17 +324,24 @@ export const useSystemAudioRecorder = ({
       isRecordingRef.current = true;
       pendingChunks.current.clear();
 
-      // Always get microphone stream
-      const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      // Get microphone stream (use existing if available)
+      let micStream: MediaStream;
+      if (microphoneStreamRef.current) {
+        console.log('✅ Using existing microphone stream');
+        micStream = microphoneStreamRef.current;
+      } else {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+        microphoneStreamRef.current = micStream;
+        console.log('🎤 New microphone stream captured successfully');
+      }
       
       micStreamRef.current = micStream;
-      console.log('🎤 Microphone stream captured successfully');
 
       // Set up microphone recorder
       const micRecorder = createMediaRecorder(micStream, 'microphone');
@@ -446,7 +480,7 @@ export const useSystemAudioRecorder = ({
 
     // Stop and cleanup streams
     if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach(track => track.stop());
+      // Don't stop the microphone stream tracks to keep permissions
       micStreamRef.current = null;
     }
 
@@ -491,6 +525,7 @@ export const useSystemAudioRecorder = ({
     setMicrophoneVolume,
     setSystemVolume,
     requestScreenPermissions,
+    requestMicrophonePermissions,
     startRecording,
     stopRecording,
   };
