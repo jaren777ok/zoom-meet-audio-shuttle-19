@@ -41,10 +41,9 @@ const Auth = () => {
         
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <DollarSign className="h-8 w-8 text-neon-cyan" />
+          <div className="flex items-center justify-center mb-4">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              SALES COACH AI
+              $ALES COACH AI
             </h1>
           </div>
           <p className="text-muted-foreground">

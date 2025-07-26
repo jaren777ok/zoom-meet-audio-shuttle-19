@@ -180,10 +180,9 @@ const AudioRecorderApp = () => {
               Salir
             </Button>
           </div>
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <DollarSign className="h-10 w-10 text-neon-cyan" />
+          <div className="flex items-center justify-center mb-2">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              SALES COACH AI
+              $ALES COACH AI
             </h1>
           </div>
           <p className="text-muted-foreground">
