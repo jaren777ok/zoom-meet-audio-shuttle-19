@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { useAIMessages } from '@/hooks/useAIMessages';
+import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
 import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User, MessageSquare } from 'lucide-react';
@@ -26,8 +26,8 @@ const AudioRecorderApp = () => {
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // AI Messages hook for clearing messages when recording stops
-  const { clearAllMessages } = useAIMessages({ enabled: true });
+  // AI Messages context for clearing messages when recording stops
+  const { clearAllMessages } = useAIMessagesContext();
 
   const { 
     isRecording, 

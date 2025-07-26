@@ -14,7 +14,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
 }) => {
   if (error) {
     return (
-      <div className={`flex items-center gap-1 text-destructive ${className}`}>
+      <div className={`flex items-center gap-1 text-destructive ${className}`} title={error}>
         <AlertCircle className="w-3 h-3" />
         <span className="text-xs">Error</span>
       </div>
@@ -22,7 +22,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   }
 
   return (
-    <div className={`flex items-center gap-1 ${isConnected ? 'text-green-400' : 'text-muted-foreground'} ${className}`}>
+    <div className={`flex items-center gap-1 ${isConnected ? 'text-green-400' : 'text-orange-400'} ${className}`}>
       {isConnected ? (
         <>
           <Wifi className="w-3 h-3" />
@@ -30,8 +30,8 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
         </>
       ) : (
         <>
-          <WifiOff className="w-3 h-3" />
-          <span className="text-xs">Desconectado</span>
+          <WifiOff className="w-3 h-3 animate-pulse" />
+          <span className="text-xs">Conectando...</span>
         </>
       )}
     </div>

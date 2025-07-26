@@ -11,7 +11,7 @@ import {
   Sparkles,
   RefreshCw
 } from 'lucide-react';
-import { useAIMessages } from '@/hooks/useAIMessages';
+import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import { usePictureInPicture } from '@/hooks/usePictureInPicture';
 import { MessageBubble } from './MessageBubble';
 import { ConnectionStatus } from './ConnectionStatus';
@@ -38,9 +38,8 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     error, 
     unreadCount, 
     markAsRead,
-    clearAllMessages,
     forceRefresh
-  } = useAIMessages({ enabled: true }); // Always keep subscription active
+  } = useAIMessagesContext(); // Use global context for consistent state
 
   const { 
     isPiPSupported, 

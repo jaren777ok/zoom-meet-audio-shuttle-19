@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useCallback, useRef, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,30 +13,53 @@ export interface AIMessage {
   updated_at: string;
 }
 
-interface UseAIMessagesProps {
-  enabled?: boolean;
+interface AIMessagesContextType {
+  messages: AIMessage[];
+  isConnected: boolean;
+  error: string | null;
+  unreadCount: number;
+  clearMessages: () => void;
+  clearAllMessages: () => Promise<void>;
+  markAsRead: () => void;
+  forceRefresh: () => void;
 }
 
-export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
+const AIMessagesContext = createContext<AIMessagesContextType | undefined>(undefined);
+
+export const useAIMessagesContext = (): AIMessagesContextType => {
+  const context = useContext(AIMessagesContext);
+  if (!context) {
+    throw new Error('useAIMessagesContext must be used within an AIMessagesProvider');
+  }
+  return context;
+};
+
+interface AIMessagesProviderProps {
+  children: React.ReactNode;
+}
+
+export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  
   const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
 
-  // Stable fetch function - no circular dependencies
+  // Stable fetch function
   const fetchMessages = useCallback(async (forceRefresh = false) => {
-    if (!user || !enabled) {
+    if (!user) {
       setMessages([]);
+      setIsConnected(false);
       return;
     }
 
     try {
-      console.log('🔄 Fetching AI messages for user:', user.id, { forceRefresh, timestamp: new Date().toISOString() });
+      console.log('🌍 [Global] Fetching AI messages for user:', user.id, { forceRefresh, timestamp: new Date().toISOString() });
       
       const { data, error } = await supabase
         .from('ai_messages')
@@ -45,34 +68,30 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('❌ Error fetching messages:', error);
+        console.error('❌ [Global] Error fetching messages:', error);
         setError(error.message);
         return;
       }
 
-      console.log('📨 Fetched messages:', data?.length, { forceRefresh, timestamp: new Date().toISOString() });
+      console.log('📨 [Global] Fetched messages:', data?.length, { forceRefresh, timestamp: new Date().toISOString() });
       
-      // Type assertion to handle database response
       const typedMessages = (data || []) as AIMessage[];
       
       if (forceRefresh) {
-        // For force refresh, replace all messages
         setMessages(typedMessages);
-        console.log('🔄 Messages replaced via force refresh');
+        console.log('🔄 [Global] Messages replaced via force refresh');
       } else {
-        // For initial fetch or incremental updates
         setMessages(prev => {
           if (prev.length === 0) {
-            console.log('📋 Initial messages load');
+            console.log('📋 [Global] Initial messages load');
             return typedMessages;
           }
           
-          // Smart merge - only add truly new messages
           const prevIds = new Set(prev.map(msg => msg.id));
           const newMessages = typedMessages.filter(msg => !prevIds.has(msg.id));
           
           if (newMessages.length > 0) {
-            console.log('📬 Adding new messages via fetch:', newMessages.length);
+            console.log('📬 [Global] Adding new messages via fetch:', newMessages.length);
             return [...prev, ...newMessages].sort((a, b) => 
               new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
@@ -83,44 +102,16 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
       }
       
       setError(null);
-      reconnectAttemptsRef.current = 0; // Reset on successful fetch
+      reconnectAttemptsRef.current = 0;
     } catch (err) {
-      console.error('❌ Fetch error:', err);
+      console.error('❌ [Global] Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, [user, enabled]);
+  }, [user]);
 
-  // Handle visibility change - critical for message sync
+  // Real-time subscription setup - always active when user is present
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && user && enabled) {
-        console.log('👁️ Page visible again, re-syncing messages...', new Date().toISOString());
-        fetchMessages(true); // Force refresh when coming back
-      }
-    };
-
-    const handleFocus = () => {
-      if (user && enabled) {
-        console.log('🎯 Window focused, re-syncing messages...', new Date().toISOString());
-        fetchMessages(true); // Force refresh on focus
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [user, enabled, fetchMessages]);
-
-  // Remove conflicting polling - real-time is primary
-  // Polling removed to prevent interference with real-time subscription
-
-  // Real-time subscription - improved logic
-  useEffect(() => {
-    if (!user || !enabled) {
+    if (!user) {
       setIsConnected(false);
       setMessages([]);
       return;
@@ -128,7 +119,7 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
 
     // Cleanup previous channel if exists
     if (channelRef.current) {
-      console.log('🧹 Cleaning up previous channel');
+      console.log('🧹 [Global] Cleaning up previous channel');
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
@@ -142,12 +133,10 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
     // Initial fetch
     fetchMessages(true);
 
-    console.log('🔄 Setting up AI messages subscription for user:', user.id, new Date().toISOString());
+    console.log('🔄 [Global] Setting up AI messages subscription for user:', user.id, new Date().toISOString());
     
-    // Simple, stable channel name
-    const channelName = `ai_messages_${user.id}`;
-    
-    console.log('📡 Creating channel:', channelName);
+    const channelName = `global_ai_messages_${user.id}`;
+    console.log('📡 [Global] Creating channel:', channelName);
     
     const channel = supabase
       .channel(channelName)
@@ -160,21 +149,19 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('📥 INSERT event received:', payload, new Date().toISOString());
+          console.log('📥 [Global] INSERT event received:', payload, new Date().toISOString());
           const newMessage = payload.new as AIMessage;
           
           setMessages(prev => {
-            // Prevent duplicates
             const exists = prev.some(msg => msg.id === newMessage.id);
             if (exists) {
-              console.log('⚠️ Message already exists, skipping:', newMessage.id);
+              console.log('⚠️ [Global] Message already exists, skipping:', newMessage.id);
               return prev;
             }
             
-            console.log('✅ Adding new message via realtime:', newMessage.id);
+            console.log('✅ [Global] Adding new message via realtime:', newMessage.id);
             setUnreadCount(prevCount => prevCount + 1);
             
-            // Insert in correct position by timestamp
             const newMessages = [...prev, newMessage];
             return newMessages.sort((a, b) => 
               new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -191,7 +178,7 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('📝 UPDATE event received:', payload, new Date().toISOString());
+          console.log('📝 [Global] UPDATE event received:', payload, new Date().toISOString());
           const updatedMessage = payload.new as AIMessage;
           setMessages(prev => 
             prev.map(msg => 
@@ -209,25 +196,24 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('🗑️ DELETE event received:', payload, new Date().toISOString());
+          console.log('🗑️ [Global] DELETE event received:', payload, new Date().toISOString());
           const deletedMessage = payload.old as AIMessage;
           setMessages(prev => prev.filter(msg => msg.id !== deletedMessage.id));
         }
       )
       .subscribe((status, err) => {
-        console.log('🔗 Subscription status:', status, 'for channel:', channelName, new Date().toISOString());
+        console.log('🔗 [Global] Subscription status:', status, 'for channel:', channelName, new Date().toISOString());
         
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
           setError(null);
           reconnectAttemptsRef.current = 0;
-          console.log('✅ Successfully connected to realtime');
+          console.log('✅ [Global] Successfully connected to realtime');
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('❌ Channel error occurred:', status, err);
+          console.error('❌ [Global] Channel error occurred:', status, err);
           setIsConnected(false);
           setError('Connection failed');
           
-          // Exponential backoff with jitter
           const attempt = reconnectAttemptsRef.current + 1;
           if (attempt <= maxReconnectAttempts) {
             reconnectAttemptsRef.current = attempt;
@@ -235,27 +221,26 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
             const jitter = Math.random() * 1000;
             const delay = baseDelay + jitter;
             
-            console.log(`🔄 Reconnection attempt ${attempt}/${maxReconnectAttempts}, retrying in ${Math.round(delay)}ms...`);
+            console.log(`🔄 [Global] Reconnection attempt ${attempt}/${maxReconnectAttempts}, retrying in ${Math.round(delay)}ms...`);
             
             reconnectTimeoutRef.current = setTimeout(() => {
-              console.log('🔄 Attempting to reconnect...');
-              fetchMessages(true); // Force refresh on reconnect
+              console.log('🔄 [Global] Attempting to reconnect...');
+              fetchMessages(true);
             }, delay);
           } else {
-            console.error('❌ Max reconnection attempts reached');
+            console.error('❌ [Global] Max reconnection attempts reached');
             setError('Connection failed - max attempts reached');
           }
         } else if (status === 'CLOSED') {
-          console.log('📴 Connection closed');
+          console.log('📴 [Global] Connection closed');
           setIsConnected(false);
         }
       });
 
     channelRef.current = channel;
 
-    // Cleanup function
     return () => {
-      console.log('🔌 Cleaning up AI messages subscription');
+      console.log('🔌 [Global] Cleaning up AI messages subscription');
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -266,57 +251,75 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
       }
       setIsConnected(false);
     };
-  }, [user, enabled]); // Only depend on user and enabled
+  }, [user, fetchMessages]);
 
-  // Clear messages function
+  // Handle visibility change for sync
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('👁️ [Global] Page visible again, re-syncing messages...', new Date().toISOString());
+        fetchMessages(true);
+      }
+    };
+
+    const handleFocus = () => {
+      if (user) {
+        console.log('🎯 [Global] Window focused, re-syncing messages...', new Date().toISOString());
+        fetchMessages(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user, fetchMessages]);
+
+  // Context methods
   const clearMessages = useCallback(() => {
-    console.log('🧹 Clearing local messages');
+    console.log('🧹 [Global] Clearing local messages');
     setMessages([]);
     setUnreadCount(0);
   }, []);
 
-  // Clear all messages from database
   const clearAllMessages = useCallback(async () => {
     if (!user) return;
 
     try {
-      console.log('🗑️ Deleting all AI messages from database');
+      console.log('🗑️ [Global] Deleting all AI messages from database');
       const { error } = await supabase
         .from('ai_messages')
         .delete()
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error clearing messages:', error);
+        console.error('[Global] Error clearing messages:', error);
         setError(error.message);
         return;
       }
 
       setMessages([]);
       setUnreadCount(0);
-      console.log('✅ All messages cleared successfully');
+      console.log('✅ [Global] All messages cleared successfully');
     } catch (err) {
-      console.error('Error clearing messages:', err);
+      console.error('[Global] Error clearing messages:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
   }, [user]);
 
-  // Mark messages as read
   const markAsRead = useCallback(() => {
-    console.log('👁️ Marking messages as read');
+    console.log('👁️ [Global] Marking messages as read');
     setUnreadCount(0);
   }, []);
-
-  // Manual refresh functions
-  const refetch = useCallback(() => {
-    fetchMessages();
-  }, [fetchMessages]);
 
   const forceRefresh = useCallback(() => {
     fetchMessages(true);
   }, [fetchMessages]);
 
-  return {
+  const contextValue: AIMessagesContextType = {
     messages,
     isConnected,
     error,
@@ -324,7 +327,12 @@ export const useAIMessages = ({ enabled = true }: UseAIMessagesProps = {}) => {
     clearMessages,
     clearAllMessages,
     markAsRead,
-    refetch,
     forceRefresh
   };
+
+  return (
+    <AIMessagesContext.Provider value={contextValue}>
+      {children}
+    </AIMessagesContext.Provider>
+  );
 };
