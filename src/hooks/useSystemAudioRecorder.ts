@@ -82,18 +82,19 @@ export const useSystemAudioRecorder = ({
     }
 
     const formData = new FormData();
+    const timestamp = Date.now();
     
-    // Add microphone audio with correct extension and MIME type
+    // Add microphone audio with new filename format
     if (micBlob) {
-      const micFile = new File([micBlob], `mic_segment_${segmentNumber}.weba`, {
+      const micFile = new File([micBlob], `audio_segment_${segmentNumber}_${timestamp}.mp3`, {
         type: 'audio/webm'
       });
-      formData.append('audio', micFile); // Using 'audio' as original field name
+      formData.append('audio', micFile);
     }
     
-    // Add system audio with correct extension and MIME type
+    // Add system audio with new filename format
     if (systemBlob) {
-      const systemFile = new File([systemBlob], `system_segment_${segmentNumber}.weba`, {
+      const systemFile = new File([systemBlob], `system_segment_${segmentNumber}_${timestamp}.mp3`, {
         type: 'audio/webm'
       });
       formData.append('system_audio', systemFile);
