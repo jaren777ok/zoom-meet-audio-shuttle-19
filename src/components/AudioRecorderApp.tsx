@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useAIMessages } from '@/hooks/useAIMessages';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
 import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User, MessageSquare } from 'lucide-react';
@@ -23,6 +24,10 @@ const AudioRecorderApp = () => {
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
   const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
   const [showFloatingChat, setShowFloatingChat] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // AI Messages hook for clearing messages when recording stops
+  const { clearAllMessages } = useAIMessages({ enabled: true });
 
   const { 
     isRecording, 
@@ -62,11 +67,31 @@ const AudioRecorderApp = () => {
   };
 
   const handleStopRecording = async () => {
-    stopRecording();
-    // Keep chat visible for a moment after recording stops, then clear all messages
-    setTimeout(() => {
-      setShowFloatingChat(false);
-    }, 3000);
+    try {
+      setIsDeleting(true);
+      console.log('🛑 Stopping recording and clearing all AI messages...');
+      
+      // Stop the recording first
+      stopRecording();
+      
+      // Clear all AI messages from Supabase
+      await clearAllMessages();
+      console.log('✅ All AI messages cleared successfully');
+      
+      // Close the chat after a short delay
+      setTimeout(() => {
+        setShowFloatingChat(false);
+        setIsDeleting(false);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Error clearing messages:', error);
+      setIsDeleting(false);
+      // Still close the chat even if clearing fails
+      setTimeout(() => {
+        setShowFloatingChat(false);
+      }, 2000);
+    }
   };
 
   return (
@@ -214,9 +239,10 @@ const AudioRecorderApp = () => {
                   variant="destructive"
                   size="lg"
                   className="px-8"
+                  disabled={isDeleting}
                 >
                   <MicOff className="mr-2 h-5 w-5" />
-                  Finalizar Grabación
+                  {isDeleting ? 'Finalizando...' : 'Finalizar Grabación'}
                 </Button>
               )}
               
