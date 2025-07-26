@@ -71,6 +71,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     if (!isVisible && messages.length > lastMessageCount && messages.length > 0) {
       console.log('🔔 New message arrived, auto-showing chat');
       setLastMessageCount(messages.length);
+      onShow(); // THIS WAS THE MISSING CALL!
     }
   }, [messages.length, isVisible, lastMessageCount, onShow]);
 
