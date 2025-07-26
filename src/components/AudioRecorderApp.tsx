@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
-import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User } from 'lucide-react';
+import { FloatingAIChat } from '@/components/FloatingAIChat';
+import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User, MessageSquare } from 'lucide-react';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -21,13 +22,16 @@ const AudioRecorderApp = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
   const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
+  const [showFloatingChat, setShowFloatingChat] = useState(false);
 
   const { 
     isRecording, 
     recordingTime, 
     segmentCount, 
     startRecording, 
-    stopRecording 
+    stopRecording,
+    sessionId,
+    clearSession
   } = useAudioRecorder({ 
     webhookUrl, 
     intervalSeconds,
@@ -49,12 +53,23 @@ const AudioRecorderApp = () => {
       return;
     }
     startRecording();
+    setShowFloatingChat(true);
   };
 
   const handleBackToForm = () => {
     if (!isRecording) {
       setCurrentStep('form');
+      setShowFloatingChat(false);
+      clearSession();
     }
+  };
+
+  const handleStopRecording = () => {
+    stopRecording();
+    // Keep chat visible for a moment after recording stops
+    setTimeout(() => {
+      setShowFloatingChat(false);
+    }, 5000);
   };
 
   return (
@@ -198,7 +213,7 @@ const AudioRecorderApp = () => {
                 </Button>
               ) : (
                 <Button 
-                  onClick={stopRecording}
+                  onClick={handleStopRecording}
                   variant="destructive"
                   size="lg"
                   className="px-8"
@@ -216,6 +231,17 @@ const AudioRecorderApp = () => {
               >
                 <Settings className="h-5 w-5" />
               </Button>
+              
+              {sessionId && (
+                <Button 
+                  onClick={() => setShowFloatingChat(!showFloatingChat)}
+                  variant="outline"
+                  size="lg"
+                  className={showFloatingChat ? 'bg-primary/20' : ''}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </Button>
+              )}
             </div>
           </CardContent>
             </Card>
@@ -278,6 +304,13 @@ const AudioRecorderApp = () => {
             </div>
           </CardContent>
         </Card>
+        
+        {/* Floating AI Chat Widget */}
+        <FloatingAIChat 
+          sessionId={sessionId}
+          isVisible={showFloatingChat}
+          onClose={() => setShowFloatingChat(false)}
+        />
       </div>
     </div>
   );

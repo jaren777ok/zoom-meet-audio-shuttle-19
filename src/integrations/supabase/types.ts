@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_messages: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          message: string
+          message_type: string
+          metadata: Json | null
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          message: string
+          message_type?: string
+          metadata?: Json | null
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          message?: string
+          message_type?: string
+          metadata?: Json | null
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           client_avatar: string | null
