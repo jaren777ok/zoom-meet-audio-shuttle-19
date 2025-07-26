@@ -1,0 +1,193 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { Mic, MicOff, Settings, Waves, Send } from 'lucide-react';
+
+const AudioRecorderApp = () => {
+  const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook-test/audio');
+  const [intervalSeconds] = useState(10);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const { 
+    isRecording, 
+    recordingTime, 
+    segmentCount, 
+    startRecording, 
+    stopRecording 
+  } = useAudioRecorder({ 
+    webhookUrl, 
+    intervalSeconds 
+  });
+
+  const handleStartRecording = () => {
+    if (!webhookUrl.trim()) {
+      alert('Por favor configura la URL del webhook');
+      return;
+    }
+    startRecording();
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl space-y-6">
+        
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
+            Audio Recorder Pro
+          </h1>
+          <p className="text-muted-foreground">
+            Graba y envía audio automáticamente cada {intervalSeconds} segundos
+          </p>
+        </div>
+
+        {/* Main Recording Card */}
+        <Card className="bg-card border-border backdrop-blur-sm">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="flex items-center justify-center gap-2 text-foreground">
+              <Waves className="h-5 w-5 text-neon-cyan" />
+              Control de Grabación
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            
+            {/* Recording Status */}
+            <div className="flex flex-col items-center space-y-4">
+              <div className={`relative p-8 rounded-full transition-all duration-300 ${
+                isRecording 
+                  ? 'bg-recording-pulse animate-recording-pulse' 
+                  : 'bg-dark-surface hover:bg-secondary'
+              }`}>
+                {isRecording ? (
+                  <Mic className="h-12 w-12 text-white" />
+                ) : (
+                  <MicOff className="h-12 w-12 text-muted-foreground" />
+                )}
+              </div>
+              
+              <div className="text-center space-y-2">
+                <div className={`text-2xl font-mono font-bold ${
+                  isRecording ? 'text-neon-cyan' : 'text-muted-foreground'
+                }`}>
+                  {recordingTime}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {isRecording ? 'Grabando...' : 'Listo para grabar'}
+                </div>
+              </div>
+            </div>
+
+            {/* Stats */}
+            {isRecording && (
+              <div className="grid grid-cols-2 gap-4 p-4 bg-dark-surface rounded-lg">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-neon-cyan">{segmentCount}</div>
+                  <div className="text-xs text-muted-foreground">Segmentos enviados</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-neon-cyan">{intervalSeconds}s</div>
+                  <div className="text-xs text-muted-foreground">Intervalo</div>
+                </div>
+              </div>
+            )}
+
+            {/* Control Buttons */}
+            <div className="flex gap-4 justify-center">
+              {!isRecording ? (
+                <Button 
+                  onClick={handleStartRecording}
+                  size="lg"
+                  className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8"
+                >
+                  <Mic className="mr-2 h-5 w-5" />
+                  Iniciar Grabación
+                </Button>
+              ) : (
+                <Button 
+                  onClick={stopRecording}
+                  variant="destructive"
+                  size="lg"
+                  className="px-8"
+                >
+                  <MicOff className="mr-2 h-5 w-5" />
+                  Finalizar Grabación
+                </Button>
+              )}
+              
+              <Button 
+                onClick={() => setShowSettings(!showSettings)}
+                variant="outline"
+                size="lg"
+                disabled={isRecording}
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Settings Card */}
+        {showSettings && (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5 text-neon-cyan" />
+                Configuración
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="webhook">URL del Webhook</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="webhook"
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    placeholder="https://tu-webhook.com/audio"
+                    className="bg-input border-border"
+                  />
+                  <Button variant="outline" size="icon">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="text-sm text-muted-foreground p-3 bg-dark-surface rounded-lg">
+                <strong>💡 Tip:</strong> Para capturar audio de Zoom/Meet, usa "Compartir pantalla" 
+                con audio habilitado en tu navegador.
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Info Card */}
+        <Card className="bg-card border-border">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-2">
+              <h3 className="font-semibold text-foreground">¿Cómo funciona?</h3>
+              <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">1</div>
+                  <span>Graba audio cada {intervalSeconds} segundos</span>
+                </div>
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">2</div>
+                  <span>Convierte a formato MP3</span>
+                </div>
+                <div className="flex flex-col items-center space-y-2">
+                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">3</div>
+                  <span>Envía automáticamente al webhook</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default AudioRecorderApp;

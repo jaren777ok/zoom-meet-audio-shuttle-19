@@ -52,6 +52,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Audio Recorder custom colors
+				'neon-cyan': 'hsl(var(--neon-cyan))',
+				'neon-cyan-glow': 'hsl(var(--neon-cyan-glow))',
+				'dark-surface': 'hsl(var(--dark-surface))',
+				'recording-pulse': 'hsl(var(--recording-pulse))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -84,11 +89,31 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-neon': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px hsl(180 100% 50% / 0.3)'
+					},
+					'50%': {
+						boxShadow: '0 0 30px hsl(180 100% 50% / 0.6), 0 0 40px hsl(180 100% 50% / 0.3)'
+					}
+				},
+				'recording-pulse': {
+					'0%, 100%': {
+						transform: 'scale(1)',
+						boxShadow: '0 0 0 0 hsl(0 85% 65% / 0.7)'
+					},
+					'50%': {
+						transform: 'scale(1.05)',
+						boxShadow: '0 0 0 10px hsl(0 85% 65% / 0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-neon': 'pulse-neon 2s ease-in-out infinite',
+				'recording-pulse': 'recording-pulse 1.5s ease-in-out infinite'
 			}
 		}
 	},

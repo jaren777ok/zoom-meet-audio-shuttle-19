@@ -2,39 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Modern Audio Recorder Design System - Black & Neon Cyan */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark theme with neon cyan accents */
+    --background: 0 0% 7%;
+    --foreground: 180 100% 90%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 12%;
+    --card-foreground: 180 100% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 180 100% 90%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Neon cyan primary */
+    --primary: 180 100% 50%;
+    --primary-foreground: 0 0% 7%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 180 100% 90%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 180 20% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 180 100% 45%;
+    --accent-foreground: 0 0% 7%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 180 100% 50%;
+
+    /* Custom tokens for audio app */
+    --neon-cyan: 180 100% 50%;
+    --neon-cyan-glow: 180 100% 60%;
+    --dark-surface: 0 0% 10%;
+    --recording-pulse: 0 85% 65%;
+    
+    /* Gradients */
+    --gradient-neon: linear-gradient(135deg, hsl(180 100% 50%), hsl(180 100% 70%));
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 12%), hsl(0 0% 8%));
+    
+    /* Shadows & Effects */
+    --shadow-neon: 0 0 20px hsl(180 100% 50% / 0.3);
+    --shadow-neon-strong: 0 0 30px hsl(180 100% 50% / 0.5);
+    --recording-glow: 0 0 25px hsl(0 85% 65% / 0.6);
 
     --radius: 0.5rem;
 
