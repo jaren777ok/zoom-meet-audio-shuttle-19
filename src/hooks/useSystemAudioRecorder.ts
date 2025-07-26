@@ -106,7 +106,9 @@ export const useSystemAudioRecorder = ({
     formData.append('segment_number', segmentNumber.toString());
     formData.append('user_id', userInfo.userId);
     formData.append('user_email', userInfo.userEmail);
-    formData.append('meeting_info', JSON.stringify(meetingInfo));
+    formData.append('numberOfPeople', meetingInfo.numberOfPeople.toString());
+    formData.append('companyInfo', meetingInfo.companyInfo);
+    formData.append('meetingObjective', meetingInfo.meetingObjective);
     formData.append('has_system_audio', hasSystemAudio.toString());
 
     try {
