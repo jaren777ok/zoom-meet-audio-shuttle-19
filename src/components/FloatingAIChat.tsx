@@ -83,9 +83,8 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   };
 
-  const handleClose = async () => {
-    console.log('🚪 Closing FloatingAIChat and clearing messages');
-    await clearAllMessages();
+  const handleClose = () => {
+    console.log('🚪 Closing FloatingAIChat (messages persist)');
     onClose();
   };
 
@@ -158,10 +157,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  clearAllMessages();
-                  onClose();
-                }}
+                onClick={handleClose}
                 className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
               >
                 <X className="w-3 h-3" />
