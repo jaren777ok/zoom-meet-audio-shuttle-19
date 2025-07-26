@@ -24,14 +24,15 @@ const AudioRecorderApp = () => {
   console.log('🔄 AudioRecorderApp rendering...');
   
   const { user, signOut } = useAuth();
-  const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook/audio');
+  const webhookUrl = 'https://n8n-n8n.lsfpo2.easypanel.host/webhook/audio'; // Hidden from UI
   const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
   const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [captureSystemAudio, setCaptureSystemAudio] = useState(false);
+  const captureSystemAudio = true; // Always true for better AI performance
+  const [isPreparingRecording, setIsPreparingRecording] = useState(false);
 
   // AI Messages context for clearing messages when recording stops
   const { clearAllMessages } = useAIMessagesContext();
@@ -61,7 +62,7 @@ const AudioRecorderApp = () => {
     intervalSeconds,
     meetingInfo: meetingInfoForHook,
     userInfo: userInfoForHook,
-    captureSystemAudio
+    captureSystemAudio: true // Always capture system audio for best AI performance
   });
 
   const handleMeetingInfoSubmit = (info: MeetingInfo) => {
@@ -69,27 +70,35 @@ const AudioRecorderApp = () => {
     setCurrentStep('recording');
   };
 
-  const handleRequestScreenPermissions = async () => {
-    const success = await requestScreenPermissions();
-    if (!success) {
-      alert('No se pudo obtener acceso al audio del sistema. Asegúrate de seleccionar "Compartir audio" en el diálogo.');
-    }
-  };
+  // New function to handle complete recording setup with automatic permissions
+  const handleStartCompleteRecording = async () => {
+    setIsPreparingRecording(true);
+    
+    try {
+      // Step 1: Request system audio permissions first
+      console.log('🔊 Paso 1: Solicitando permisos de audio del sistema...');
+      const systemSuccess = await requestScreenPermissions();
+      
+      if (!systemSuccess) {
+        alert('⚠️ No se pudo obtener acceso al audio del sistema.\n\nAsegúrate de:\n1. Hacer clic en "Compartir"\n2. Seleccionar "Compartir audio" en el diálogo\n\nEsto es necesario para que la IA funcione correctamente.');
+        setIsPreparingRecording(false);
+        return;
+      }
 
-  const handleStartRecording = () => {
-    if (!webhookUrl.trim()) {
-      alert('Por favor configura la URL del webhook');
-      return;
+      // Step 2: Small delay to ensure system stream is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 3: Start recording (this will automatically request microphone permissions)
+      console.log('🎤 Paso 2: Iniciando grabación completa...');
+      await startRecording();
+      setShowFloatingChat(true);
+      
+    } catch (error) {
+      console.error('❌ Error durante la preparación de grabación:', error);
+      alert('❌ Error al iniciar la grabación. Por favor, intenta de nuevo.');
+    } finally {
+      setIsPreparingRecording(false);
     }
-    
-    // Check if system audio is required but not ready
-    if (captureSystemAudio && !systemStreamReady) {
-      alert('Primero debes compartir la pantalla para capturar audio del sistema.');
-      return;
-    }
-    
-    startRecording();
-    setShowFloatingChat(true);
   };
 
   const handleBackToForm = () => {
@@ -235,12 +244,10 @@ const AudioRecorderApp = () => {
                   <Mic className="w-3 h-3" />
                   Micrófono
                 </Badge>
-                {captureSystemAudio && (
-                  <Badge variant={hasSystemAudio && isRecording ? "default" : isScreenShared ? "outline" : "secondary"} className="flex items-center gap-1">
-                    <Volume2 className="w-3 h-3" />
-                    Sistema {isScreenShared && !isRecording ? '(Listo)' : ''}
-                  </Badge>
-                )}
+                <Badge variant={hasSystemAudio && isRecording ? "default" : isScreenShared ? "outline" : "secondary"} className="flex items-center gap-1">
+                  <Volume2 className="w-3 h-3" />
+                  Sistema {isScreenShared && !isRecording ? '(Listo)' : ''}
+                </Badge>
               </div>
               
               <div className="text-center space-y-2">
@@ -250,7 +257,9 @@ const AudioRecorderApp = () => {
                   {recordingTime}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {isRecording ? 'Grabando...' : 'Listo para grabar'}
+                  {isPreparingRecording ? 'Configurando permisos...' : 
+                   isRecording ? 'Grabando...' : 
+                   isScreenShared ? 'Listo para grabar' : 'Necesita permisos de audio'}
                 </div>
               </div>
             </div>
@@ -272,31 +281,37 @@ const AudioRecorderApp = () => {
             {/* Control Buttons */}
             <div className="flex gap-4 justify-center">
               {!isRecording ? (
-                <div className="flex gap-2">
-                  {/* Screen Sharing Button - Only show if system audio is enabled and not shared yet */}
-                  {captureSystemAudio && !isScreenShared && (
-                    <Button 
-                      onClick={handleRequestScreenPermissions}
-                      size="lg"
-                      variant="outline"
-                      disabled={isRequestingPermissions}
-                      className="px-6"
-                    >
-                      <Square className="mr-2 h-5 w-5" />
-                      {isRequestingPermissions ? 'Solicitando...' : 'Compartir Pantalla'}
-                    </Button>
+                <div className="flex flex-col items-center gap-4">
+                  {/* Main Start Recording Button */}
+                  <Button 
+                    onClick={handleStartCompleteRecording}
+                    size="lg"
+                    className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8 text-lg"
+                    disabled={isPreparingRecording || isRequestingPermissions}
+                  >
+                    <Mic className="mr-2 h-6 w-6" />
+                    {isPreparingRecording ? 'Configurando...' : 'Iniciar Grabación Completa'}
+                  </Button>
+                  
+                  {/* Permission Status Indicator */}
+                  {!isScreenShared && !isPreparingRecording && (
+                    <div className="text-center space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        🎯 Se solicitarán permisos de audio del sistema y micrófono
+                      </div>
+                      <div className="text-xs text-muted-foreground max-w-md">
+                        Para un mejor rendimiento de la IA, la aplicación necesita acceso tanto al micrófono como al audio del sistema
+                      </div>
+                    </div>
                   )}
                   
-                  {/* Start Recording Button */}
-                  <Button 
-                    onClick={handleStartRecording}
-                    size="lg"
-                    className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8"
-                    disabled={captureSystemAudio && !systemStreamReady}
-                  >
-                    <Mic className="mr-2 h-5 w-5" />
-                    Iniciar Grabación
-                  </Button>
+                  {isScreenShared && !isRecording && (
+                    <div className="text-center">
+                      <div className="text-sm text-green-400 flex items-center gap-2">
+                        ✅ Audio del sistema configurado - Listo para grabar
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Button 
@@ -311,122 +326,80 @@ const AudioRecorderApp = () => {
                 </Button>
               )}
               
-              <Button 
-                onClick={() => setShowSettings(!showSettings)}
-                variant="outline"
-                size="lg"
-                disabled={isRecording}
-              >
-                <Settings className="h-5 w-5" />
-              </Button>
-              
-              <Button 
-                onClick={() => setShowFloatingChat(!showFloatingChat)}
-                variant="outline"
-                size="lg"
-                className={showFloatingChat ? 'bg-primary/20' : ''}
-              >
-                <MessageSquare className="h-5 w-5" />
-              </Button>
+              {/* Secondary Buttons */}
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setShowSettings(!showSettings)}
+                  variant="outline"
+                  size="lg"
+                  disabled={isRecording}
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+                
+                <Button 
+                  onClick={() => setShowFloatingChat(!showFloatingChat)}
+                  variant="outline"
+                  size="lg"
+                  className={showFloatingChat ? 'bg-primary/20' : ''}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </CardContent>
             </Card>
           </>
         )}
 
-        {/* Settings Card */}
+        {/* Settings Card - Simplified */}
         {showSettings && (
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5 text-neon-cyan" />
-                Configuración
+                Configuración de Audio
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="webhook">URL del Webhook</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="webhook"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    placeholder="https://tu-webhook.com/audio"
-                    className="bg-input border-border"
-                  />
-                  <Button variant="outline" size="icon">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
               
-              <Separator />
-              
-              {/* System Audio Settings */}
+              {/* Volume Controls */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label htmlFor="system-audio">Capturar Audio del Sistema</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Graba tanto micrófono como audio de la computadora
-                    </p>
-                  </div>
-                  <Switch
-                    id="system-audio"
-                    checked={captureSystemAudio}
-                    onCheckedChange={setCaptureSystemAudio}
-                    disabled={isRecording || !isSystemAudioSupported}
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Mic className="w-4 h-4" />
+                    Volumen Micrófono: {Math.round(microphoneVolume * 100)}%
+                  </Label>
+                  <Slider
+                    value={[microphoneVolume]}
+                    onValueChange={(value) => setMicrophoneVolume(value[0])}
+                    max={2}
+                    min={0}
+                    step={0.1}
+                    className="mt-2"
+                    disabled={isRecording}
                   />
                 </div>
                 
-                {!isSystemAudioSupported && (
-                  <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg dark:bg-amber-950/20 dark:text-amber-400">
-                    ⚠️ Captura de audio del sistema no disponible en este navegador
-                  </div>
-                )}
-                
-                {captureSystemAudio && (
-                  <div className="space-y-4 pl-4 border-l-2 border-muted">
-                    <div>
-                      <Label className="flex items-center gap-2">
-                        <Mic className="w-4 h-4" />
-                        Volumen Micrófono: {Math.round(microphoneVolume * 100)}%
-                      </Label>
-                      <Slider
-                        value={[microphoneVolume]}
-                        onValueChange={(value) => setMicrophoneVolume(value[0])}
-                        max={2}
-                        min={0}
-                        step={0.1}
-                        className="mt-2"
-                        disabled={isRecording}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label className="flex items-center gap-2">
-                        <Volume2 className="w-4 h-4" />
-                        Volumen Sistema: {Math.round(systemVolume * 100)}%
-                      </Label>
-                      <Slider
-                        value={[systemVolume]}
-                        onValueChange={(value) => setSystemVolume(value[0])}
-                        max={2}
-                        min={0}
-                        step={0.1}
-                        className="mt-2"
-                        disabled={isRecording}
-                      />
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Volume2 className="w-4 h-4" />
+                    Volumen Sistema: {Math.round(systemVolume * 100)}%
+                  </Label>
+                  <Slider
+                    value={[systemVolume]}
+                    onValueChange={(value) => setSystemVolume(value[0])}
+                    max={2}
+                    min={0}
+                    step={0.1}
+                    className="mt-2"
+                    disabled={isRecording}
+                  />
+                </div>
               </div>
               
               <div className="text-sm text-muted-foreground p-3 bg-dark-surface rounded-lg">
-                <strong>💡 Tip:</strong> {captureSystemAudio 
-                  ? "Con captura del sistema activada, puedes grabar audio de Zoom/Meet directamente."
-                  : "Para capturar audio de Zoom/Meet, activa la captura del sistema arriba."
-                }
+                <strong>💡 Información:</strong> La aplicación siempre captura tanto micrófono como audio del sistema para un rendimiento óptimo de la IA.
               </div>
             </CardContent>
           </Card>
@@ -440,15 +413,15 @@ const AudioRecorderApp = () => {
               <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col items-center space-y-2">
                   <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">1</div>
-                  <span>Graba audio cada {intervalSeconds} segundos</span>
+                  <span>Un solo clic para iniciar</span>
                 </div>
                 <div className="flex flex-col items-center space-y-2">
                   <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">2</div>
-                  <span>Convierte a formato MP3</span>
+                  <span>Permisos automáticos</span>
                 </div>
                 <div className="flex flex-col items-center space-y-2">
                   <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">3</div>
-                  <span>Envía automáticamente al webhook</span>
+                  <span>IA en tiempo real</span>
                 </div>
               </div>
             </div>
