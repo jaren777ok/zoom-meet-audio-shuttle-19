@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,8 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     isPiPSupported, 
     isPiPActive, 
     openPictureInPicture, 
-    closePictureInPicture 
+    closePictureInPicture,
+    updatePictureInPictureContent
   } = usePictureInPicture({ width: 400, height: 500 });
 
   // Auto-scroll to bottom when new messages arrive
@@ -75,15 +76,35 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   }, [messages.length, isVisible, lastMessageCount, onShow]);
 
+  // Callback to handle content updates for PiP (like in successful implementation)
+  const onContentUpdate = useCallback(() => {
+    if (isPiPActive) {
+      console.log('🔄 Content update triggered, syncing PiP with 100ms timeout');
+      updatePictureInPictureContent();
+    }
+  }, [isPiPActive, updatePictureInPictureContent]);
+
+  // Auto-sync PiP when messages change (replicate successful pattern)
+  useEffect(() => {
+    if (isPiPActive && messages.length > 0) {
+      console.log('📱 Messages changed in PiP mode, auto-syncing content');
+      // Sync after DOM update, just like in the successful implementation
+      setTimeout(() => {
+        onContentUpdate();
+      }, 100);
+    }
+  }, [messages.length, isPiPActive, onContentUpdate]);
+
   // Log messages updates for debugging
   useEffect(() => {
     console.log('💬 FloatingAIChat messages updated:', {
       count: messages.length,
       isVisible,
       isConnected,
-      unreadCount
+      unreadCount,
+      isPiPActive
     });
-  }, [messages.length, isVisible, isConnected, unreadCount]);
+  }, [messages.length, isVisible, isConnected, unreadCount, isPiPActive]);
 
   const handlePictureInPicture = () => {
     if (isPiPActive) {

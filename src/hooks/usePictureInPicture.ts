@@ -96,14 +96,30 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
     }
   }, []);
 
-  const updatePiPContent = useCallback((newContent: string) => {
+  const updatePictureInPictureContent = useCallback(() => {
     if (pipWindowRef.current && sourceElementRef.current) {
-      const targetElement = pipWindowRef.current.document.body.firstElementChild;
-      if (targetElement) {
-        targetElement.innerHTML = sourceElementRef.current.innerHTML;
-      }
+      console.log('🔄 Updating PiP content with 100ms timeout');
+      
+      // Use 100ms timeout like in the successful implementation
+      setTimeout(() => {
+        if (pipWindowRef.current && sourceElementRef.current) {
+          const targetElement = pipWindowRef.current.document.body.firstElementChild;
+          if (targetElement) {
+            // Update the content by cloning the source element fresh
+            const updatedClone = sourceElementRef.current.cloneNode(true) as HTMLElement;
+            pipWindowRef.current.document.body.removeChild(targetElement);
+            pipWindowRef.current.document.body.appendChild(updatedClone);
+            console.log('✅ PiP content updated successfully');
+          }
+        }
+      }, 100);
     }
   }, []);
+
+  // Keep the old function for backward compatibility
+  const updatePiPContent = useCallback((newContent: string) => {
+    updatePictureInPictureContent();
+  }, [updatePictureInPictureContent]);
 
   return {
     isPiPSupported,
@@ -112,6 +128,7 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
     openPictureInPicture,
     closePictureInPicture,
     updatePiPContent,
+    updatePictureInPictureContent, // New main function with timeout
     pipWindow: pipWindowRef.current,
   };
 };
