@@ -251,7 +251,7 @@ export const useSystemAudioRecorder = ({
       setIsRecording(false);
       setHasSystemAudio(false);
     }
-  }, [captureSystemAudio, isSystemAudioSupported, intervalSeconds, createMediaRecorder, formatTime]);
+  }, [captureSystemAudio, isSystemAudioSupported, intervalSeconds, formatTime, createMediaRecorder]);
 
   const stopRecording = useCallback(() => {
     console.log('🛑 Stopping dual recording...');
