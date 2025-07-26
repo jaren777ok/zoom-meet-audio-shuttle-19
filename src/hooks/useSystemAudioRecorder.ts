@@ -54,6 +54,8 @@ export const useSystemAudioRecorder = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null);
+  const isRestartingRef = useRef<boolean>(false);
 
   const formatTime = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -153,7 +155,10 @@ export const useSystemAudioRecorder = ({
         setHasSystemAudio(false);
       }
 
-      // Set up MediaRecorder
+      // Store the stream for restarts
+      streamRef.current = finalStream;
+
+      // Set up initial MediaRecorder
       const mediaRecorder = new MediaRecorder(finalStream, {
         mimeType: 'audio/webm;codecs=opus',
       });
@@ -161,10 +166,51 @@ export const useSystemAudioRecorder = ({
       let currentSegment = 0;
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data.size > 0 && !isRestartingRef.current) {
           currentSegment++;
           setSegmentCount(currentSegment);
           sendAudioChunk(event.data, currentSegment);
+          console.log(`🎯 Segment ${currentSegment} completed and sent (${event.data.size} bytes)`);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        if (isRestartingRef.current && streamRef.current) {
+          console.log('🔄 Restarting MediaRecorder for next segment...');
+          restartMediaRecorder();
+        }
+      };
+
+      const restartMediaRecorder = () => {
+        if (!streamRef.current || !isRecording) return;
+
+        try {
+          const newRecorder = new MediaRecorder(streamRef.current, {
+            mimeType: 'audio/webm;codecs=opus',
+          });
+
+          newRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0 && !isRestartingRef.current) {
+              currentSegment++;
+              setSegmentCount(currentSegment);
+              sendAudioChunk(event.data, currentSegment);
+              console.log(`🎯 Segment ${currentSegment} completed and sent (${event.data.size} bytes)`);
+            }
+          };
+
+          newRecorder.onstop = () => {
+            if (isRestartingRef.current && streamRef.current) {
+              console.log('🔄 Restarting MediaRecorder for next segment...');
+              restartMediaRecorder();
+            }
+          };
+
+          newRecorder.start();
+          mediaRecorderRef.current = newRecorder;
+          isRestartingRef.current = false;
+        } catch (error) {
+          console.error('❌ Error restarting MediaRecorder:', error);
+          isRestartingRef.current = false;
         }
       };
 
@@ -173,10 +219,14 @@ export const useSystemAudioRecorder = ({
       setIsRecording(true);
       startTimeRef.current = Date.now();
 
-      // Set up interval for creating segments
+      // Set up interval for restarting segments (stop + start cycle)
       intervalRef.current = setInterval(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          mediaRecorderRef.current.requestData();
+        if (mediaRecorderRef.current && 
+            mediaRecorderRef.current.state === 'recording' && 
+            !isRestartingRef.current) {
+          console.log('🔄 Triggering segment restart...');
+          isRestartingRef.current = true;
+          mediaRecorderRef.current.stop();
         }
       }, intervalSeconds * 1000);
 
@@ -197,15 +247,8 @@ export const useSystemAudioRecorder = ({
   const stopRecording = useCallback(() => {
     console.log('🛑 Stopping recording...');
 
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-    }
-
-    if (audioMixerRef.current) {
-      audioMixerRef.current.destroy();
-      audioMixerRef.current = null;
-    }
+    // Stop the restart cycle
+    isRestartingRef.current = false;
 
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -215,6 +258,21 @@ export const useSystemAudioRecorder = ({
     if (timeIntervalRef.current) {
       clearInterval(timeIntervalRef.current);
       timeIntervalRef.current = null;
+    }
+
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    if (audioMixerRef.current) {
+      audioMixerRef.current.destroy();
+      audioMixerRef.current = null;
     }
 
     setIsRecording(false);
