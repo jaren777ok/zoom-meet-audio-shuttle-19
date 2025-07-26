@@ -18,7 +18,7 @@ interface MeetingInfo {
 
 const AudioRecorderApp = () => {
   const { user, signOut } = useAuth();
-  const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook-test/audio');
+  const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook/audio');
   const [intervalSeconds] = useState(20);
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
