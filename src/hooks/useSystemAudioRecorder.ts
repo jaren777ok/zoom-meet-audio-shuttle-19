@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { AudioMixer } from '@/lib/AudioMixer';
 
 interface MeetingInfo {
@@ -28,17 +28,26 @@ export const useSystemAudioRecorder = ({
   userInfo,
   captureSystemAudio = false
 }: UseSystemAudioRecorderProps) => {
+  console.log('🔄 useSystemAudioRecorder: Hook called with:', { 
+    webhookUrl, 
+    intervalSeconds, 
+    captureSystemAudio,
+    meetingInfo,
+    userInfo 
+  });
+
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState('00:00:00');
   const [segmentCount, setSegmentCount] = useState(0);
   const [hasSystemAudio, setHasSystemAudio] = useState(false);
-  const [isSystemAudioSupported] = useState(() => {
+  const [microphoneVolume, setMicrophoneVolume] = useState(1);
+  const [systemVolume, setSystemVolume] = useState(1);
+
+  const isSystemAudioSupported = useMemo(() => {
     return typeof navigator !== 'undefined' && 
            'mediaDevices' in navigator && 
            'getDisplayMedia' in navigator.mediaDevices;
-  });
-  const [microphoneVolume, setMicrophoneVolume] = useState(1);
-  const [systemVolume, setSystemVolume] = useState(1);
+  }, []);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioMixerRef = useRef<AudioMixer | null>(null);
@@ -53,32 +62,35 @@ export const useSystemAudioRecorder = ({
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, []);
 
-  const sendAudioChunk = useCallback(async (audioBlob: Blob, segmentNumber: number) => {
-    if (!webhookUrl.trim()) return;
+  // Stabilize the sendAudioChunk function with useMemo to prevent re-creation
+  const sendAudioChunk = useMemo(() => {
+    return async (audioBlob: Blob, segmentNumber: number) => {
+      if (!webhookUrl.trim()) return;
 
-    const formData = new FormData();
-    formData.append('audio', audioBlob, `segment_${segmentNumber}.mp3`);
-    formData.append('segment_number', segmentNumber.toString());
-    formData.append('user_id', userInfo.userId);
-    formData.append('user_email', userInfo.userEmail);
-    formData.append('meeting_info', JSON.stringify(meetingInfo));
-    formData.append('has_system_audio', hasSystemAudio.toString());
+      const formData = new FormData();
+      formData.append('audio', audioBlob, `segment_${segmentNumber}.mp3`);
+      formData.append('segment_number', segmentNumber.toString());
+      formData.append('user_id', userInfo.userId);
+      formData.append('user_email', userInfo.userEmail);
+      formData.append('meeting_info', JSON.stringify(meetingInfo));
+      formData.append('has_system_audio', hasSystemAudio.toString());
 
-    try {
-      console.log(`📤 Sending audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        console.log(`📤 Sending audio segment ${segmentNumber} to webhook (${audioBlob.size} bytes)`);
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (response.ok) {
-        console.log(`✅ Successfully sent segment ${segmentNumber}`);
-      } else {
-        console.error(`❌ Failed to send segment ${segmentNumber}:`, response.statusText);
+        if (response.ok) {
+          console.log(`✅ Successfully sent segment ${segmentNumber}`);
+        } else {
+          console.error(`❌ Failed to send segment ${segmentNumber}:`, response.statusText);
+        }
+      } catch (error) {
+        console.error(`❌ Error sending segment ${segmentNumber}:`, error);
       }
-    } catch (error) {
-      console.error(`❌ Error sending segment ${segmentNumber}:`, error);
-    }
+    };
   }, [webhookUrl, userInfo.userId, userInfo.userEmail, meetingInfo, hasSystemAudio]);
 
   const startRecording = useCallback(async () => {
@@ -213,18 +225,20 @@ export const useSystemAudioRecorder = ({
     console.log('✅ Recording stopped successfully');
   }, []);
 
-  // Update mixer volumes when they change
+  // Update mixer volumes when they change - using useEffect with proper dependencies
   useEffect(() => {
-    if (audioMixerRef.current) {
+    if (audioMixerRef.current && isRecording) {
       audioMixerRef.current.updateVolume('microphone', microphoneVolume);
+      console.log('🎤 Updated microphone volume to:', microphoneVolume);
     }
-  }, [microphoneVolume]);
+  }, [microphoneVolume, isRecording]);
 
   useEffect(() => {
-    if (audioMixerRef.current) {
+    if (audioMixerRef.current && isRecording) {
       audioMixerRef.current.updateVolume('system', systemVolume);
+      console.log('🔊 Updated system volume to:', systemVolume);
     }
-  }, [systemVolume]);
+  }, [systemVolume, isRecording]);
 
   return {
     isRecording,
