@@ -1,12 +1,19 @@
 import { useState, useRef, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 
+interface MeetingInfo {
+  numberOfPeople: number;
+  companyInfo: string;
+  meetingObjective: string;
+}
+
 interface AudioRecorderConfig {
   webhookUrl: string;
   intervalSeconds: number;
+  meetingInfo: MeetingInfo;
 }
 
-export const useAudioRecorder = ({ webhookUrl, intervalSeconds }: AudioRecorderConfig) => {
+export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo }: AudioRecorderConfig) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [segmentCount, setSegmentCount] = useState(0);
@@ -24,6 +31,9 @@ export const useAudioRecorder = ({ webhookUrl, intervalSeconds }: AudioRecorderC
       formData.append('audio', audioBlob, fileName);
       formData.append('timestamp', new Date().toISOString());
       formData.append('segmentNumber', segmentNumber.toString());
+      formData.append('numberOfPeople', meetingInfo.numberOfPeople.toString());
+      formData.append('companyInfo', meetingInfo.companyInfo);
+      formData.append('meetingObjective', meetingInfo.meetingObjective);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',

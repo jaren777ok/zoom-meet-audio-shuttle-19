@@ -4,12 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { Mic, MicOff, Settings, Waves, Send } from 'lucide-react';
+import MeetingInfoForm from '@/components/MeetingInfoForm';
+import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target } from 'lucide-react';
+
+interface MeetingInfo {
+  numberOfPeople: number;
+  companyInfo: string;
+  meetingObjective: string;
+}
 
 const AudioRecorderApp = () => {
   const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook-test/audio');
-  const [intervalSeconds] = useState(10);
+  const [intervalSeconds] = useState(20);
   const [showSettings, setShowSettings] = useState(false);
+  const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
+  const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
 
   const { 
     isRecording, 
@@ -19,8 +28,14 @@ const AudioRecorderApp = () => {
     stopRecording 
   } = useAudioRecorder({ 
     webhookUrl, 
-    intervalSeconds 
+    intervalSeconds,
+    meetingInfo: meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' }
   });
+
+  const handleMeetingInfoSubmit = (info: MeetingInfo) => {
+    setMeetingInfo(info);
+    setCurrentStep('recording');
+  };
 
   const handleStartRecording = () => {
     if (!webhookUrl.trim()) {
@@ -28,6 +43,12 @@ const AudioRecorderApp = () => {
       return;
     }
     startRecording();
+  };
+
+  const handleBackToForm = () => {
+    if (!isRecording) {
+      setCurrentStep('form');
+    }
   };
 
   return (
@@ -44,8 +65,57 @@ const AudioRecorderApp = () => {
           </p>
         </div>
 
-        {/* Main Recording Card */}
-        <Card className="bg-card border-border backdrop-blur-sm">
+        {/* Meeting Info Form */}
+        {currentStep === 'form' && (
+          <MeetingInfoForm onSubmit={handleMeetingInfoSubmit} />
+        )}
+
+        {/* Recording Interface */}
+        {currentStep === 'recording' && (
+          <>
+            {/* Meeting Info Summary */}
+            {meetingInfo && (
+              <Card className="bg-card border-border backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center justify-center gap-2 text-foreground text-lg">
+                    Información de la Reunión
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-neon-cyan" />
+                      <span className="text-muted-foreground">Personas:</span>
+                      <span className="font-medium text-foreground">{meetingInfo.numberOfPeople}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-neon-cyan" />
+                      <span className="text-muted-foreground">Empresa:</span>
+                      <span className="font-medium text-foreground">{meetingInfo.companyInfo}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Target className="h-4 w-4 text-neon-cyan" />
+                      <span className="text-muted-foreground">Objetivo:</span>
+                      <span className="font-medium text-foreground truncate">{meetingInfo.meetingObjective}</span>
+                    </div>
+                  </div>
+                  {!isRecording && (
+                    <div className="flex justify-center pt-2">
+                      <Button 
+                        onClick={handleBackToForm}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Editar Información
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Main Recording Card */}
+            <Card className="bg-card border-border backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
             <CardTitle className="flex items-center justify-center gap-2 text-foreground">
               <Waves className="h-5 w-5 text-neon-cyan" />
@@ -127,7 +197,9 @@ const AudioRecorderApp = () => {
               </Button>
             </div>
           </CardContent>
-        </Card>
+            </Card>
+          </>
+        )}
 
         {/* Settings Card */}
         {showSettings && (
