@@ -220,6 +220,13 @@ export const useSystemAudioRecorder = ({
           readyState: track.readyState
         })));
         
+        // Verify tracks are actually active and not muted
+        const activeTracks = audioTracks.filter(track => 
+          track.readyState === 'live' && track.enabled && !track.muted
+        );
+        
+        console.log('🔊 Active system audio tracks:', activeTracks.length);
+        
         // Stop video tracks immediately if we got them (we only need audio)
         videoTracks.forEach(track => {
           console.log('🎥 Stopping video track:', track.label);
@@ -230,10 +237,13 @@ export const useSystemAudioRecorder = ({
         const audioOnlyStream = new MediaStream(audioTracks);
         console.log('🔊 Created audio-only stream with', audioOnlyStream.getAudioTracks().length, 'tracks');
         
-        setHasSystemAudio(true);
-        setIsScreenShared(true);
-        setSystemStreamReady(true);
+        // Update states in the correct order
         systemStreamRef.current = audioOnlyStream;
+        setSystemStreamReady(true);
+        setIsScreenShared(true);
+        setHasSystemAudio(true); // This must be last to ensure other states are ready
+        
+        console.log('✅ System audio states updated: hasSystemAudio=true, systemStreamReady=true');
 
         // Listen for track ending (user stops sharing)
         audioTracks.forEach(track => {
@@ -308,13 +318,30 @@ export const useSystemAudioRecorder = ({
         if (systemStreamRef.current && systemStreamReady) {
           console.log('✅ Using existing system audio stream');
           
-          // Set up system audio recorder with existing stream
-          try {
-            const systemRecorder = createMediaRecorder(systemStreamRef.current, 'system');
-            systemRecorderRef.current = systemRecorder;
-            console.log('✅ System audio recorder created with existing stream');
-          } catch (recorderError) {
-            console.error('❌ Failed to create system audio recorder with existing stream:', recorderError);
+          // Verify the stream is still active
+          const audioTracks = systemStreamRef.current.getAudioTracks();
+          const activeTracks = audioTracks.filter(track => 
+            track.readyState === 'live' && track.enabled && !track.muted
+          );
+          
+          if (activeTracks.length > 0) {
+            // Set up system audio recorder with existing stream
+            try {
+              const systemRecorder = createMediaRecorder(systemStreamRef.current, 'system');
+              systemRecorderRef.current = systemRecorder;
+              console.log('✅ System audio recorder created with existing stream');
+              
+              // Ensure hasSystemAudio is true when we have an active stream and recorder
+              if (!hasSystemAudio) {
+                console.log('🔄 Updating hasSystemAudio to true');
+                setHasSystemAudio(true);
+              }
+            } catch (recorderError) {
+              console.error('❌ Failed to create system audio recorder with existing stream:', recorderError);
+              setHasSystemAudio(false);
+            }
+          } else {
+            console.log('⚠️ System stream exists but no active audio tracks');
             setHasSystemAudio(false);
           }
         } else {
