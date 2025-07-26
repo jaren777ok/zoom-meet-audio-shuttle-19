@@ -16,7 +16,6 @@ export type Database = {
     Tables: {
       ai_messages: {
         Row: {
-          confidence: number | null
           created_at: string
           id: string
           message: string
@@ -26,7 +25,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          confidence?: number | null
           created_at?: string
           id?: string
           message: string
@@ -36,7 +34,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          confidence?: number | null
           created_at?: string
           id?: string
           message?: string
@@ -78,6 +75,36 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           unread_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meeting_configurations: {
+        Row: {
+          company_info: string
+          created_at: string
+          id: string
+          meeting_objective: string
+          number_of_people: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_info: string
+          created_at?: string
+          id?: string
+          meeting_objective: string
+          number_of_people: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_info?: string
+          created_at?: string
+          id?: string
+          meeting_objective?: string
+          number_of_people?: number
           updated_at?: string
           user_id?: string
         }
