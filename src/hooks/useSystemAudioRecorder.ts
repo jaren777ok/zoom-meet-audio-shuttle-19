@@ -205,33 +205,91 @@ export const useSystemAudioRecorder = ({
       // Try to get system audio if requested
       if (captureSystemAudio && isSystemAudioSupported) {
         try {
+          console.log('🔊 Attempting to capture system audio with getDisplayMedia...');
+          
+          // Use video: true as some browsers require it for system audio
           const systemStream = await navigator.mediaDevices.getDisplayMedia({
-            video: false,
+            video: true, // Required by some browsers for system audio
             audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-            } as any,
+              echoCancellation: false, // Keep system audio natural
+              noiseSuppression: false,
+              autoGainControl: false,
+              sampleRate: 48000,
+              channelCount: 2
+            }
           });
 
-          const audioTracks = systemStream.getAudioTracks();
-          if (audioTracks.length > 0) {
-            console.log('🔊 System audio captured successfully');
-            setHasSystemAudio(true);
-            systemStreamRef.current = systemStream;
+          console.log('🔊 Display media stream acquired:', systemStream);
+          console.log('🔊 Video tracks:', systemStream.getVideoTracks().length);
+          console.log('🔊 Audio tracks:', systemStream.getAudioTracks().length);
 
-            // Set up system audio recorder
-            const systemRecorder = createMediaRecorder(systemStream, 'system');
-            systemRecorderRef.current = systemRecorder;
+          const audioTracks = systemStream.getAudioTracks();
+          const videoTracks = systemStream.getVideoTracks();
+          
+          if (audioTracks.length > 0) {
+            console.log('✅ System audio tracks found:', audioTracks.map(track => ({
+              id: track.id,
+              label: track.label,
+              enabled: track.enabled,
+              muted: track.muted,
+              readyState: track.readyState
+            })));
+            
+            // Stop video tracks immediately if we got them (we only need audio)
+            videoTracks.forEach(track => {
+              console.log('🎥 Stopping video track:', track.label);
+              track.stop();
+            });
+            
+            // Create a new stream with only audio tracks
+            const audioOnlyStream = new MediaStream(audioTracks);
+            console.log('🔊 Created audio-only stream with', audioOnlyStream.getAudioTracks().length, 'tracks');
+            
+            setHasSystemAudio(true);
+            systemStreamRef.current = audioOnlyStream;
+
+            // Set up system audio recorder with validation
+            try {
+              const systemRecorder = createMediaRecorder(audioOnlyStream, 'system');
+              systemRecorderRef.current = systemRecorder;
+              console.log('✅ System audio recorder created successfully');
+              
+              // Test if recorder can actually record
+              systemRecorder.start();
+              setTimeout(() => {
+                if (systemRecorder.state === 'recording') {
+                  systemRecorder.pause();
+                  systemRecorder.resume();
+                  console.log('✅ System audio recorder test successful');
+                } else {
+                  console.log('⚠️ System audio recorder failed test:', systemRecorder.state);
+                }
+              }, 100);
+              
+            } catch (recorderError) {
+              console.error('❌ Failed to create system audio recorder:', recorderError);
+              setHasSystemAudio(false);
+              audioOnlyStream.getTracks().forEach(track => track.stop());
+            }
+            
           } else {
-            console.log('⚠️ No system audio tracks available');
+            console.log('⚠️ No system audio tracks available in stream');
+            console.log('💡 User might need to select "Share audio" in the screen sharing dialog');
             setHasSystemAudio(false);
+            // Stop all tracks since we don't need video
+            systemStream.getTracks().forEach(track => track.stop());
           }
         } catch (systemError) {
-          console.log('⚠️ System audio not available:', systemError);
+          console.error('❌ System audio capture failed:', systemError);
+          console.log('💡 Possible causes:');
+          console.log('   - User denied screen sharing permission');
+          console.log('   - User did not select "Share audio" option');
+          console.log('   - Browser does not support system audio capture');
+          console.log('   - No audio is currently playing on the system');
           setHasSystemAudio(false);
         }
       } else {
+        console.log('🔊 System audio capture not requested or not supported');
         setHasSystemAudio(false);
       }
 
