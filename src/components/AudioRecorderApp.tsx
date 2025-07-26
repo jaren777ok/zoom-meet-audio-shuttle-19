@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
-import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target } from 'lucide-react';
+import { Mic, MicOff, Settings, Waves, Send, Users, Building, Target, LogOut, User } from 'lucide-react';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -14,6 +15,7 @@ interface MeetingInfo {
 }
 
 const AudioRecorderApp = () => {
+  const { user, signOut } = useAuth();
   const [webhookUrl, setWebhookUrl] = useState('https://n8n-n8n.lsfpo2.easypanel.host/webhook-test/audio');
   const [intervalSeconds] = useState(20);
   const [showSettings, setShowSettings] = useState(false);
@@ -29,7 +31,11 @@ const AudioRecorderApp = () => {
   } = useAudioRecorder({ 
     webhookUrl, 
     intervalSeconds,
-    meetingInfo: meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' }
+    meetingInfo: meetingInfo || { numberOfPeople: 0, companyInfo: '', meetingObjective: '' },
+    userInfo: {
+      userId: user?.id || '',
+      userEmail: user?.email || ''
+    }
   });
 
   const handleMeetingInfoSubmit = (info: MeetingInfo) => {
@@ -57,11 +63,26 @@ const AudioRecorderApp = () => {
         
         {/* Header */}
         <div className="text-center space-y-2">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <User className="h-6 w-6 text-neon-cyan" />
+              <span className="text-sm text-muted-foreground">{user?.email}</span>
+            </div>
+            <Button
+              onClick={signOut}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Salir
+            </Button>
+          </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-            Audio Recorder Pro
+            LIVE IA COACHING
           </h1>
           <p className="text-muted-foreground">
-            Graba y envía audio automáticamente cada {intervalSeconds} segundos
+            Sistema inteligente de grabación cada {intervalSeconds} segundos
           </p>
         </div>
 

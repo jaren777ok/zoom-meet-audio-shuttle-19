@@ -7,13 +7,19 @@ interface MeetingInfo {
   meetingObjective: string;
 }
 
+interface UserInfo {
+  userId: string;
+  userEmail: string;
+}
+
 interface AudioRecorderConfig {
   webhookUrl: string;
   intervalSeconds: number;
   meetingInfo: MeetingInfo;
+  userInfo: UserInfo;
 }
 
-export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo }: AudioRecorderConfig) => {
+export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo, userInfo }: AudioRecorderConfig) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [segmentCount, setSegmentCount] = useState(0);
@@ -34,6 +40,8 @@ export const useAudioRecorder = ({ webhookUrl, intervalSeconds, meetingInfo }: A
       formData.append('numberOfPeople', meetingInfo.numberOfPeople.toString());
       formData.append('companyInfo', meetingInfo.companyInfo);
       formData.append('meetingObjective', meetingInfo.meetingObjective);
+      formData.append('userId', userInfo.userId);
+      formData.append('userEmail', userInfo.userEmail);
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
