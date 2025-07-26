@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useCallback, useRef, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,8 +51,8 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
 
-  // Stable fetch function
-  const fetchMessages = useCallback(async (forceRefresh = false) => {
+  // Stable fetch function - removed from useCallback to prevent circular dependency
+  const fetchMessages = async (forceRefresh = false) => {
     if (!user) {
       setMessages([]);
       setIsConnected(false);
@@ -107,9 +108,9 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
       console.error('❌ [Global] Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, [user]);
+  };
 
-  // Real-time subscription setup - always active when user is present
+  // Real-time subscription setup - removed fetchMessages from dependency array
   useEffect(() => {
     if (!user) {
       setIsConnected(false);
@@ -251,9 +252,9 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
       }
       setIsConnected(false);
     };
-  }, [user, fetchMessages]);
+  }, [user]); // Only depend on user, not fetchMessages
 
-  // Handle visibility change for sync
+  // Handle visibility change for sync - using separate effect with direct call
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && user) {
@@ -276,7 +277,7 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [user, fetchMessages]);
+  }, [user]); // Only depend on user
 
   // Context methods
   const clearMessages = useCallback(() => {
@@ -317,7 +318,7 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
 
   const forceRefresh = useCallback(() => {
     fetchMessages(true);
-  }, [fetchMessages]);
+  }, []);
 
   const contextValue: AIMessagesContextType = {
     messages,
