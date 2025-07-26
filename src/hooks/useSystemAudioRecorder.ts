@@ -66,6 +66,7 @@ export const useSystemAudioRecorder = ({
   const isRecordingRef = useRef<boolean>(false);
   const currentSegmentRef = useRef<number>(0);
   const pendingChunks = useRef<Set<string>>(new Set());
+  const sesionIDRef = useRef<string | null>(null);
 
   const formatTime = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -106,6 +107,7 @@ export const useSystemAudioRecorder = ({
       formData.append('system_audio', systemFile);
     }
     
+    formData.append('sesionID', sesionIDRef.current || '');
     formData.append('segment_number', segmentNumber.toString());
     formData.append('user_id', userInfo.userId);
     formData.append('user_email', userInfo.userEmail);
@@ -319,6 +321,12 @@ export const useSystemAudioRecorder = ({
     try {
       console.log('🎤 Starting dual recording with system audio:', captureSystemAudio);
       
+      // Generate unique session ID at the start of recording
+      if (!sesionIDRef.current) {
+        sesionIDRef.current = `${userInfo.userId}_${Date.now()}`;
+        console.log('🆔 New sesionID generated:', sesionIDRef.current);
+      }
+      
       // Reset state
       currentSegmentRef.current = 0;
       isRecordingRef.current = true;
@@ -494,6 +502,10 @@ export const useSystemAudioRecorder = ({
     // Don't reset hasSystemAudio - keep it if stream is still available
     currentSegmentRef.current = 0;
     pendingChunks.current.clear();
+    
+    // Reset session ID for next session
+    sesionIDRef.current = null;
+    console.log('🆔 sesionID cleared for next session');
     
     console.log('✅ Dual recording stopped successfully');
   }, []);
