@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, UserCheck, UserPlus, DollarSign, TrendingUp } from 'lucide-react';
+import { Eye, EyeOff, UserCheck, Target, TrendingUp } from 'lucide-react';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const { user, signIn, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,11 +24,7 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
-      if (isLogin) {
-        await signIn(email, password);
-      } else {
-        await signUp(email, password);
-      }
+      await signIn(email, password);
     } finally {
       setIsSubmitting(false);
     }
@@ -42,12 +37,14 @@ const Auth = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center mb-4">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              $ALES COACH AI
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent flex items-center justify-center gap-1">
+              <span>Z</span>
+              <Target className="h-8 w-8 text-neon-cyan mx-1" />
+              <span>M HACK</span>
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Tu entrenador de ventas personal impulsado por IA
+            Tu herramienta de productividad para Zoom impulsada por IA
           </p>
         </div>
 
@@ -55,17 +52,8 @@ const Auth = () => {
         <Card className="bg-card border-border backdrop-blur-sm">
           <CardHeader className="text-center pb-4">
             <CardTitle className="flex items-center justify-center gap-2 text-foreground">
-              {isLogin ? (
-                <>
-                  <UserCheck className="h-5 w-5 text-neon-cyan" />
-                  Iniciar Sesión
-                </>
-              ) : (
-                <>
-                  <UserPlus className="h-5 w-5 text-neon-cyan" />
-                  Crear Cuenta
-                </>
-              )}
+              <UserCheck className="h-5 w-5 text-neon-cyan" />
+              Iniciar Sesión
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -116,28 +104,19 @@ const Auth = () => {
                 className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? (
-                  'Procesando...'
-                ) : isLogin ? (
-                  'Iniciar Sesión'
-                ) : (
-                  'Crear Cuenta'
-                )}
+                {isSubmitting ? 'Procesando...' : 'Iniciar Sesión'}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
-              <Button
-                variant="ghost"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-foreground"
+              <a
+                href="https://inmuebla-ia-login.lovable.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-neon-cyan transition-colors underline"
               >
-                {isLogin ? (
-                  '¿No tienes cuenta? Crear una nueva'
-                ) : (
-                  '¿Ya tienes cuenta? Iniciar sesión'
-                )}
-              </Button>
+                ¿Olvidaste tu Contraseña?
+              </a>
             </div>
           </CardContent>
         </Card>
@@ -148,10 +127,10 @@ const Auth = () => {
             <div className="text-center space-y-2">
               <h3 className="font-semibold text-foreground flex items-center justify-center gap-2">
                 <TrendingUp className="h-5 w-5 text-neon-cyan" />
-                Coaching AI 10X
+                Zoom Hack 10X
               </h3>
               <p className="text-sm text-muted-foreground">
-                Multiplica tus ventas hasta 10X con análisis de IA en tiempo real
+                Multiplica tu productividad hasta 10X con análisis de IA en tiempo real
               </p>
             </div>
           </CardContent>

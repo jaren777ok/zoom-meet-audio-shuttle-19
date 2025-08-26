@@ -181,12 +181,14 @@ const AudioRecorderApp = () => {
             </Button>
           </div>
           <div className="flex items-center justify-center mb-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              $ALES COACH AI
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent flex items-center justify-center gap-1">
+              <span>Z</span>
+              <Target className="h-10 w-10 text-neon-cyan mx-1" />
+              <span>M HACK</span>
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Tu Camino a Ventas 10X - Análisis cada {intervalSeconds} segundos
+            Tu Herramienta de Productividad 10X - Análisis cada {intervalSeconds} segundos
           </p>
         </div>
 
@@ -242,12 +244,12 @@ const AudioRecorderApp = () => {
 
             {/* Main Recording Card */}
             <Card className="bg-card border-border backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="flex items-center justify-center gap-2 text-foreground">
-              <TrendingUp className="h-5 w-5 text-neon-cyan" />
-              Centro de Entrenamiento de Ventas
-            </CardTitle>
-          </CardHeader>
+           <CardHeader className="text-center pb-4">
+             <CardTitle className="flex items-center justify-center gap-2 text-foreground">
+               <TrendingUp className="h-5 w-5 text-neon-cyan" />
+               Centro de Productividad Zoom Hack
+             </CardTitle>
+           </CardHeader>
           <CardContent className="space-y-6">
             
             {/* Recording Status */}
