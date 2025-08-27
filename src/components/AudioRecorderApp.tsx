@@ -24,7 +24,7 @@ const AudioRecorderApp = () => {
   console.log('🔄 AudioRecorderApp rendering...');
   
   const { user, signOut } = useAuth();
-  const webhookUrl = 'https://n8n-n8n.lsfpo2.easypanel.host/webhook/audio'; // Hidden from UI
+  const webhookUrl = 'https://cris.cloude.es/webhook/audio'; // Hidden from UI
   const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
