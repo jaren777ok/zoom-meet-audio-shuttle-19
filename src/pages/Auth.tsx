@@ -5,21 +5,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, UserCheck, Target, TrendingUp } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Eye, EyeOff, UserCheck, UserPlus, Target, TrendingUp } from 'lucide-react';
+import zoomHackLogo from '@/assets/zoom-hack-logo.png';
 
 const Auth = () => {
-  const { user, signIn, loading } = useAuth();
+  const { user, signIn, signUp, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
 
   // Redirect if already authenticated
   if (user && !loading) {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -30,94 +35,213 @@ const Auth = () => {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      alert('Las contraseñas no coinciden');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await signUp(email, password);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center mb-4">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent flex items-center justify-center gap-1">
-              <span>Z</span>
-              <Target className="h-8 w-8 text-neon-cyan mx-1" />
-              <span>M HACK</span>
-            </h1>
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center">
+            <img 
+              src={zoomHackLogo} 
+              alt="Zoom Hack Logo" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
-          <p className="text-muted-foreground">
-            Tu herramienta de productividad para Zoom impulsada por IA
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
+              ZOOM HACK
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Tu herramienta de productividad para Zoom impulsada por IA
+            </p>
+          </div>
         </div>
 
         {/* Auth Form */}
         <Card className="bg-card border-border backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="flex items-center justify-center gap-2 text-foreground">
-              <UserCheck className="h-5 w-5 text-neon-cyan" />
-              Iniciar Sesión
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  required
-                  className="bg-input border-border"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="bg-input border-border pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+          <CardContent className="p-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 rounded-t-lg rounded-b-none h-12">
+                <TabsTrigger value="login" className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4" />
+                  Iniciar Sesión
+                </TabsTrigger>
+                <TabsTrigger value="register" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Registrarse
+                </TabsTrigger>
+              </TabsList>
 
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Procesando...' : 'Iniciar Sesión'}
-              </Button>
-            </form>
+              <div className="p-6">
+                <TabsContent value="login" className="mt-0">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Correo electrónico</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tu@email.com"
+                        required
+                        className="bg-input border-border"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="bg-input border-border pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
 
-            <div className="mt-6 text-center">
-              <a
-                href="https://inmuebla-ia-login.lovable.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-neon-cyan transition-colors underline"
-              >
-                ¿Olvidaste tu Contraseña?
-              </a>
-            </div>
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Procesando...' : 'Iniciar Sesión'}
+                    </Button>
+                  </form>
+
+                  <div className="mt-6 text-center">
+                    <a
+                      href="https://inmuebla-ia-login.lovable.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-muted-foreground hover:text-neon-cyan transition-colors underline"
+                    >
+                      ¿Olvidaste tu Contraseña?
+                    </a>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="register" className="mt-0">
+                  <div className="mb-4 p-3 rounded-lg bg-neon-cyan/10 border border-neon-cyan/30">
+                    <p className="text-sm text-center text-muted-foreground">
+                      🎉 <span className="font-semibold text-neon-cyan">¡Prueba gratuita de 7 días!</span> 
+                      <br />Regístrate y comienza a multiplicar tu productividad
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="register-email">Correo electrónico</Label>
+                      <Input
+                        id="register-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tu@email.com"
+                        required
+                        className="bg-input border-border"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="register-password">Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="register-password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="bg-input border-border pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                      <div className="relative">
+                        <Input
+                          id="confirm-password"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="bg-input border-border pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Creando cuenta...' : 'Crear Cuenta Gratis'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </div>
+            </Tabs>
           </CardContent>
         </Card>
 
