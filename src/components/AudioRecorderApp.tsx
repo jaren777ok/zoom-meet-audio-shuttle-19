@@ -236,21 +236,18 @@ const AudioRecorderApp = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-neon-cyan" />
-                      <span className="text-muted-foreground">Prospectos:</span>
-                      <span className="font-medium text-foreground">{meetingInfo.numberOfPeople}</span>
+                  <div className="flex justify-center gap-6 text-sm">
+                    <div className="flex flex-col items-center gap-1">
+                      <Users className="h-6 w-6 text-neon-cyan" />
+                      <span className="text-xs text-muted-foreground">Prospectos</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-neon-cyan" />
-                      <span className="text-muted-foreground">Productos:</span>
-                      <span className="font-medium text-foreground">{meetingInfo.companyInfo}</span>
+                    <div className="flex flex-col items-center gap-1">
+                      <Building className="h-6 w-6 text-neon-cyan" />
+                      <span className="text-xs text-muted-foreground">Productos</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-neon-cyan" />
-                      <span className="text-muted-foreground">Meta Ventas:</span>
-                      <span className="font-medium text-foreground truncate">{meetingInfo.meetingObjective}</span>
+                    <div className="flex flex-col items-center gap-1">
+                      <Target className="h-6 w-6 text-neon-cyan" />
+                      <span className="text-xs text-muted-foreground">Objetivo de la sesión</span>
                     </div>
                   </div>
                   {!isRecording && (
