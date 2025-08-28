@@ -76,9 +76,9 @@ const MeetingInfoForm = ({
           
           {/* Número de Personas */}
           <div className="space-y-2">
-            <Label htmlFor="numberOfPeople" className="flex items-start gap-2">
-              <Users className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">¿Cuántos prospectos/clientes estarán presentes?</span>
+            <Label htmlFor="numberOfPeople" className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-neon-cyan" />
+              <span>Prospectos</span>
             </Label>
             <Input id="numberOfPeople" type="number" min="1" max="100" value={numberOfPeople} onChange={e => setNumberOfPeople(parseInt(e.target.value) || 1)} className={`bg-input border-border ${errors.numberOfPeople ? 'border-destructive' : ''}`} />
             {errors.numberOfPeople && <p className="text-sm text-destructive">{errors.numberOfPeople}</p>}
@@ -86,9 +86,9 @@ const MeetingInfoForm = ({
 
           {/* Información de la Empresa */}
           <div className="space-y-2">
-            <Label htmlFor="companyInfo" className="flex items-start gap-2">
-              <Building className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">Contexto de tu Empresa y Productos</span>
+            <Label htmlFor="companyInfo" className="flex items-center gap-2">
+              <Building className="h-4 w-4 text-neon-cyan" />
+              <span>Productos</span>
             </Label>
             <Textarea id="companyInfo" value={companyInfo} onChange={e => setCompanyInfo(e.target.value)} placeholder="Describe tus productos, mercado objetivo, propuesta de valor única, precios, competencia y cualquier información que ayude a la IA a potenciar tu estrategia de ventas..." className={`bg-input border-border min-h-[120px] resize-y ${errors.companyInfo ? 'border-destructive' : ''}`} />
             {errors.companyInfo && <p className="text-sm text-destructive">{errors.companyInfo}</p>}
@@ -96,9 +96,9 @@ const MeetingInfoForm = ({
 
           {/* Objetivo de la Reunión */}
           <div className="space-y-2">
-            <Label htmlFor="meetingObjective" className="flex items-start gap-2">
-              <Target className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
-              <span className="line-clamp-2">Objetivo de la Sesión</span>
+            <Label htmlFor="meetingObjective" className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-neon-cyan" />
+              <span>Objetivo de la sesión</span>
             </Label>
             <Textarea id="meetingObjective" value={meetingObjective} onChange={e => setMeetingObjective(e.target.value)} placeholder="¿Qué quieres lograr? (cerrar venta, generar interés, seguimiento, etc.)" className={`bg-input border-border min-h-[100px] ${errors.meetingObjective ? 'border-destructive' : ''}`} />
             {errors.meetingObjective && <p className="text-sm text-destructive">{errors.meetingObjective}</p>}
