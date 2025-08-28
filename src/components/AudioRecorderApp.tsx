@@ -206,9 +206,6 @@ const AudioRecorderApp = () => {
             />
           </div>
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              ZOOM HACK
-            </h1>
             <p className="text-muted-foreground mt-2">
               Tu Herramienta de Productividad 10X - Análisis cada {intervalSeconds} segundos
             </p>

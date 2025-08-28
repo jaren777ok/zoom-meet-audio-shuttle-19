@@ -48,6 +48,7 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
   
   const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
 
@@ -133,6 +134,12 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
 
     // Initial fetch
     fetchMessages(true);
+
+    // Setup 10-second auto-refresh interval for message recovery
+    autoRefreshIntervalRef.current = setInterval(() => {
+      console.log('⏰ [Global] Auto-refresh interval triggered (10s)');
+      fetchMessages(true);
+    }, 10000); // 10 seconds
 
     console.log('🔄 [Global] Setting up AI messages subscription for user:', user.id, new Date().toISOString());
     
@@ -245,6 +252,10 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
+      }
+      if (autoRefreshIntervalRef.current) {
+        clearInterval(autoRefreshIntervalRef.current);
+        autoRefreshIntervalRef.current = null;
       }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);

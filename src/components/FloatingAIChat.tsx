@@ -72,9 +72,17 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     if (!isVisible && messages.length > lastMessageCount && messages.length > 0) {
       console.log('🔔 New message arrived, auto-showing chat');
       setLastMessageCount(messages.length);
-      onShow(); // THIS WAS THE MISSING CALL!
+      onShow();
     }
   }, [messages.length, isVisible, lastMessageCount, onShow]);
+
+  // Force refresh when chat becomes visible (recovery mechanism)
+  useEffect(() => {
+    if (isVisible && !isMinimized) {
+      console.log('👁️ Chat became visible, forcing refresh for recovery');
+      forceRefresh();
+    }
+  }, [isVisible, isMinimized, forceRefresh]);
 
   // Callback to handle content updates for PiP (like in successful implementation)
   const onContentUpdate = useCallback(() => {

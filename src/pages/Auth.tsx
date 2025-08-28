@@ -64,9 +64,6 @@ const Auth = () => {
             />
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
-              ZOOM HACK
-            </h1>
             <p className="text-muted-foreground mt-2">
               Tu herramienta de productividad para Zoom impulsada por IA
             </p>
