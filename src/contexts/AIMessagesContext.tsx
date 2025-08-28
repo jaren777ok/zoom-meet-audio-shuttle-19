@@ -45,6 +45,7 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastSuccessfulFetch, setLastSuccessfulFetch] = useState<number>(0);
   
   const channelRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -105,9 +106,20 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
       
       setError(null);
       reconnectAttemptsRef.current = 0;
+      
+      // Update connection status based on successful fetch
+      setLastSuccessfulFetch(Date.now());
+      setIsConnected(true);
+      
     } catch (err) {
       console.error('❌ [Global] Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
+      
+      // Only set disconnected if we haven't had a recent successful fetch
+      const timeSinceLastFetch = Date.now() - lastSuccessfulFetch;
+      if (timeSinceLastFetch > 30000) { // 30 seconds
+        setIsConnected(false);
+      }
     }
   };
 
@@ -213,13 +225,18 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
         console.log('🔗 [Global] Subscription status:', status, 'for channel:', channelName, new Date().toISOString());
         
         if (status === 'SUBSCRIBED') {
-          setIsConnected(true);
+          console.log('✅ [Global] Successfully connected to realtime');
+          // Don't override isConnected here - let fetch success handle it
           setError(null);
           reconnectAttemptsRef.current = 0;
-          console.log('✅ [Global] Successfully connected to realtime');
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.error('❌ [Global] Channel error occurred:', status, err);
-          setIsConnected(false);
+          
+          // Only set disconnected if we haven't had a recent successful fetch
+          const timeSinceLastFetch = Date.now() - lastSuccessfulFetch;
+          if (timeSinceLastFetch > 30000) { // 30 seconds
+            setIsConnected(false);
+          }
           setError('Connection failed');
           
           const attempt = reconnectAttemptsRef.current + 1;
