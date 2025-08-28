@@ -46,12 +46,12 @@ export const useSubscription = () => {
       
       // Check if user has a subscription
       const { data: existingSubscription, error } = await supabase
-        .from('user_subscriptions')
+        .from('user_subscriptions' as any)
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching subscription:', error);
         return;
       }
@@ -62,12 +62,12 @@ export const useSubscription = () => {
         trialEndDate.setDate(trialEndDate.getDate() + 7);
 
         const { data: newSubscription, error: insertError } = await supabase
-          .from('user_subscriptions')
+          .from('user_subscriptions' as any)
           .insert({
             user_id: user.id,
             subscription_type: 'trial',
             trial_end_date: trialEndDate.toISOString()
-          })
+          } as any)
           .select()
           .single();
 
@@ -76,11 +76,11 @@ export const useSubscription = () => {
           return;
         }
 
-        setSubscription(newSubscription);
-        calculateTrialStatus(newSubscription);
+        setSubscription(newSubscription as unknown as UserSubscription);
+        calculateTrialStatus(newSubscription as unknown as UserSubscription);
       } else {
-        setSubscription(existingSubscription);
-        calculateTrialStatus(existingSubscription);
+        setSubscription(existingSubscription as unknown as UserSubscription);
+        calculateTrialStatus(existingSubscription as unknown as UserSubscription);
       }
     } catch (error) {
       console.error('Error in fetchSubscription:', error);
@@ -104,7 +104,7 @@ export const useSubscription = () => {
 
     try {
       const { error } = await supabase
-        .from('premium_access_requests')
+        .from('premium_access_requests' as any)
         .insert({
           user_id: user.id,
           full_name: requestData.full_name,
@@ -112,7 +112,7 @@ export const useSubscription = () => {
           phone_number: requestData.phone_number,
           message: requestData.message || null,
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
 

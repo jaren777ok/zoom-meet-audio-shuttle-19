@@ -10,9 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
-import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Zap, Monitor, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { TrialBanner } from '@/components/TrialBanner';
+import { PremiumAccessModal } from '@/components/PremiumAccessModal';
+import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Zap, Monitor, CheckCircle, XCircle, AlertCircle, Crown } from 'lucide-react';
+import zoomHackLogo from '@/assets/zoom-hack-logo.png';
 
 interface MeetingInfo {
   numberOfPeople: number;
@@ -24,6 +28,7 @@ const AudioRecorderApp = () => {
   console.log('🔄 AudioRecorderApp rendering...');
   
   const { user, signOut } = useAuth();
+  const { isTrialActive, daysRemaining, loading: subscriptionLoading, submitPremiumRequest } = useSubscription();
   const webhookUrl = 'https://cris.cloude.es/webhook/audio'; // Hidden from UI
   const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
@@ -31,6 +36,7 @@ const AudioRecorderApp = () => {
   const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const captureSystemAudio = true; // Always true for better AI performance
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
   const [isRequestingMicPermission, setIsRequestingMicPermission] = useState(false);
@@ -107,8 +113,14 @@ const AudioRecorderApp = () => {
     }
   };
 
-  // Start recording when both permissions are ready
+  // Start recording when both permissions are ready and trial is active
   const handleStartRecording = async () => {
+    // Check trial status first
+    if (!subscriptionLoading && !isTrialActive) {
+      setShowPremiumModal(true);
+      return;
+    }
+
     if (!hasSystemAudio || !hasMicrophonePermission) {
       alert('⚠️ Se requieren ambos permisos para iniciar el entrenamiento.');
       return;
@@ -159,12 +171,17 @@ const AudioRecorderApp = () => {
     }
   };
 
+  const handlePremiumRequest = async (requestData: { full_name: string; email: string; phone_number: string; message?: string }) => {
+    const result = await submitPremiumRequest(requestData);
+    return result;
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
         
         {/* Header */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <User className="h-6 w-6 text-neon-cyan" />
@@ -180,17 +197,29 @@ const AudioRecorderApp = () => {
               Salir
             </Button>
           </div>
+          
           <div className="flex items-center justify-center mb-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent flex items-center justify-center gap-1">
-              <span>Z</span>
-              <Target className="h-10 w-10 text-neon-cyan mx-1" />
-              <span>M HACK</span>
-            </h1>
+            <img 
+              src={zoomHackLogo} 
+              alt="Zoom Hack Logo" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
-          <p className="text-muted-foreground">
-            Tu Herramienta de Productividad 10X - Análisis cada {intervalSeconds} segundos
-          </p>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-cyan to-neon-cyan-glow bg-clip-text text-transparent">
+              ZOOM HACK
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Tu Herramienta de Productividad 10X - Análisis cada {intervalSeconds} segundos
+            </p>
+          </div>
         </div>
+
+        {/* Trial Banner */}
+        <TrialBanner 
+          daysRemaining={daysRemaining} 
+          isVisible={!subscriptionLoading && isTrialActive} 
+        />
 
         {/* Meeting Info Form */}
         {currentStep === 'form' && (
@@ -407,14 +436,33 @@ const AudioRecorderApp = () => {
 
                   {/* Main Start Recording Button */}
                   {hasSystemAudio && hasMicrophonePermission && (
-                    <Button 
-                      onClick={handleStartRecording}
-                      size="lg"
-                      className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 animate-pulse-neon px-8 text-lg w-full"
-                    >
-                      <DollarSign className="mr-2 h-6 w-6" />
-                      Comenzar Entrenamiento de Ventas
-                    </Button>
+                    <>
+                      <Button
+                        onClick={handleStartRecording}
+                        size="lg"
+                        className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 shadow-glow-cyan min-w-[200px]"
+                        disabled={!hasSystemAudio || !hasMicrophonePermission || subscriptionLoading}
+                      >
+                        <DollarSign className="mr-2 h-5 w-5" />
+                        {subscriptionLoading ? 
+                          'Cargando...' : 
+                          !isTrialActive ? 
+                            'Acceso Premium Requerido' : 
+                            'Comenzar Entrenamiento'
+                        }
+                      </Button>
+                      {!isTrialActive && !subscriptionLoading && (
+                        <Button
+                          onClick={() => setShowPremiumModal(true)}
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 border-yellow-400 text-yellow-400 hover:bg-yellow-400/10"
+                        >
+                          <Crown className="mr-2 h-4 w-4" />
+                          Solicitar Acceso Premium
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
@@ -545,6 +593,13 @@ const AudioRecorderApp = () => {
           onClose={() => setShowFloatingChat(false)}
           onStopRecording={handleStopRecording}
           onShow={() => setShowFloatingChat(true)}
+        />
+
+        {/* Premium Access Modal */}
+        <PremiumAccessModal
+          isOpen={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+          onSubmit={handlePremiumRequest}
         />
       </div>
     </div>
