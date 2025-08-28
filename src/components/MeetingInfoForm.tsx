@@ -61,8 +61,7 @@ const MeetingInfoForm = ({
       onSubmit(meetingInfo);
     }
   };
-  return (
-    <Card className="bg-card border-border backdrop-blur-sm">
+  return <Card className="bg-card border-border backdrop-blur-sm">
       <CardHeader className="text-center pb-4">
         <CardTitle className="flex items-center justify-center gap-2 text-foreground">
           <Target className="h-5 w-5 text-neon-cyan" />
@@ -81,15 +80,7 @@ const MeetingInfoForm = ({
               <Users className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
               <span className="line-clamp-2">¿Cuántos prospectos/clientes estarán presentes?</span>
             </Label>
-            <Input 
-              id="numberOfPeople" 
-              type="number" 
-              min="1" 
-              max="100" 
-              value={numberOfPeople} 
-              onChange={e => setNumberOfPeople(parseInt(e.target.value) || 1)} 
-              className={`bg-input border-border ${errors.numberOfPeople ? 'border-destructive' : ''}`} 
-            />
+            <Input id="numberOfPeople" type="number" min="1" max="100" value={numberOfPeople} onChange={e => setNumberOfPeople(parseInt(e.target.value) || 1)} className={`bg-input border-border ${errors.numberOfPeople ? 'border-destructive' : ''}`} />
             {errors.numberOfPeople && <p className="text-sm text-destructive">{errors.numberOfPeople}</p>}
           </div>
 
@@ -99,13 +90,7 @@ const MeetingInfoForm = ({
               <Building className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
               <span className="line-clamp-2">Contexto de tu Empresa y Productos</span>
             </Label>
-            <Textarea 
-              id="companyInfo" 
-              value={companyInfo} 
-              onChange={e => setCompanyInfo(e.target.value)} 
-              placeholder="Describe tus productos, mercado objetivo, propuesta de valor única, precios, competencia y cualquier información que ayude a la IA a potenciar tu estrategia de ventas..." 
-              className={`bg-input border-border min-h-[120px] resize-y ${errors.companyInfo ? 'border-destructive' : ''}`} 
-            />
+            <Textarea id="companyInfo" value={companyInfo} onChange={e => setCompanyInfo(e.target.value)} placeholder="Describe tus productos, mercado objetivo, propuesta de valor única, precios, competencia y cualquier información que ayude a la IA a potenciar tu estrategia de ventas..." className={`bg-input border-border min-h-[120px] resize-y ${errors.companyInfo ? 'border-destructive' : ''}`} />
             {errors.companyInfo && <p className="text-sm text-destructive">{errors.companyInfo}</p>}
           </div>
 
@@ -115,27 +100,15 @@ const MeetingInfoForm = ({
               <Target className="h-4 w-4 text-neon-cyan flex-shrink-0 mt-0.5" />
               <span className="line-clamp-2">Objetivo de la Sesión</span>
             </Label>
-            <Textarea 
-              id="meetingObjective" 
-              value={meetingObjective} 
-              onChange={e => setMeetingObjective(e.target.value)} 
-              placeholder="¿Qué quieres lograr? (cerrar venta, generar interés, seguimiento, etc.)" 
-              className={`bg-input border-border min-h-[100px] ${errors.meetingObjective ? 'border-destructive' : ''}`} 
-            />
+            <Textarea id="meetingObjective" value={meetingObjective} onChange={e => setMeetingObjective(e.target.value)} placeholder="¿Qué quieres lograr? (cerrar venta, generar interés, seguimiento, etc.)" className={`bg-input border-border min-h-[100px] ${errors.meetingObjective ? 'border-destructive' : ''}`} />
             {errors.meetingObjective && <p className="text-sm text-destructive">{errors.meetingObjective}</p>}
           </div>
 
-          <Button 
-            type="submit" 
-            size="lg" 
-            disabled={isLoading} 
-            className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 disabled:opacity-50"
-          >
+          <Button type="submit" size="lg" disabled={isLoading} className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 disabled:opacity-50">
             {isLoading ? 'Cargando configuración...' : 'Iniciar Coaching de Ventas'}
           </Button>
         </form>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
 export default MeetingInfoForm;
