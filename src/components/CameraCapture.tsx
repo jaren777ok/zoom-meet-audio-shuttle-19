@@ -14,18 +14,20 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
   const {
     isPermissionGranted,
     isRequestingPermission,
+    isVideoReady,
     isCapturing,
     capturedPhoto,
     isSending,
     error,
     videoRef,
     canvasRef,
+    onVideoReady,
     requestCameraPermission,
     capturePhoto,
     retakePhoto,
     sendPhotoToWebhook,
     stopCamera
-  } = useCameraCapture({ 
+  } = useCameraCapture({
     userId,
     onPhotoSent: () => {
       setTimeout(() => {
@@ -93,23 +95,36 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
                 autoPlay
                 playsInline
                 muted
+                onLoadedMetadata={onVideoReady}
                 className="w-full h-full object-cover"
               />
               
-              {/* Overlay guide */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="border-2 border-white/30 rounded-full w-48 h-48 flex items-center justify-center">
-                  <div className="text-white/70 text-sm font-medium text-center">
-                    Posiciona tu rostro<br />dentro del círculo
+              {/* Loading overlay when video is not ready */}
+              {!isVideoReady && (
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <Camera className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+                    <p className="text-sm">Cargando vista previa...</p>
                   </div>
                 </div>
-              </div>
+              )}
+              
+              {/* Overlay guide - only show when video is ready */}
+              {isVideoReady && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="border-2 border-white/30 rounded-full w-48 h-48 flex items-center justify-center">
+                    <div className="text-white/70 text-sm font-medium text-center">
+                      Posiciona tu rostro<br />dentro del círculo
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="text-center space-y-3">
-              <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-400/30">
+              <Badge variant="outline" className={`${isVideoReady ? 'bg-green-500/20 text-green-400 border-green-400/30' : 'bg-blue-500/20 text-blue-400 border-blue-400/30'}`}>
                 <CheckCircle className="w-3 h-3 mr-1" />
-                Cámara activa
+                {isVideoReady ? 'Cámara lista' : 'Preparando cámara...'}
               </Badge>
               
               <p className="text-sm text-muted-foreground">
@@ -118,7 +133,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
               
               <Button
                 onClick={capturePhoto}
-                disabled={isCapturing}
+                disabled={isCapturing || !isVideoReady}
                 className="w-full max-w-xs"
               >
                 <Camera className="w-4 h-4 mr-2" />
