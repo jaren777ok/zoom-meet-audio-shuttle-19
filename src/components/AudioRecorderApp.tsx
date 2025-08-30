@@ -12,6 +12,7 @@ import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
+import CameraCapture from '@/components/CameraCapture';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
 import { TrialBanner } from '@/components/TrialBanner';
 import { PremiumAccessModal } from '@/components/PremiumAccessModal';
@@ -33,7 +34,7 @@ const AudioRecorderApp = () => {
   const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
-  const [currentStep, setCurrentStep] = useState<'form' | 'recording'>('form');
+  const [currentStep, setCurrentStep] = useState<'form' | 'camera' | 'recording'>('form');
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -75,6 +76,10 @@ const AudioRecorderApp = () => {
 
   const handleMeetingInfoSubmit = (info: MeetingInfo) => {
     setMeetingInfo(info);
+    setCurrentStep('camera');
+  };
+
+  const handleCameraComplete = () => {
     setCurrentStep('recording');
   };
 
@@ -221,6 +226,14 @@ const AudioRecorderApp = () => {
         {/* Meeting Info Form */}
         {currentStep === 'form' && (
           <MeetingInfoForm onSubmit={handleMeetingInfoSubmit} />
+        )}
+
+        {/* Camera Capture */}
+        {currentStep === 'camera' && (
+          <CameraCapture 
+            userId={user?.id || ''} 
+            onComplete={handleCameraComplete}
+          />
         )}
 
         {/* Recording Interface */}
