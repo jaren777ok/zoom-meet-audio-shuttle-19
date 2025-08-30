@@ -344,6 +344,39 @@ export type Database = {
         }
         Relationships: []
       }
+      document_embeddings: {
+        Row: {
+          content: string
+          created_at: string | null
+          document_id: string
+          embedding: string | null
+          id: number
+          metadata: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          document_id: string
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          document_id?: string
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_videos: {
         Row: {
           config_data: Json | null
@@ -1483,6 +1516,21 @@ export type Database = {
         Args: { filter?: Json; match_count?: number; query_embedding: string }
         Returns: {
           content: string
+          id: number
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      match_user_documents: {
+        Args: {
+          filter?: Json
+          match_count?: number
+          query_embedding: string
+          user_filter: string
+        }
+        Returns: {
+          content: string
+          document_id: string
           id: number
           metadata: Json
           similarity: number
