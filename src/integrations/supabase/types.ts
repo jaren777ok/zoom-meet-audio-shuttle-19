@@ -446,6 +446,48 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_documents: {
+        Row: {
+          document_id: string
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          processed_at: string | null
+          upload_status: string
+          uploaded_at: string
+          user_id: string
+          vectorization_status: string
+          webhook_response: Json | null
+        }
+        Insert: {
+          document_id: string
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          processed_at?: string | null
+          upload_status?: string
+          uploaded_at?: string
+          user_id: string
+          vectorization_status?: string
+          webhook_response?: Json | null
+        }
+        Update: {
+          document_id?: string
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          processed_at?: string | null
+          upload_status?: string
+          uploaded_at?: string
+          user_id?: string
+          vectorization_status?: string
+          webhook_response?: Json | null
+        }
+        Relationships: []
+      }
       meeting_configurations: {
         Row: {
           company_info: string
@@ -471,6 +513,39 @@ export type Database = {
           id?: string
           meeting_objective?: string
           number_of_people?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meeting_sessions: {
+        Row: {
+          company_info: string
+          created_at: string
+          id: string
+          meeting_objective: string
+          number_of_people: number
+          session_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_info: string
+          created_at?: string
+          id?: string
+          meeting_objective: string
+          number_of_people: number
+          session_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_info?: string
+          created_at?: string
+          id?: string
+          meeting_objective?: string
+          number_of_people?: number
+          session_name?: string
           updated_at?: string
           user_id?: string
         }
@@ -953,6 +1028,24 @@ export type Database = {
         }
         Relationships: []
       }
+      n8n_clonegame: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           color: string
@@ -1324,6 +1417,10 @@ export type Database = {
           p_time_range_days: number
           p_user_id: string
         }
+        Returns: string
+      }
+      generate_document_id: {
+        Args: { p_user_id: string }
         Returns: string
       }
       generate_next_request_id: {

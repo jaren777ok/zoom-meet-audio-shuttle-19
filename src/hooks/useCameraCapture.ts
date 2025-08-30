@@ -200,7 +200,28 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
     setCapturedPhoto(null);
     setCapturedBlob(null);
     setError(null);
-  }, []);
+    
+    // Reset video readiness to ensure proper stream handling for retake
+    setIsVideoReady(false);
+    
+    // Re-trigger video readiness check if stream exists
+    if (streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      
+      // Force video to reload metadata
+      video.load();
+      
+      // Set up timeout for video readiness
+      const timeoutId = setTimeout(() => {
+        if (!isVideoReady) {
+          console.log('⚠️ Video readiness timeout on retake, forcing ready state');
+          setIsVideoReady(true);
+        }
+      }, 3000);
+      
+      videoTimeoutRef.current = timeoutId;
+    }
+  }, [isVideoReady]);
 
   const sendPhotoToWebhook = useCallback(async () => {
     if (!capturedBlob || !userId) {

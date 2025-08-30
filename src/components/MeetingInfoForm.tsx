@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Users, Building, Target } from 'lucide-react';
 import { useMeetingConfiguration, MeetingConfiguration } from '@/hooks/useMeetingConfiguration';
+import { useMeetingSessions } from '@/hooks/useMeetingSessions';
 interface MeetingInfo {
   numberOfPeople: number;
   companyInfo: string;
@@ -22,6 +23,7 @@ const MeetingInfoForm = ({
     saveConfiguration,
     isLoading
   } = useMeetingConfiguration();
+  const { createSession } = useMeetingSessions();
   const [numberOfPeople, setNumberOfPeople] = useState<number>(config.numberOfPeople);
   const [companyInfo, setCompanyInfo] = useState(config.companyInfo);
   const [meetingObjective, setMeetingObjective] = useState(config.meetingObjective);
@@ -56,9 +58,18 @@ const MeetingInfoForm = ({
         meetingObjective: meetingObjective.trim()
       };
 
-      // Save configuration before submitting
-      await saveConfiguration(meetingInfo);
-      onSubmit(meetingInfo);
+      try {
+        // Save configuration
+        await saveConfiguration(meetingInfo);
+        
+        // Create session with timestamp as name
+        const sessionName = `Sesión ${new Date().toLocaleString()}`;
+        await createSession({ ...meetingInfo, session_name: sessionName });
+        
+        onSubmit(meetingInfo);
+      } catch (error) {
+        console.error('Error saving configuration or session:', error);
+      }
     }
   };
   return <Card className="bg-card border-border backdrop-blur-sm">

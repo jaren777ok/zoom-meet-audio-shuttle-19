@@ -106,17 +106,6 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
                   </div>
                 </div>
               )}
-              
-              {/* Overlay guide - only show when video is ready */}
-              {isVideoReady && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="border-2 border-white/30 rounded-full w-48 h-48 flex items-center justify-center">
-                    <div className="text-white/70 text-sm font-medium text-center">
-                      Posiciona tu rostro<br />dentro del círculo
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="text-center space-y-3">

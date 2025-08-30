@@ -9,6 +9,8 @@ import { AIMessagesProvider } from "@/contexts/AIMessagesContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Knowledge from "./pages/Knowledge";
+import Sessions from "./pages/Sessions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,16 @@ const App = () => (
               <Route path="/" element={
                 <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              } />
+              <Route path="/knowledge" element={
+                <ProtectedRoute>
+                  <Knowledge />
+                </ProtectedRoute>
+              } />
+              <Route path="/sessions" element={
+                <ProtectedRoute>
+                  <Sessions />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
