@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 interface UseCameraCaptureProps {
   userId: string;
@@ -18,11 +18,77 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const videoTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const onVideoReady = useCallback(() => {
-    console.log('📹 Video stream is ready');
-    setIsVideoReady(true);
-  }, []);
+  // Handle video readiness with multiple event listeners and timeout
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamRef.current || isVideoReady) return;
+
+    console.log('🎥 Setting up video event listeners...');
+
+    const handleVideoReady = () => {
+      console.log('📹 Video event triggered', {
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        readyState: video.readyState
+      });
+
+      // Verify video has actual dimensions
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        console.log('✅ Video is fully ready with dimensions');
+        setIsVideoReady(true);
+        setError(null);
+        
+        // Clear timeout since video loaded successfully
+        if (videoTimeoutRef.current) {
+          clearTimeout(videoTimeoutRef.current);
+          videoTimeoutRef.current = null;
+        }
+      } else {
+        console.log('⚠️ Video dimensions not ready yet', {
+          width: video.videoWidth,
+          height: video.videoHeight
+        });
+      }
+    };
+
+    // Add multiple event listeners for different loading stages
+    video.addEventListener('loadedmetadata', handleVideoReady);
+    video.addEventListener('loadeddata', handleVideoReady);
+    video.addEventListener('canplay', handleVideoReady);
+
+    // Set timeout for video loading (5 seconds)
+    videoTimeoutRef.current = setTimeout(() => {
+      console.log('⏰ Video loading timeout - attempting retry...');
+      if (!isVideoReady) {
+        setError('La cámara está tardando en cargar. Reintentando...');
+        
+        // Retry after timeout
+        retryTimeoutRef.current = setTimeout(() => {
+          console.log('🔄 Retrying video stream...');
+          requestCameraPermission();
+        }, 2000);
+      }
+    }, 5000);
+
+    // Cleanup function
+    return () => {
+      video.removeEventListener('loadedmetadata', handleVideoReady);
+      video.removeEventListener('loadeddata', handleVideoReady);
+      video.removeEventListener('canplay', handleVideoReady);
+      
+      if (videoTimeoutRef.current) {
+        clearTimeout(videoTimeoutRef.current);
+        videoTimeoutRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+  }, [streamRef.current, isVideoReady]);
 
   const requestCameraPermission = useCallback(async () => {
     setIsRequestingPermission(true);
@@ -58,7 +124,25 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
 
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !streamRef.current || !isVideoReady) {
+      console.log('❌ Camera not ready for capture:', {
+        hasVideo: !!videoRef.current,
+        hasCanvas: !!canvasRef.current,
+        hasStream: !!streamRef.current,
+        isVideoReady
+      });
       setError('La cámara no está lista para capturar');
+      return;
+    }
+
+    const video = videoRef.current;
+    
+    // Additional validation: check video dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      console.log('❌ Video dimensions not ready:', {
+        width: video.videoWidth,
+        height: video.videoHeight
+      });
+      setError('El video no está completamente cargado. Por favor, espera un momento.');
       return;
     }
 
@@ -66,7 +150,6 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
     console.log('📸 Starting photo capture...');
     
     try {
-      const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       
@@ -75,30 +158,39 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
       }
 
       console.log(`📐 Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
+      console.log(`📺 Video ready state: ${video.readyState}`);
       
       // Set canvas size to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
+      console.log(`🖼️ Canvas size set to: ${canvas.width}x${canvas.height}`);
+      
       // Draw the current video frame to canvas
       context.drawImage(video, 0, 0);
+      console.log('🎨 Video frame drawn to canvas');
       
       // Convert to blob directly (more efficient than base64)
       canvas.toBlob((blob) => {
-        if (blob) {
-          console.log('✅ Photo captured successfully', `Size: ${blob.size} bytes`);
+        if (blob && blob.size > 0) {
+          console.log('✅ Photo captured successfully', {
+            size: `${blob.size} bytes`,
+            type: blob.type
+          });
           const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
           setCapturedPhoto(photoDataUrl); // For preview
           setCapturedBlob(blob); // For sending
+          setIsCapturing(false);
         } else {
-          throw new Error('Failed to create blob from canvas');
+          console.error('❌ Blob creation failed or empty blob');
+          setError('Error al crear la imagen. Por favor, intenta de nuevo.');
+          setIsCapturing(false);
         }
       }, 'image/jpeg', 0.8);
       
     } catch (err) {
       console.error('❌ Error capturing photo:', err);
       setError('Error al capturar la foto');
-    } finally {
       setIsCapturing(false);
     }
   }, [isVideoReady]);
@@ -171,10 +263,27 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
 
   const stopCamera = useCallback(() => {
     console.log('🛑 Stopping camera...');
+    
+    // Clear any pending timeouts
+    if (videoTimeoutRef.current) {
+      clearTimeout(videoTimeoutRef.current);
+      videoTimeoutRef.current = null;
+    }
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    
+    // Stop all tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        console.log('🛑 Stopping track:', track.kind);
+        track.stop();
+      });
       streamRef.current = null;
     }
+    
+    // Reset all states
     setIsPermissionGranted(false);
     setIsVideoReady(false);
     setCapturedPhoto(null);
@@ -192,7 +301,6 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
     error,
     videoRef,
     canvasRef,
-    onVideoReady,
     requestCameraPermission,
     capturePhoto,
     retakePhoto,

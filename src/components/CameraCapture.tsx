@@ -21,7 +21,6 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
     error,
     videoRef,
     canvasRef,
-    onVideoReady,
     requestCameraPermission,
     capturePhoto,
     retakePhoto,
@@ -95,7 +94,6 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
                 autoPlay
                 playsInline
                 muted
-                onLoadedMetadata={onVideoReady}
                 className="w-full h-full object-cover"
               />
               
