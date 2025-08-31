@@ -60,7 +60,7 @@ const Auth = () => {
             <img 
               src="https://jbunbmphadxmzjokwgkw.supabase.co/storage/v1/object/sign/fotos/zoom%20hack%20logo%20(1).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zNGY4MzVlOS03N2Y3LTRiMWQtOWE0MS03NTVhYzYxNTM3NDUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJmb3Rvcy96b29tIGhhY2sgbG9nbyAoMSkucG5nIiwiaWF0IjoxNzU2NDAyNDY1LCJleHAiOjE5MTQwODI0NjV9.Y0gJgiDh2zvxJoep36_ykWIYdfo5SQjpMs0auWVkuTQ" 
               alt="Zoom Hack Logo" 
-              className="h-24 w-auto object-contain"
+              className="h-40 w-auto object-contain"
             />
           </div>
           <div>

@@ -137,18 +137,38 @@ export const useKnowledgeDocuments = (): UseKnowledgeDocumentsReturn => {
 
   const deleteDocument = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase
+      // First get the document to get its document_id
+      const { data: document, error: fetchError } = await supabase
+        .from('knowledge_documents')
+        .select('document_id')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!document) throw new Error('Documento no encontrado');
+
+      // Delete related embeddings first using user_id and document_id
+      const { error: embeddingsError } = await supabase
+        .from('document_embeddings')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('document_id', document.document_id);
+
+      if (embeddingsError) throw embeddingsError;
+
+      // Then delete the main document
+      const { error: documentError } = await supabase
         .from('knowledge_documents')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (documentError) throw documentError;
       await refreshDocuments();
     } catch (err) {
       console.error('Error deleting document:', err);
       setError('Error al eliminar documento');
     }
-  }, [refreshDocuments]);
+  }, [refreshDocuments, user]);
 
   return {
     documents,
