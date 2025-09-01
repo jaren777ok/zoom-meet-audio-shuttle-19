@@ -36,7 +36,7 @@ const AppNavigation: React.FC = () => {
       <CardContent className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={faviconZoom} alt="Favicon" className="h-6 w-6" />
+            <img src={faviconZoom} alt="Favicon" className="h-6 w-6 dark:drop-shadow-none drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]" />
             <span className="font-bold text-lg">
               <span className="text-primary">ZOOM</span>{' '}
               <span className={`${theme === 'light' ? 'drop-shadow-[1px_1px_2px_rgba(0,0,0,0.7)]' : ''}`}>
