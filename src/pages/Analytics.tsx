@@ -10,6 +10,7 @@ import AppNavigation from '@/components/AppNavigation';
 import SessionAnalysisCard from '@/components/analytics/SessionAnalysisCard';
 import MetricsKPISection from '@/components/analytics/MetricsKPISection';
 import ClientClassificationSection from '@/components/analytics/ClientClassificationSection';
+import ConversionsResultsSection from '@/components/analytics/ConversionsResultsSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import DateFilter, { DateRange } from '@/components/DateFilter';
 import EditableSessionName from '@/components/EditableSessionName';
@@ -100,11 +101,24 @@ const Analytics: React.FC = () => {
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
-                  <div>
-                    <CardTitle className="text-2xl font-bold">
-                      Análisis de Sesión {selectedSession.session_id.slice(-8)}
-                    </CardTitle>
-                    <p className="text-muted-foreground mt-1">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <EditableSessionName
+                        sessionName={selectedSession.session_name || 'Análisis de Sesión'}
+                        onSave={async (newName) => {
+                          const success = await updateSessionName(selectedSession.session_id, newName);
+                          if (success) {
+                            refreshSessions();
+                          }
+                          return success;
+                        }}
+                        className="text-2xl font-bold"
+                      />
+                      <span className="text-2xl font-bold text-muted-foreground">
+                        {selectedSession.session_id.slice(-8)}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground">
                       {new Date(selectedSession.created_at).toLocaleDateString('es-ES', {
                         weekday: 'long',
                         year: 'numeric',
@@ -116,23 +130,15 @@ const Analytics: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  {selectedSession?.session_name && (
-                    <EditableSessionName
-                      sessionName={selectedSession.session_name}
-                      onSave={(newName) => updateSessionName(selectedSession.session_id, newName)}
-                    />
-                  )}
-                  <Button
-                    variant="outline"
-                    onClick={refreshSessions}
-                    disabled={isLoading}
-                    className="gap-2"
-                  >
-                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    Actualizar
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  onClick={refreshSessions}
+                  disabled={isLoading}
+                  className="gap-2 shrink-0"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  Actualizar
+                </Button>
               </div>
             </CardHeader>
           </Card>
@@ -145,6 +151,9 @@ const Analytics: React.FC = () => {
               
               {/* Clasificación del Cliente */}
               <ClientClassificationSection metrics={metrics} />
+              
+              {/* Conversiones y Resultados */}
+              <ConversionsResultsSection metrics={metrics} />
               
               {/* Análisis de Venta Perdida (condicional) */}
               <LostSaleAnalysis metrics={metrics} />

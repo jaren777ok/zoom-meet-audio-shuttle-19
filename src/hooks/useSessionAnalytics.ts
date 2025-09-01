@@ -4,17 +4,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
-// Zod schema for metrics validation - ajustado a la estructura real
+// Zod schema for metrics validation - estructura completa
 const MetricsSchema = z.object({
+  // Clasificación del cliente
   Temperatura_Lead: z.string(),
-  Tasa_de_Cierre: z.string(),
   Intención_compra: z.string(),
   Sentimiento_cliente: z.string(),
-  Net_Promoter_Score: z.string(),
+  
+  // KPIs principales
+  Tasa_de_Cierre: z.string(),
   Puntuación_Satisfacción_Cliente: z.number(),
   Tiempo_Promedio_Respuesta_Vendedor: z.number(),
+  
+  // Conversiones y resultados
+  Net_Promoter_Score: z.string(),
   Conversiones: z.number(),
   Ganancia_en_Dinero: z.number(),
+  
+  // Análisis de carrito abandonado
   Carrito_Abandonado: z.boolean(),
   Motivo_Principal_Abandono: z.string(),
   punto_friccion: z.string(),

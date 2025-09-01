@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Check, X } from 'lucide-react';
+import { Edit2, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -56,13 +56,15 @@ const EditableSessionName: React.FC<EditableSessionNameProps> = ({
   };
 
   if (isEditing) {
+    const isLargeText = className?.includes('text-2xl') || className?.includes('text-3xl');
+    
     return (
       <div className={cn("flex items-center gap-2", className)}>
         <Input
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-8 text-sm"
+          className={`${isLargeText ? 'h-12 text-2xl font-bold' : 'h-8 text-sm'}`}
           autoFocus
           disabled={isLoading}
         />
@@ -71,33 +73,37 @@ const EditableSessionName: React.FC<EditableSessionNameProps> = ({
           variant="ghost"
           onClick={handleSave}
           disabled={isLoading}
-          className="h-8 w-8 p-0"
+          className={`p-0 ${isLargeText ? 'h-12 w-12' : 'h-8 w-8'}`}
         >
-          <Check className="h-4 w-4" />
+          <Check className={isLargeText ? "h-6 w-6" : "h-4 w-4"} />
         </Button>
         <Button
           size="sm"
           variant="ghost"
           onClick={handleCancel}
           disabled={isLoading}
-          className="h-8 w-8 p-0"
+          className={`p-0 ${isLargeText ? 'h-12 w-12' : 'h-8 w-8'}`}
         >
-          <X className="h-4 w-4" />
+          <X className={isLargeText ? "h-6 w-6" : "h-4 w-4"} />
         </Button>
       </div>
     );
   }
 
+  const isLargeText = className?.includes('text-2xl') || className?.includes('text-3xl');
+  
   return (
     <div className={cn("flex items-center gap-2 group", className)}>
-      <span className="text-sm font-medium">{sessionName}</span>
+      <span className={className?.includes('text-') ? '' : "text-sm font-medium"}>{sessionName}</span>
       <Button
         size="sm"
         variant="ghost"
         onClick={() => setIsEditing(true)}
-        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        className={`p-0 opacity-0 group-hover:opacity-100 transition-opacity ${
+          isLargeText ? 'h-10 w-10' : 'h-8 w-8'
+        }`}
       >
-        <Edit2 className="h-3 w-3" />
+        <Edit2 className={isLargeText ? "h-5 w-5" : "h-3 w-3"} />
       </Button>
     </div>
   );
