@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Search, BarChart3, RefreshCw } from 'lucide-react';
+import { ImageModal } from '@/components/ImageModal';
 import { marked } from 'marked';
 import AppNavigation from '@/components/AppNavigation';
 import SessionAnalysisCard from '@/components/analytics/SessionAnalysisCard';
@@ -41,6 +42,8 @@ const Analytics: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null);
   
   const {
     sessions,
@@ -102,9 +105,6 @@ const Analytics: React.FC = () => {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex-1">
-                    <div className="text-sm text-muted-foreground mb-1">
-                      Análisis de Sesión {selectedSession.session_id}
-                    </div>
                     <EditableSessionName
                       sessionName={
                         metrics?.Titulo || 
@@ -138,7 +138,14 @@ const Analytics: React.FC = () => {
                       <img 
                         src={selectedSession.url} 
                         alt="Foto del vendedor en la reunión"
-                        className="w-24 h-24 rounded-lg object-cover border-2 border-border"
+                        className="w-24 h-24 rounded-lg object-cover border-2 border-border cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => {
+                          setSelectedImage({ 
+                            url: selectedSession.url!, 
+                            alt: "Foto del vendedor en la reunión" 
+                          });
+                          setImageModalOpen(true);
+                        }}
                       />
                     </div>
                   )}
@@ -199,6 +206,19 @@ const Analytics: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+          )}
+          
+          {/* Image Modal */}
+          {selectedImage && (
+            <ImageModal
+              isOpen={imageModalOpen}
+              onClose={() => {
+                setImageModalOpen(false);
+                setSelectedImage(null);
+              }}
+              imageUrl={selectedImage.url}
+              altText={selectedImage.alt}
+            />
           )}
         </div>
       </div>

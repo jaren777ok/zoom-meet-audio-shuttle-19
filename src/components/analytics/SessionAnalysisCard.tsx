@@ -63,7 +63,7 @@ const SessionAnalysisCard: React.FC<SessionAnalysisCardProps> = ({ session, onCl
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold truncate">
-            Sesión {session.session_id.slice(-8)}
+            {session.metricas_json?.Titulo || session.session_name || `Sesión ${session.session_id.slice(-8)}`}
           </CardTitle>
           {getStatusBadge(session.analysis_status)}
         </div>

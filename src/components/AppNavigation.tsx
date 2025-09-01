@@ -3,12 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Home, Brain, History, BarChart3, Mic, LogOut } from 'lucide-react';
+import { Home, Brain, History, BarChart3, LogOut, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from 'next-themes';
+import faviconZoom from '@/assets/favicon-zoom.png';
 
 const AppNavigation: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -32,8 +35,8 @@ const AppNavigation: React.FC = () => {
       <CardContent className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Mic className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg">ZoomHack</span>
+            <img src={faviconZoom} alt="Favicon" className="h-6 w-6" />
+            <span className="font-bold text-lg">ZOOM HACK</span>
             {user?.email && (
               <Badge variant="outline" className="ml-2">
                 {user.email}
@@ -54,6 +57,16 @@ const AppNavigation: React.FC = () => {
                 </Button>
               </Link>
             ))}
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <span className="hidden sm:inline">{theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
+            </Button>
             
             <Button 
               variant="ghost" 

@@ -115,7 +115,7 @@ const MeetingInfoForm = ({
             {errors.meetingObjective && <p className="text-sm text-destructive">{errors.meetingObjective}</p>}
           </div>
 
-          <Button type="submit" size="lg" disabled={isLoading} className="w-full bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 disabled:opacity-50">
+          <Button type="submit" size="lg" disabled={isLoading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 disabled:opacity-50">
             {isLoading ? 'Cargando configuración...' : 'Iniciar Coaching de Ventas'}
           </Button>
         </form>
