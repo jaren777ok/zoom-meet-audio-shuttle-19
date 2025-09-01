@@ -52,10 +52,12 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// Audio Recorder custom colors
-				'neon-cyan': 'hsl(var(--neon-cyan))',
-				'neon-cyan-glow': 'hsl(var(--neon-cyan-glow))',
-				'dark-surface': 'hsl(var(--dark-surface))',
+				// Zoom Professional custom colors
+				'zoom-blue': 'hsl(var(--zoom-blue))',
+				'zoom-blue-light': 'hsl(var(--zoom-blue-light))',
+				'zoom-blue-dark': 'hsl(var(--zoom-blue-dark))',
+				'zoom-success': 'hsl(var(--zoom-success))',
+				'zoom-warning': 'hsl(var(--zoom-warning))',
 				'recording-pulse': 'hsl(var(--recording-pulse))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
@@ -90,12 +92,12 @@ export default {
 						height: '0'
 					}
 				},
-				'pulse-neon': {
+				'pulse-zoom': {
 					'0%, 100%': {
-						boxShadow: '0 0 20px hsl(180 100% 50% / 0.3)'
+						boxShadow: '0 0 20px hsl(var(--zoom-blue) / 0.3)'
 					},
 					'50%': {
-						boxShadow: '0 0 30px hsl(180 100% 50% / 0.6), 0 0 40px hsl(180 100% 50% / 0.3)'
+						boxShadow: '0 0 30px hsl(var(--zoom-blue) / 0.6), 0 0 40px hsl(var(--zoom-blue) / 0.3)'
 					}
 				},
 				'recording-pulse': {
@@ -112,7 +114,7 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse-neon': 'pulse-neon 2s ease-in-out infinite',
+				'pulse-zoom': 'pulse-zoom 2s ease-in-out infinite',
 				'recording-pulse': 'recording-pulse 1.5s ease-in-out infinite'
 			}
 		}

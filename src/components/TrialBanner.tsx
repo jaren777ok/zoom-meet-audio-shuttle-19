@@ -11,15 +11,15 @@ export const TrialBanner: React.FC<TrialBannerProps> = ({ daysRemaining, isVisib
   if (!isVisible) return null;
 
   return (
-    <Card className="bg-gradient-to-r from-neon-cyan/10 to-neon-cyan-glow/10 border-neon-cyan/30 backdrop-blur-sm">
+    <Card className="bg-gradient-to-r from-zoom-blue/10 to-zoom-blue-light/10 border-zoom-blue/30 backdrop-blur-sm shadow-zoom">
       <CardContent className="py-3 px-4">
         <div className="flex items-center justify-center gap-2 text-sm">
-          <Zap className="h-4 w-4 text-neon-cyan" />
+          <Zap className="h-4 w-4 text-zoom-blue" />
           <span className="text-foreground">
-            <span className="font-semibold text-neon-cyan">Prueba Gratuita:</span>
-            {' '}Te quedan <span className="font-bold text-neon-cyan">{daysRemaining}</span> días
+            <span className="font-semibold text-zoom-blue">Prueba Gratuita:</span>
+            {' '}Te quedan <span className="font-bold text-zoom-blue">{daysRemaining}</span> días
           </span>
-          <Clock className="h-4 w-4 text-neon-cyan" />
+          <Clock className="h-4 w-4 text-zoom-blue" />
         </div>
       </CardContent>
     </Card>
