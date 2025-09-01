@@ -306,6 +306,50 @@ export type Database = {
         }
         Relationships: []
       }
+      company_metrics: {
+        Row: {
+          avg_satisfaction: number | null
+          company_id: string
+          conversion_rate: number | null
+          created_at: string
+          id: string
+          total_revenue: number | null
+          total_sales: number | null
+          total_sessions: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_satisfaction?: number | null
+          company_id: string
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          total_revenue?: number | null
+          total_sales?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_satisfaction?: number | null
+          company_id?: string
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          total_revenue?: number | null
+          total_sales?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_metrics_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contactos_gohighlevel: {
         Row: {
           conversacion_id: string
@@ -1494,6 +1538,66 @@ export type Database = {
             columns: ["api_key_id"]
             isOneToOne: false
             referencedRelation: "heygen_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_metrics: {
+        Row: {
+          avg_satisfaction: number | null
+          company_id: string | null
+          conversion_rate: number | null
+          created_at: string
+          id: string
+          last_session_date: string | null
+          performance_score: number | null
+          total_revenue: number | null
+          total_sales: number | null
+          total_sessions: number | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          avg_satisfaction?: number | null
+          company_id?: string | null
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          last_session_date?: string | null
+          performance_score?: number | null
+          total_revenue?: number | null
+          total_sales?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          avg_satisfaction?: number | null
+          company_id?: string | null
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          last_session_date?: string | null
+          performance_score?: number | null
+          total_revenue?: number | null
+          total_sales?: number | null
+          total_sessions?: number | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_metrics_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_metrics_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -25,9 +25,8 @@ const CompanyNavigation: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/company', icon: Building2, label: 'Panel Empresa', description: 'Dashboard empresarial' },
+    { path: '/company', icon: Building2, label: 'Dashboard', description: 'Panel principal' },
     { path: '/company/team', icon: Users, label: 'Equipo', description: 'Gestionar vendedores' },
-    { path: '/company/analytics', icon: BarChart3, label: 'Métricas', description: 'Análisis del equipo' },
   ];
 
   return (

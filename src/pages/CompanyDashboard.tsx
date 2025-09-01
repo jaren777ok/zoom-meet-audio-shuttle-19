@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail } from 'lucide-react';
+import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign } from 'lucide-react';
 import { useCompanyAccount } from '@/hooks/useCompanyAccount';
+import { useCompanyMetrics } from '@/hooks/useCompanyMetrics';
 import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CompanyNavigation from '@/components/CompanyNavigation';
+import VendorCard from '@/components/VendorCard';
 import faviconZoom from '@/assets/favicon-zoom.png';
 
 const CompanyDashboard = () => {
@@ -23,6 +25,13 @@ const CompanyDashboard = () => {
     updateCompanyName,
     isUpdatingName
   } = useCompanyAccount();
+
+  const {
+    companyMetrics,
+    topVendors,
+    isLoadingCompanyMetrics,
+    isLoadingVendorMetrics
+  } = useCompanyMetrics();
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
@@ -52,6 +61,13 @@ const CompanyDashboard = () => {
   const handleCancelEdit = () => {
     setIsEditingName(false);
     setNewCompanyName('');
+  };
+
+  const handleViewVendorDetails = (vendorId: string) => {
+    toast({
+      title: "Métricas Detalladas",
+      description: "Próximamente: Vista detallada de métricas del vendedor",
+    });
   };
 
   if (isLoadingCompany) {
@@ -97,8 +113,8 @@ const CompanyDashboard = () => {
             </Badge>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Company KPIs */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -114,8 +130,8 @@ const CompanyDashboard = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Sesiones Totales</p>
-                    <p className="text-3xl font-bold">-</p>
+                    <p className="text-sm text-muted-foreground">Total Sesiones</p>
+                    <p className="text-3xl font-bold">{companyMetrics?.total_sessions || 0}</p>
                   </div>
                   <BarChart3 className="h-8 w-8 text-primary" />
                 </div>
@@ -125,8 +141,21 @@ const CompanyDashboard = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Rendimiento</p>
-                    <p className="text-3xl font-bold text-green-600">+12%</p>
+                    <p className="text-sm text-muted-foreground">Total Ventas</p>
+                    <p className="text-3xl font-bold text-green-600">{companyMetrics?.total_sales || 0}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ingresos Totales</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      ${companyMetrics?.total_revenue ? companyMetrics.total_revenue.toLocaleString() : '0'}
+                    </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-600" />
                 </div>
@@ -248,13 +277,51 @@ const CompanyDashboard = () => {
             </Card>
           </div>
 
-          {/* Team Members */}
+          {/* Top 10 Performers */}
+          {topVendors.length > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-600" />
+                  Top 10 Mejores Vendedores
+                </CardTitle>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/company/team">Ver todos</a>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingVendorMetrics ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, index) => (
+                      <Skeleton key={index} className="h-64" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {topVendors.map((vendor, index) => (
+                      <VendorCard
+                        key={vendor.id}
+                        vendor={vendor}
+                        rank={index + 1}
+                        onViewDetails={handleViewVendorDetails}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Team Overview */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Equipo de Vendedores ({companyMembers.length})
+                Resumen del Equipo ({companyMembers.length} vendedores)
               </CardTitle>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/company/team">Gestionar Equipo</a>
+              </Button>
             </CardHeader>
             <CardContent>
               {isLoadingMembers ? (
@@ -270,29 +337,47 @@ const CompanyDashboard = () => {
                   ))}
                 </div>
               ) : companyMembers.length > 0 ? (
-                <div className="space-y-4">
-                  {companyMembers.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                      <div className="flex items-center space-x-4">
-                        <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Users className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{member.full_name || 'Sin nombre'}</p>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline">Vendedor</Badge>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Unido {formatDistanceToNow(new Date(member.created_at), { 
-                            addSuffix: true, 
-                            locale: es 
-                          })}
-                        </p>
-                      </div>
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div className="p-4 bg-accent/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Promedio Satisfacción</p>
+                      <p className="text-2xl font-bold">{companyMetrics?.avg_satisfaction.toFixed(1) || '0'}/5</p>
                     </div>
-                  ))}
+                    <div className="p-4 bg-accent/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Tasa Conversión</p>
+                      <p className="text-2xl font-bold">{companyMetrics?.conversion_rate.toFixed(1) || '0'}%</p>
+                    </div>
+                    <div className="p-4 bg-accent/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Vendedores Activos</p>
+                      <p className="text-2xl font-bold">{companyMembers.length}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Últimos miembros unidos:</h4>
+                    {companyMembers.slice(0, 5).map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <Users className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{member.full_name || 'Sin nombre'}</p>
+                            <p className="text-xs text-muted-foreground">{member.email}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="outline" className="text-xs">Vendedor</Badge>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDistanceToNow(new Date(member.created_at), { 
+                              addSuffix: true, 
+                              locale: es 
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">

@@ -61,24 +61,36 @@ const VendorCompanySection: React.FC = () => {
     mutationFn: async (code: string) => {
       if (!user?.id) throw new Error('No user found');
       
+      console.log('Attempting to associate with code:', code);
+      
       // First verify the company code exists
       const { data: company, error: companyError } = await supabase
         .from('company_accounts')
-        .select('company_code')
+        .select('company_code, id')
         .eq('company_code', code.toUpperCase())
         .single();
       
+      console.log('Company query result:', { company, companyError });
+      
       if (companyError || !company) {
+        console.log('Company not found:', companyError);
         throw new Error('Código de empresa no válido');
       }
 
+      console.log('Company found, updating profile...');
+      
       // Update vendor profile with company code
       const { error } = await supabase
         .from('profiles')
         .update({ company_code: code.toUpperCase() })
         .eq('id', user.id);
 
-      if (error) throw error;
+      console.log('Profile update result:', { error });
+
+      if (error) {
+        console.log('Profile update error:', error);
+        throw error;
+      }
       
       return code.toUpperCase();
     },

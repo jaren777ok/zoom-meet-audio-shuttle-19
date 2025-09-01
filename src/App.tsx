@@ -15,6 +15,7 @@ import Knowledge from "./pages/Knowledge";
 import Sessions from "./pages/Sessions";
 import Analytics from "./pages/Analytics";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import CompanyTeam from "./pages/CompanyTeam";
 import VendorCompany from "./pages/VendorCompany";
 import NotFound from "./pages/NotFound";
 
@@ -65,11 +66,16 @@ const App = () => (
               } />
               
               {/* Company Route */}
-              <Route path="/company" element={
-                <CompanyProtectedRoute>
-                  <CompanyDashboard />
-                </CompanyProtectedRoute>
-              } />
+            <Route path="/company" element={
+              <CompanyProtectedRoute>
+                <CompanyDashboard />
+              </CompanyProtectedRoute>
+            } />
+            <Route path="/company/team" element={
+              <CompanyProtectedRoute>
+                <CompanyTeam />
+              </CompanyProtectedRoute>
+            } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
