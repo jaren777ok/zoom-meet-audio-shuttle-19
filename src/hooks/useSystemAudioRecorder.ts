@@ -534,6 +534,7 @@ export const useSystemAudioRecorder = ({
     isRequestingPermissions,
     microphoneVolume,
     systemVolume,
+    sessionId: sesionIDRef.current,
     setMicrophoneVolume,
     setSystemVolume,
     requestScreenPermissions,

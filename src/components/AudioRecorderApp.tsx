@@ -61,6 +61,7 @@ const AudioRecorderApp = () => {
     isRequestingPermissions,
     microphoneVolume,
     systemVolume,
+    sessionId,
     setMicrophoneVolume,
     setSystemVolume,
     requestScreenPermissions,
@@ -157,12 +158,10 @@ const AudioRecorderApp = () => {
       // Stop the recording first
       stopRecording();
       
-      // Crear sessionId único y enviar webhook para análisis
-      if (user) {
-        const sessionId = `${Date.now()}-${user.id}`;
-        
+      // Usar el mismo sessionId del hook y enviar webhook para análisis
+      if (user && sessionId) {
         try {
-          // Crear registro en session_analytics
+          // Crear registro en session_analytics usando el sessionId del hook
           const { data: sessionRecord, error: insertError } = await supabase
             .from('session_analytics')
             .insert({
