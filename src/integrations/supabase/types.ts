@@ -1313,7 +1313,6 @@ export type Database = {
           analysis_status: string
           created_at: string
           id: string
-          meeting_session_id: string | null
           metricas_json: Json | null
           session_id: string
           updated_at: string
@@ -1325,7 +1324,6 @@ export type Database = {
           analysis_status?: string
           created_at?: string
           id?: string
-          meeting_session_id?: string | null
           metricas_json?: Json | null
           session_id: string
           updated_at?: string
@@ -1337,7 +1335,6 @@ export type Database = {
           analysis_status?: string
           created_at?: string
           id?: string
-          meeting_session_id?: string | null
           metricas_json?: Json | null
           session_id?: string
           updated_at?: string

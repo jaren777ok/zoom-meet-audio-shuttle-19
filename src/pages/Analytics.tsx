@@ -43,12 +43,12 @@ const Analytics: React.FC = () => {
     isLoading,
     error,
     refreshSessions,
-    getSessionById,
+    getSessionBySessionId,
     parseMetrics,
   } = useSessionAnalytics();
 
   // Si hay sessionId en la URL, mostrar vista detalle
-  const selectedSession = sessionId ? getSessionById(sessionId) : null;
+  const selectedSession = sessionId ? getSessionBySessionId(sessionId) : null;
   const metrics = selectedSession ? parseMetrics(selectedSession) : null;
 
   // Filtrar sesiones por búsqueda
@@ -253,7 +253,7 @@ const Analytics: React.FC = () => {
                 <SessionAnalysisCard
                   key={session.id}
                   session={session}
-                  onClick={() => navigate(`/analytics/${session.id}`)}
+                  onClick={() => navigate(`/analytics/${session.session_id}`)}
                 />
               ))}
             </div>

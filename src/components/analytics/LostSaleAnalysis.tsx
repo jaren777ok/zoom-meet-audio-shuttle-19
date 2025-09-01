@@ -8,7 +8,7 @@ interface LostSaleAnalysisProps {
 }
 
 const LostSaleAnalysis: React.FC<LostSaleAnalysisProps> = ({ metrics }) => {
-  const { output } = metrics;
+  const output = metrics;
 
   // Solo mostrar si el carrito fue abandonado
   if (!output.Carrito_Abandonado) {

@@ -4,25 +4,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
-// Zod schema for metrics validation
+// Zod schema for metrics validation - ajustado a la estructura real
 const MetricsSchema = z.object({
-  output: z.object({
-    Temperatura_Lead: z.string(),
-    Tasa_de_Cierre: z.string(),
-    Intención_compra: z.string(),
-    Sentimiento_cliente: z.string(),
-    Net_Promoter_Score: z.string(),
-    Puntuación_Satisfacción_Cliente: z.number(),
-    Tiempo_Promedio_Respuesta_Vendedor: z.number(),
-    Conversiones: z.number(),
-    Ganancia_en_Dinero: z.number(),
-    Carrito_Abandonado: z.boolean(),
-    Motivo_Principal_Abandono: z.string(),
-    punto_friccion: z.string(),
-    intento_recuperacion: z.boolean(),
-    Técnica_Recuperación_Utilizada: z.string(),
-    'Estado Final del Carrito': z.string(),
-  }),
+  Temperatura_Lead: z.string(),
+  Tasa_de_Cierre: z.string(),
+  Intención_compra: z.string(),
+  Sentimiento_cliente: z.string(),
+  Net_Promoter_Score: z.string(),
+  Puntuación_Satisfacción_Cliente: z.number(),
+  Tiempo_Promedio_Respuesta_Vendedor: z.number(),
+  Conversiones: z.number(),
+  Ganancia_en_Dinero: z.number(),
+  Carrito_Abandonado: z.boolean(),
+  Motivo_Principal_Abandono: z.string(),
+  punto_friccion: z.string(),
+  intento_recuperacion: z.boolean(),
+  Técnica_Recuperación_Utilizada: z.string(),
+  'Estado Final del Carrito': z.string(),
 });
 
 export type SessionMetrics = z.infer<typeof MetricsSchema>;
@@ -31,7 +29,6 @@ export interface SessionAnalytic {
   id: string;
   user_id: string;
   session_id: string;
-  meeting_session_id?: string | null;
   webhook_sent_at?: string | null;
   analysis_status: string;
   metricas_json?: any;
@@ -47,7 +44,7 @@ export interface UseSessionAnalyticsReturn {
   createSessionRecord: (sessionId: string) => Promise<SessionAnalytic | null>;
   sendWebhook: (sessionId: string, userId: string) => Promise<boolean>;
   refreshSessions: () => Promise<void>;
-  getSessionById: (id: string) => SessionAnalytic | null;
+  getSessionBySessionId: (sessionId: string) => SessionAnalytic | null;
   parseMetrics: (session: SessionAnalytic) => SessionMetrics | null;
 }
 
@@ -156,19 +153,20 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     }
   };
 
-  const getSessionById = (id: string): SessionAnalytic | null => {
-    return sessions.find(session => session.id === id) || null;
+  const getSessionBySessionId = (sessionId: string): SessionAnalytic | null => {
+    return sessions.find(session => session.session_id === sessionId) || null;
   };
 
   const parseMetrics = (session: SessionAnalytic): SessionMetrics | null => {
-    if (!session.metricas_json || !Array.isArray(session.metricas_json) || session.metricas_json.length === 0) {
+    if (!session.metricas_json) {
       return null;
     }
 
     try {
-      return MetricsSchema.parse(session.metricas_json[0]);
+      // La estructura ahora es directa, no está envuelta en un array
+      return MetricsSchema.parse(session.metricas_json);
     } catch (err) {
-      console.error('Error parsing metrics:', err);
+      console.error('Error parsing metrics:', err, session.metricas_json);
       return null;
     }
   };
@@ -186,7 +184,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     createSessionRecord,
     sendWebhook,
     refreshSessions,
-    getSessionById,
+    getSessionBySessionId,
     parseMetrics,
   };
 };

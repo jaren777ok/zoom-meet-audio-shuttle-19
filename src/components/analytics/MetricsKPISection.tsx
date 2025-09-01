@@ -9,7 +9,7 @@ interface MetricsKPISectionProps {
 }
 
 const MetricsKPISection: React.FC<MetricsKPISectionProps> = ({ metrics }) => {
-  const { output } = metrics;
+  const output = metrics;
 
   // Función para parsear porcentaje
   const parsePercentage = (value: string): number => {

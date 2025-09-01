@@ -28,12 +28,12 @@ const SessionAnalysisCard: React.FC<SessionAnalysisCardProps> = ({ session, onCl
 
   // Función para obtener información básica de métricas
   const getQuickMetrics = () => {
-    if (!session.metricas_json || !Array.isArray(session.metricas_json) || session.metricas_json.length === 0) {
+    if (!session.metricas_json) {
       return null;
     }
 
     try {
-      const metrics = session.metricas_json[0]?.output;
+      const metrics = session.metricas_json;
       if (!metrics) return null;
 
       return {

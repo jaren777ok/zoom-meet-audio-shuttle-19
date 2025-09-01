@@ -7,7 +7,7 @@ interface ClientClassificationSectionProps {
 }
 
 const ClientClassificationSection: React.FC<ClientClassificationSectionProps> = ({ metrics }) => {
-  const { output } = metrics;
+  const output = metrics;
 
   // Función para obtener color de temperatura del lead
   const getLeadTemperatureVariant = (temperature: string): "default" | "secondary" | "destructive" | "outline" => {
