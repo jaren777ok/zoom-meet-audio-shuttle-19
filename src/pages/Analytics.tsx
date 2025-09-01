@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import SessionAnalysisCard from '@/components/analytics/SessionAnalysisCard';
 import MetricsKPISection from '@/components/analytics/MetricsKPISection';
 import ClientClassificationSection from '@/components/analytics/ClientClassificationSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
+import DateFilter, { DateRange } from '@/components/DateFilter';
+import EditableSessionName from '@/components/EditableSessionName';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
 
 // Component for rendering analysis content
@@ -37,6 +39,7 @@ const Analytics: React.FC = () => {
   const { sessionId } = useParams<{ sessionId?: string }>();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   
   const {
     sessions,
@@ -45,17 +48,32 @@ const Analytics: React.FC = () => {
     refreshSessions,
     getSessionBySessionId,
     parseMetrics,
+    updateSessionName,
+    filterSessionsByDateRange,
   } = useSessionAnalytics();
 
   // Si hay sessionId en la URL, mostrar vista detalle
   const selectedSession = sessionId ? getSessionBySessionId(sessionId) : null;
   const metrics = selectedSession ? parseMetrics(selectedSession) : null;
 
-  // Filtrar sesiones por búsqueda
-  const filteredSessions = sessions.filter(session =>
-    session.session_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.analysis_status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter sessions based on search term and date range
+  const filteredSessions = useMemo(() => {
+    let filtered = sessions;
+    
+    // Apply date filter
+    filtered = filterSessionsByDateRange(filtered, dateRange);
+    
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(session => 
+        session.session_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        session.analysis_status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        session.session_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [sessions, searchTerm, dateRange, filterSessionsByDateRange]);
 
   // Función para convertir markdown a HTML
   const convertMarkdownToHTML = async (markdown: string): Promise<string> => {
@@ -72,29 +90,48 @@ const Analytics: React.FC = () => {
           {/* Header de detalle */}
           <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5">
             <CardHeader>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate('/analytics')}
-                  className="hover:bg-primary/10"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                  <CardTitle className="text-2xl font-bold">
-                    Análisis de Sesión {selectedSession.session_id.slice(-8)}
-                  </CardTitle>
-                  <p className="text-muted-foreground mt-1">
-                    {new Date(selectedSession.created_at).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate('/analytics')}
+                    className="hover:bg-primary/10"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">
+                      Análisis de Sesión {selectedSession.session_id.slice(-8)}
+                    </CardTitle>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(selectedSession.created_at).toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  {selectedSession?.session_name && (
+                    <EditableSessionName
+                      sessionName={selectedSession.session_name}
+                      onSave={(newName) => updateSessionName(selectedSession.session_id, newName)}
+                    />
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={refreshSessions}
+                    disabled={isLoading}
+                    className="gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    Actualizar
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -174,13 +211,20 @@ const Analytics: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por ID de sesión o estado..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+              <div className="flex gap-4 flex-1">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por ID, nombre o estado..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <DateFilter
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  placeholder="Filtrar por fecha"
                 />
               </div>
               <Button

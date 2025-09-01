@@ -1315,6 +1315,7 @@ export type Database = {
           id: string
           metricas_json: Json | null
           session_id: string
+          session_name: string | null
           updated_at: string
           user_id: string
           webhook_sent_at: string | null
@@ -1326,6 +1327,7 @@ export type Database = {
           id?: string
           metricas_json?: Json | null
           session_id: string
+          session_name?: string | null
           updated_at?: string
           user_id: string
           webhook_sent_at?: string | null
@@ -1337,6 +1339,7 @@ export type Database = {
           id?: string
           metricas_json?: Json | null
           session_id?: string
+          session_name?: string | null
           updated_at?: string
           user_id?: string
           webhook_sent_at?: string | null

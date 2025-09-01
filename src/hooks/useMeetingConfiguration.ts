@@ -33,7 +33,7 @@ export const useMeetingConfiguration = () => {
         .from('meeting_configurations')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
         setConfig({

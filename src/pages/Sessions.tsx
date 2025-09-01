@@ -1,10 +1,47 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import SessionsList from '@/components/SessionsList';
 import AppNavigation from '@/components/AppNavigation';
-import { History, Calendar, Users } from 'lucide-react';
+import DateFilter, { DateRange } from '@/components/DateFilter';
+import { useMeetingSessions } from '@/hooks/useMeetingSessions';
+import { History, Calendar, Users, Search } from 'lucide-react';
 
 const Sessions: React.FC = () => {
+  const { sessions } = useMeetingSessions();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  const filteredSessions = useMemo(() => {
+    let filtered = sessions;
+    
+    // Apply date filter
+    if (dateRange?.from) {
+      filtered = filtered.filter(session => {
+        const sessionDate = new Date(session.created_at);
+        const fromDate = dateRange.from!;
+        const toDate = dateRange.to || dateRange.from!;
+
+        const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+        const fromDateOnly = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+        const toDateOnly = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59);
+
+        return sessionDateOnly >= fromDateOnly && sessionDateOnly <= toDateOnly;
+      });
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(session => 
+        session.session_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        session.company_info.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        session.meeting_objective.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [sessions, searchTerm, dateRange]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -60,8 +97,30 @@ const Sessions: React.FC = () => {
           </Card>
         </div>
 
+        {/* Search and Filter Section */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nombre, empresa u objetivo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <DateFilter
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                placeholder="Filtrar por fecha"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Sessions List Component */}
-        <SessionsList />
+        <SessionsList filteredSessions={filteredSessions} />
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ export interface SessionAnalytic {
   analysis_status: string;
   metricas_json?: any;
   analisis_markdown?: string | null;
+  session_name?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +47,8 @@ export interface UseSessionAnalyticsReturn {
   refreshSessions: () => Promise<void>;
   getSessionBySessionId: (sessionId: string) => SessionAnalytic | null;
   parseMetrics: (session: SessionAnalytic) => SessionMetrics | null;
+  updateSessionName: (sessionId: string, newName: string) => Promise<boolean>;
+  filterSessionsByDateRange: (sessions: SessionAnalytic[], dateRange?: { from?: Date; to?: Date }) => SessionAnalytic[];
 }
 
 export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
@@ -171,6 +174,52 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     }
   };
 
+  const updateSessionName = async (sessionId: string, newName: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('session_analytics')
+        .update({ session_name: newName })
+        .eq('session_id', sessionId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setSessions(prevSessions => 
+        prevSessions.map(session => 
+          session.session_id === sessionId 
+            ? { ...session, session_name: newName }
+            : session
+        )
+      );
+
+      return true;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar nombre';
+      setError(errorMessage);
+      return false;
+    }
+  };
+
+  const filterSessionsByDateRange = (sessions: SessionAnalytic[], dateRange?: { from?: Date; to?: Date }): SessionAnalytic[] => {
+    if (!dateRange?.from) return sessions;
+
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.created_at);
+      const fromDate = dateRange.from;
+      const toDate = dateRange.to || dateRange.from;
+
+      // Set time to start/end of day for accurate comparison
+      const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+      const fromDateOnly = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+      const toDateOnly = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59);
+
+      return sessionDateOnly >= fromDateOnly && sessionDateOnly <= toDateOnly;
+    });
+  };
+
   useEffect(() => {
     if (user) {
       refreshSessions();
@@ -186,5 +235,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     refreshSessions,
     getSessionBySessionId,
     parseMetrics,
+    updateSessionName,
+    filterSessionsByDateRange,
   };
 };
