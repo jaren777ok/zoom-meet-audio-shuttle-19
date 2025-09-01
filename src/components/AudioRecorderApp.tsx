@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import CameraCapture from '@/components/CameraCapture';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
@@ -155,6 +156,62 @@ const AudioRecorderApp = () => {
       
       // Stop the recording first
       stopRecording();
+      
+      // Crear sessionId único y enviar webhook para análisis
+      if (user) {
+        const sessionId = `${Date.now()}-${user.id}`;
+        
+        try {
+          // Crear registro en session_analytics
+          const { data: sessionRecord, error: insertError } = await supabase
+            .from('session_analytics')
+            .insert({
+              user_id: user.id,
+              session_id: sessionId,
+              analysis_status: 'pending',
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error('Error creating session record:', insertError);
+          } else {
+            // Enviar webhook para análisis
+            try {
+              const response = await fetch('https://cris.cloude.es/webhook/analisis_reunion', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  user_id: user.id,
+                  session_id: sessionId,
+                  timestamp: new Date().toISOString(),
+                }),
+              });
+
+              if (response.ok) {
+                // Actualizar registro con timestamp del webhook
+                await supabase
+                  .from('session_analytics')
+                  .update({ 
+                    webhook_sent_at: new Date().toISOString(),
+                    analysis_status: 'processing'
+                  })
+                  .eq('id', sessionRecord.id);
+                
+                console.log('Session analysis webhook sent successfully');
+              } else {
+                console.error('Failed to send webhook:', response.status);
+              }
+            } catch (webhookError) {
+              console.error('Error sending webhook:', webhookError);
+            }
+          }
+        } catch (error) {
+          console.error('Error in session analysis flow:', error);
+        }
+      }
       
       // Clear all AI messages from Supabase
       await clearAllMessages();

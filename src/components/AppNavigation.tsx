@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Home, Brain, History, Mic, LogOut } from 'lucide-react';
+import { Home, Brain, History, BarChart3, Mic, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AppNavigation: React.FC = () => {
@@ -24,6 +24,7 @@ const AppNavigation: React.FC = () => {
     { path: '/', icon: Home, label: 'Inicio', description: 'Grabación de audio' },
     { path: '/knowledge', icon: Brain, label: 'Conocimiento', description: 'Documentos IA' },
     { path: '/sessions', icon: History, label: 'Sesiones', description: 'Historial' },
+    { path: '/analytics', icon: BarChart3, label: 'Analytics', description: 'Análisis de rendimiento' },
   ];
 
   return (

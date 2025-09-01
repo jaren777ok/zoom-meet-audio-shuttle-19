@@ -344,7 +344,34 @@ export type Database = {
         }
         Relationships: []
       }
-      document_embeddings: {
+      document_embeddings_duplicate: {
+        Row: {
+          content: string
+          created_at: string | null
+          embedding: string | null
+          id: number
+          metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      documents: {
         Row: {
           content: string
           created_at: string | null
@@ -1277,6 +1304,45 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      session_analytics: {
+        Row: {
+          analisis_markdown: string | null
+          analysis_status: string
+          created_at: string
+          id: string
+          meeting_session_id: string | null
+          metricas_json: Json | null
+          session_id: string
+          updated_at: string
+          user_id: string
+          webhook_sent_at: string | null
+        }
+        Insert: {
+          analisis_markdown?: string | null
+          analysis_status?: string
+          created_at?: string
+          id?: string
+          meeting_session_id?: string | null
+          metricas_json?: Json | null
+          session_id: string
+          updated_at?: string
+          user_id: string
+          webhook_sent_at?: string | null
+        }
+        Update: {
+          analisis_markdown?: string | null
+          analysis_status?: string
+          created_at?: string
+          id?: string
+          meeting_session_id?: string | null
+          metricas_json?: Json | null
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+          webhook_sent_at?: string | null
         }
         Relationships: []
       }

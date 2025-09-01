@@ -149,7 +149,7 @@ export const useKnowledgeDocuments = (): UseKnowledgeDocumentsReturn => {
 
       // Delete related embeddings first using user_id and document_id
       const { error: embeddingsError } = await supabase
-        .from('document_embeddings')
+        .from('documents')
         .delete()
         .eq('user_id', user.id)
         .eq('document_id', document.document_id);
