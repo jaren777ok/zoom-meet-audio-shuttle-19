@@ -15,6 +15,7 @@ import Knowledge from "./pages/Knowledge";
 import Sessions from "./pages/Sessions";
 import Analytics from "./pages/Analytics";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import VendorCompany from "./pages/VendorCompany";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,15 @@ const App = () => (
                   <Analytics />
                 </ProtectedRoute>
               } />
+              
+              {/* Vendor Company Route */}
+              <Route path="/vendor-company" element={
+                <ProtectedRoute>
+                  <VendorCompany />
+                </ProtectedRoute>
+              } />
+              
+              {/* Company Route */}
               <Route path="/company" element={
                 <CompanyProtectedRoute>
                   <CompanyDashboard />

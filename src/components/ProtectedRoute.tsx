@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, accountType } = useAuth();
 
   if (loading) {
     return (
@@ -27,6 +27,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect empresa users to company dashboard
+  if (accountType === 'empresa' && window.location.pathname === '/') {
+    return <Navigate to="/company" replace />;
+  }
+
+  // Redirect vendedor users away from company routes
+  if (accountType === 'vendedor' && window.location.pathname.startsWith('/company')) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

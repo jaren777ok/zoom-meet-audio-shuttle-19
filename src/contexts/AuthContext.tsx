@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  accountType: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -26,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accountType, setAccountType] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -33,6 +35,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Fetch account type when user changes
+        if (session?.user) {
+          setTimeout(() => {
+            fetchAccountType(session.user.id);
+          }, 0);
+        } else {
+          setAccountType(null);
+        }
         setLoading(false);
       }
     );
@@ -41,11 +52,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        setTimeout(() => {
+          fetchAccountType(session.user.id);
+        }, 0);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchAccountType = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('account_type')
+        .eq('id', userId)
+        .single();
+      
+      setAccountType(profile?.account_type || null);
+    } catch (error) {
+      console.error('Error fetching account type:', error);
+      setAccountType(null);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -128,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
+    accountType,
     signIn,
     signUp,
     signOut,

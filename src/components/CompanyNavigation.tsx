@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Home, Brain, History, BarChart3, LogOut, Sun, Moon, Building2 } from 'lucide-react';
+import { Building2, Users, BarChart3, LogOut, Sun, Moon, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import faviconZoom from '@/assets/favicon-zoom.png';
 
-const AppNavigation: React.FC = () => {
+const CompanyNavigation: React.FC = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -25,11 +25,9 @@ const AppNavigation: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Inicio', description: 'Grabación de audio' },
-    { path: '/knowledge', icon: Brain, label: 'Conocimiento', description: 'Documentos IA' },
-    { path: '/sessions', icon: History, label: 'Sesiones', description: 'Historial' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics', description: 'Análisis de rendimiento' },
-    { path: '/vendor-company', icon: Building2, label: 'Empresa', description: 'Asociación empresarial' },
+    { path: '/company', icon: Building2, label: 'Panel Empresa', description: 'Dashboard empresarial' },
+    { path: '/company/team', icon: Users, label: 'Equipo', description: 'Gestionar vendedores' },
+    { path: '/company/analytics', icon: BarChart3, label: 'Métricas', description: 'Análisis del equipo' },
   ];
 
   return (
@@ -44,8 +42,11 @@ const AppNavigation: React.FC = () => {
                 HACK
               </span>
             </span>
+            <Badge variant="secondary" className="ml-2">
+              EMPRESA
+            </Badge>
             {user?.email && (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-1">
                 {user.email}
               </Badge>
             )}
@@ -91,4 +92,4 @@ const AppNavigation: React.FC = () => {
   );
 };
 
-export default AppNavigation;
+export default CompanyNavigation;
