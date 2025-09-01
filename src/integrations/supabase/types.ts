@@ -1311,9 +1311,15 @@ export type Database = {
         Row: {
           analisis_markdown: string | null
           analysis_status: string
+          avg_connection_speed: number | null
+          connection_stability_score: number | null
           created_at: string
           id: string
+          internet_quality_end: number | null
+          internet_quality_start: number | null
           metricas_json: Json | null
+          network_type: string | null
+          session_duration_minutes: number | null
           session_id: string
           session_name: string | null
           updated_at: string
@@ -1324,9 +1330,15 @@ export type Database = {
         Insert: {
           analisis_markdown?: string | null
           analysis_status?: string
+          avg_connection_speed?: number | null
+          connection_stability_score?: number | null
           created_at?: string
           id?: string
+          internet_quality_end?: number | null
+          internet_quality_start?: number | null
           metricas_json?: Json | null
+          network_type?: string | null
+          session_duration_minutes?: number | null
           session_id: string
           session_name?: string | null
           updated_at?: string
@@ -1337,9 +1349,15 @@ export type Database = {
         Update: {
           analisis_markdown?: string | null
           analysis_status?: string
+          avg_connection_speed?: number | null
+          connection_stability_score?: number | null
           created_at?: string
           id?: string
+          internet_quality_end?: number | null
+          internet_quality_start?: number | null
           metricas_json?: Json | null
+          network_type?: string | null
+          session_duration_minutes?: number | null
           session_id?: string
           session_name?: string | null
           updated_at?: string

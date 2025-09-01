@@ -45,6 +45,12 @@ export interface SessionAnalytic {
   analisis_markdown?: string | null;
   session_name?: string | null;
   url?: string | null;
+  internet_quality_start?: number | null;
+  internet_quality_end?: number | null;
+  session_duration_minutes?: number | null;
+  connection_stability_score?: number | null;
+  network_type?: string | null;
+  avg_connection_speed?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,7 +59,14 @@ export interface UseSessionAnalyticsReturn {
   sessions: SessionAnalytic[];
   isLoading: boolean;
   error: string | null;
-  createSessionRecord: (sessionId: string) => Promise<SessionAnalytic | null>;
+  createSessionRecord: (sessionId: string, connectivityData?: {
+    internet_quality_start?: number;
+    session_duration_minutes?: number;
+    internet_quality_end?: number;
+    connection_stability_score?: number;
+    network_type?: string;
+    avg_connection_speed?: number;
+  }) => Promise<SessionAnalytic | null>;
   sendWebhook: (sessionId: string, userId: string) => Promise<boolean>;
   refreshSessions: () => Promise<void>;
   getSessionBySessionId: (sessionId: string) => SessionAnalytic | null;
@@ -97,7 +110,17 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     }
   };
 
-  const createSessionRecord = async (sessionId: string): Promise<SessionAnalytic | null> => {
+  const createSessionRecord = async (
+    sessionId: string, 
+    connectivityData?: {
+      internet_quality_start?: number;
+      session_duration_minutes?: number;
+      internet_quality_end?: number;
+      connection_stability_score?: number;
+      network_type?: string;
+      avg_connection_speed?: number;
+    }
+  ): Promise<SessionAnalytic | null> => {
     if (!user) return null;
     
     try {
@@ -107,6 +130,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
           user_id: user.id,
           session_id: sessionId,
           analysis_status: 'pending',
+          ...connectivityData,
         })
         .select()
         .single();

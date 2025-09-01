@@ -11,12 +11,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSystemAudioRecorder } from '@/hooks/useSystemAudioRecorder';
 import { useAIMessagesContext } from '@/contexts/AIMessagesContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useNetworkQuality } from '@/hooks/useNetworkQuality';
+import { useSessionTimer } from '@/hooks/useSessionTimer';
+import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import CameraCapture from '@/components/CameraCapture';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
 import { TrialBanner } from '@/components/TrialBanner';
 import { PremiumAccessModal } from '@/components/PremiumAccessModal';
+import { NetworkQualityIndicator } from '@/components/NetworkQualityIndicator';
 import { Mic, MicOff, Settings, DollarSign, Send, Users, Building, Target, LogOut, User, MessageSquare, Volume2, VolumeX, Square, TrendingUp, Zap, Monitor, CheckCircle, XCircle, AlertCircle, Crown } from 'lucide-react';
 import zoomHackLogo from '@/assets/zoom-hack-logo.png';
 
@@ -31,6 +35,24 @@ const AudioRecorderApp = () => {
   
   const { user, signOut } = useAuth();
   const { isTrialActive, daysRemaining, loading: subscriptionLoading, submitPremiumRequest } = useSubscription();
+  const { createSessionRecord } = useSessionAnalytics();
+  
+  // Network quality and session timer hooks
+  const {
+    currentQuality,
+    isMonitoring,
+    startMonitoring,
+    stopMonitoring,
+    getNetworkStability,
+  } = useNetworkQuality();
+  
+  const {
+    sessionDuration,
+    startTimer,
+    stopTimer,
+    getSessionSummary,
+  } = useSessionTimer();
+  
   const webhookUrl = 'https://cris.cloude.es/webhook/audio'; // Hidden from UI
   const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
@@ -42,6 +64,7 @@ const AudioRecorderApp = () => {
   const captureSystemAudio = true; // Always true for better AI performance
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
   const [isRequestingMicPermission, setIsRequestingMicPermission] = useState(false);
+  const [startQuality, setStartQuality] = useState<any>(null);
 
   // AI Messages context for clearing messages when recording stops
   const { clearAllMessages } = useAIMessagesContext();
@@ -135,6 +158,16 @@ const AudioRecorderApp = () => {
 
     try {
       console.log('🚀 Iniciando grabación...');
+      
+      // Start network monitoring and session timer
+      await startMonitoring();
+      startTimer();
+      
+      // Store initial network quality
+      if (currentQuality) {
+        setStartQuality(currentQuality);
+      }
+      
       await startRecording();
       setShowFloatingChat(true);
     } catch (error) {
@@ -155,26 +188,35 @@ const AudioRecorderApp = () => {
       setIsDeleting(true);
       console.log('🛑 Stopping recording and clearing all AI messages...');
       
+      // Stop monitoring and timer
+      stopMonitoring();
+      stopTimer();
+      
       // Stop the recording first
       stopRecording();
+      
+      // Get final metrics
+      const sessionSummary = getSessionSummary();
+      const networkStability = getNetworkStability();
+      const endQuality = currentQuality;
       
       // Usar el mismo sessionId del hook y enviar webhook para análisis
       if (user && sessionId) {
         try {
-          // Crear registro en session_analytics usando el sessionId del hook
-          const { data: sessionRecord, error: insertError } = await supabase
-            .from('session_analytics')
-            .insert({
-              user_id: user.id,
-              session_id: sessionId,
-              analysis_status: 'pending',
-            })
-            .select()
-            .single();
+          // Prepare connectivity data
+          const connectivityData = {
+            internet_quality_start: startQuality?.quality || null,
+            internet_quality_end: endQuality?.quality || null,
+            session_duration_minutes: sessionSummary.durationMinutes,
+            connection_stability_score: networkStability.stabilityScore,
+            network_type: endQuality?.networkType || startQuality?.networkType || null,
+            avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
+          };
+          
+          // Crear registro en session_analytics usando el sessionId del hook con datos de conectividad
+          const sessionRecord = await createSessionRecord(sessionId, connectivityData);
 
-          if (insertError) {
-            console.error('Error creating session record:', insertError);
-          } else {
+          if (sessionRecord) {
             // Enviar webhook para análisis
             try {
               const response = await fetch('https://cris.cloude.es/webhook/analisis_reunion', {
@@ -200,12 +242,15 @@ const AudioRecorderApp = () => {
                   .eq('id', sessionRecord.id);
                 
                 console.log('Session analysis webhook sent successfully');
+                console.log('Connectivity metrics saved:', connectivityData);
               } else {
                 console.error('Failed to send webhook:', response.status);
               }
             } catch (webhookError) {
               console.error('Error sending webhook:', webhookError);
             }
+          } else {
+            console.error('Failed to create session record');
           }
         } catch (error) {
           console.error('Error in session analysis flow:', error);
@@ -215,6 +260,9 @@ const AudioRecorderApp = () => {
       // Clear all AI messages from Supabase
       await clearAllMessages();
       console.log('✅ All AI messages cleared successfully');
+      
+      // Reset quality states
+      setStartQuality(null);
       
       // Close the chat after a short delay
       setTimeout(() => {
@@ -385,14 +433,37 @@ const AudioRecorderApp = () => {
 
             {/* Stats */}
             {isRecording && (
-              <div className="grid grid-cols-2 gap-4 p-4 bg-dark-surface rounded-lg">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-neon-cyan">{segmentCount}</div>
-                  <div className="text-xs text-muted-foreground">Momentos analizados</div>
+              <div className="space-y-4">
+                {/* Network Quality Indicator */}
+                <div className="p-4 bg-dark-surface rounded-lg">
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-blue-500" />
+                    Estado de Conectividad
+                  </h4>
+                  <div className="space-y-2">
+                    <NetworkQualityIndicator 
+                      quality={currentQuality} 
+                      showDetails={true}
+                      className="justify-center"
+                    />
+                    {sessionDuration.isRunning && (
+                      <div className="text-center text-xs text-muted-foreground">
+                        Duración: {sessionDuration.durationMinutes.toFixed(1)} min
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-neon-cyan">{intervalSeconds}s</div>
-                  <div className="text-xs text-muted-foreground">Intervalo</div>
+                
+                {/* Recording Stats */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-dark-surface rounded-lg">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-neon-cyan">{segmentCount}</div>
+                    <div className="text-xs text-muted-foreground">Momentos analizados</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-neon-cyan">{intervalSeconds}s</div>
+                    <div className="text-xs text-muted-foreground">Intervalo</div>
+                  </div>
                 </div>
               </div>
             )}

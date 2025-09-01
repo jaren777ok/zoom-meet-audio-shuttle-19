@@ -13,6 +13,7 @@ import MetricsKPISection from '@/components/analytics/MetricsKPISection';
 import ClientClassificationSection from '@/components/analytics/ClientClassificationSection';
 import ConversionsResultsSection from '@/components/analytics/ConversionsResultsSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
+import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
 import DateFilter, { DateRange } from '@/components/DateFilter';
 import EditableSessionName from '@/components/EditableSessionName';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
@@ -166,6 +167,9 @@ const Analytics: React.FC = () => {
           {/* Contenido del análisis */}
           {metrics ? (
             <div className="space-y-8">
+              {/* Métricas de Conectividad */}
+              <ConnectivityMetricsSection session={selectedSession} />
+              
               {/* KPIs Principales */}
               <MetricsKPISection metrics={metrics} />
               
@@ -287,7 +291,7 @@ const Analytics: React.FC = () => {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i}>
+                <Card key={i} className="animate-pulse">
                   <CardHeader>
                     <Skeleton className="h-6 w-3/4" />
                     <Skeleton className="h-4 w-1/2" />
@@ -296,6 +300,7 @@ const Analytics: React.FC = () => {
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-8 w-full" />
                     </div>
                   </CardContent>
                 </Card>
@@ -334,13 +339,18 @@ const Analytics: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredSessions.map((session) => (
-                <SessionAnalysisCard
-                  key={session.id}
-                  session={session}
-                  onClick={() => navigate(`/analytics/${session.session_id}`)}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+              {filteredSessions.map((session, index) => (
+                <div 
+                  key={session.id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <SessionAnalysisCard
+                    session={session}
+                    onClick={() => navigate(`/analytics/${session.session_id}`)}
+                  />
+                </div>
               ))}
             </div>
           )}
