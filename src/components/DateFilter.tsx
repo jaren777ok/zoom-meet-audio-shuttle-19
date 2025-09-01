@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import type { DateRange as CalendarDateRange } from 'react-day-picker';
 
 export interface DateRange {
   from?: Date;
@@ -121,8 +122,8 @@ const DateFilter: React.FC<DateFilterProps> = ({
         </div>
         <Calendar
           mode="range"
-          selected={dateRange ? { from: dateRange.from, to: dateRange.to } : undefined}
-          onSelect={onDateRangeChange}
+          selected={dateRange as CalendarDateRange}
+          onSelect={(range) => onDateRangeChange(range as DateRange)}
           initialFocus
           className={cn("p-3 pointer-events-auto")}
         />
