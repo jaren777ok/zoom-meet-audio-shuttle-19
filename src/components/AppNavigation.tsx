@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Home, Brain, History, BarChart3, LogOut, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
@@ -36,7 +37,12 @@ const AppNavigation: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <img src={faviconZoom} alt="Favicon" className="h-6 w-6" />
-            <span className="font-bold text-lg">ZOOM HACK</span>
+            <span className="font-bold text-lg">
+              <span className="text-primary">ZOOM</span>{' '}
+              <span className={`${theme === 'light' ? 'drop-shadow-[1px_1px_2px_rgba(0,0,0,0.7)]' : ''}`}>
+                HACK
+              </span>
+            </span>
             {user?.email && (
               <Badge variant="outline" className="ml-2">
                 {user.email}
@@ -58,15 +64,15 @@ const AppNavigation: React.FC = () => {
               </Link>
             ))}
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              <span className="hidden sm:inline">{theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Sun className="h-4 w-4 text-muted-foreground" />
+              <Switch
+                checked={theme === 'dark'}
+                onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+              />
+              <Moon className="h-4 w-4 text-muted-foreground" />
+            </div>
             
             <Button 
               variant="ghost" 
