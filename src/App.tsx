@@ -8,11 +8,13 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AIMessagesProvider } from "@/contexts/AIMessagesContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import CompanyProtectedRoute from "@/components/CompanyProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Knowledge from "./pages/Knowledge";
 import Sessions from "./pages/Sessions";
 import Analytics from "./pages/Analytics";
+import CompanyDashboard from "./pages/CompanyDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +54,11 @@ const App = () => (
                 <ProtectedRoute>
                   <Analytics />
                 </ProtectedRoute>
+              } />
+              <Route path="/company" element={
+                <CompanyProtectedRoute>
+                  <CompanyDashboard />
+                </CompanyProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

@@ -279,6 +279,33 @@ export type Database = {
         }
         Relationships: []
       }
+      company_accounts: {
+        Row: {
+          company_code: string
+          company_name: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_code: string
+          company_name: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_code?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contactos_gohighlevel: {
         Row: {
           conversacion_id: string
@@ -1261,6 +1288,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string
+          company_code: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -1268,6 +1297,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_type?: string
+          company_code?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -1275,6 +1306,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_type?: string
+          company_code?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -1537,6 +1570,10 @@ export type Database = {
           p_time_range_days: number
           p_user_id: string
         }
+        Returns: string
+      }
+      generate_company_code: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       generate_document_id: {
