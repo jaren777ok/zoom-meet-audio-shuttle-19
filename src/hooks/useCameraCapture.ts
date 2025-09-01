@@ -5,6 +5,23 @@ interface UseCameraCaptureProps {
   onPhotoSent?: () => void;
 }
 
+export interface UseCameraCaptureReturn {
+  isPermissionGranted: boolean;
+  isRequestingPermission: boolean;
+  isVideoReady: boolean;
+  isCapturing: boolean;
+  capturedPhoto: string | null;
+  isSending: boolean;
+  error: string | null;
+  videoRef: React.RefObject<HTMLVideoElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement>;
+  requestCameraPermission: () => Promise<void>;
+  capturePhoto: () => void;
+  retakePhoto: () => void;
+  sendPhotoToWebhook: (userId: string, sessionId?: string) => Promise<void>;
+  stopCamera: () => void;
+}
+
 export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps) => {
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
@@ -223,7 +240,7 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
     }
   }, [isVideoReady]);
 
-  const sendPhotoToWebhook = useCallback(async () => {
+  const sendPhotoToWebhook = useCallback(async (userId: string, sessionId?: string) => {
     if (!capturedBlob || !userId) {
       console.error('❌ Missing data for webhook:', { hasBlob: !!capturedBlob, userId });
       setError('No hay foto para enviar o falta el ID de usuario');
@@ -235,7 +252,8 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
     console.log('📤 Sending photo to webhook...', {
       blobSize: capturedBlob.size,
       blobType: capturedBlob.type,
-      userId
+      userId,
+      sessionId
     });
 
     try {
@@ -244,6 +262,9 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
       formData.append('photo', capturedBlob, 'camera-capture.jpg');
       formData.append('user_id', userId);
       formData.append('timestamp', new Date().toISOString());
+      if (sessionId) {
+        formData.append('session_id', sessionId);
+      }
       
       // Log FormData contents
       console.log('📋 FormData contents:');
@@ -280,7 +301,7 @@ export const useCameraCapture = ({ userId, onPhotoSent }: UseCameraCaptureProps)
     } finally {
       setIsSending(false);
     }
-  }, [capturedBlob, userId, onPhotoSent]);
+  }, [capturedBlob, onPhotoSent]);
 
   const stopCamera = useCallback(() => {
     console.log('🛑 Stopping camera...');

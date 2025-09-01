@@ -23,6 +23,20 @@ const ClientClassificationSection: React.FC<ClientClassificationSectionProps> = 
     }
   };
 
+  // Función para obtener emoji de temperatura del lead
+  const getLeadTemperatureEmoji = (temperature: string): string => {
+    switch (temperature.toLowerCase()) {
+      case 'caliente':
+        return '🔥';
+      case 'tibio':
+        return '🌡️';
+      case 'frío':
+        return '❄️';
+      default:
+        return '🌡️';
+    }
+  };
+
   // Función para obtener color de intención de compra
   const getPurchaseIntentVariant = (intent: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (intent.toLowerCase()) {
@@ -34,6 +48,20 @@ const ClientClassificationSection: React.FC<ClientClassificationSectionProps> = 
         return 'outline'; // Gris
       default:
         return 'default';
+    }
+  };
+
+  // Función para obtener emoji de intención de compra
+  const getPurchaseIntentEmoji = (intent: string): string => {
+    switch (intent.toLowerCase()) {
+      case 'alta':
+        return '🎯';
+      case 'media':
+        return '📊';
+      case 'baja':
+        return '📉';
+      default:
+        return '📊';
     }
   };
 
@@ -77,7 +105,7 @@ const ClientClassificationSection: React.FC<ClientClassificationSectionProps> = 
         {/* Temperatura del Lead */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Temperatura del Lead</h3>
-          <Badge 
+           <Badge 
             variant={getLeadTemperatureVariant(output.Temperatura_Lead)}
             className={`
               text-sm px-3 py-1
@@ -89,6 +117,7 @@ const ClientClassificationSection: React.FC<ClientClassificationSectionProps> = 
               }
             `}
           >
+            <span className="mr-1">{getLeadTemperatureEmoji(output.Temperatura_Lead)}</span>
             {output.Temperatura_Lead}
           </Badge>
         </div>
@@ -108,6 +137,7 @@ const ClientClassificationSection: React.FC<ClientClassificationSectionProps> = 
               }
             `}
           >
+            <span className="mr-1">{getPurchaseIntentEmoji(output.Intención_compra)}</span>
             {output.Intención_compra}
           </Badge>
         </div>

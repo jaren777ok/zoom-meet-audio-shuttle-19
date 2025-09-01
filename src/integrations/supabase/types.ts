@@ -1317,6 +1317,7 @@ export type Database = {
           session_id: string
           session_name: string | null
           updated_at: string
+          url: string | null
           user_id: string
           webhook_sent_at: string | null
         }
@@ -1329,6 +1330,7 @@ export type Database = {
           session_id: string
           session_name?: string | null
           updated_at?: string
+          url?: string | null
           user_id: string
           webhook_sent_at?: string | null
         }
@@ -1341,6 +1343,7 @@ export type Database = {
           session_id?: string
           session_name?: string | null
           updated_at?: string
+          url?: string | null
           user_id?: string
           webhook_sent_at?: string | null
         }

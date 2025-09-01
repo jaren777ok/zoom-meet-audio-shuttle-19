@@ -30,7 +30,7 @@ const AnalysisContent: React.FC<{ markdown: string }> = ({ markdown }) => {
 
   return (
     <div 
-      className="prose prose-sm max-w-none dark:prose-invert"
+      className="prose-lg leading-relaxed space-y-4 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_li]:mb-2 [&_strong]:font-bold [&_em]:italic [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto"
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );
@@ -102,23 +102,25 @@ const Analytics: React.FC = () => {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <EditableSessionName
-                        sessionName={selectedSession.session_name || 'Análisis de Sesión'}
-                        onSave={async (newName) => {
-                          const success = await updateSessionName(selectedSession.session_id, newName);
-                          if (success) {
-                            refreshSessions();
-                          }
-                          return success;
-                        }}
-                        className="text-2xl font-bold"
-                      />
-                      <span className="text-2xl font-bold text-muted-foreground">
-                        {selectedSession.session_id.slice(-8)}
-                      </span>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      Análisis de Sesión {selectedSession.session_id}
                     </div>
-                    <p className="text-muted-foreground">
+                    <EditableSessionName
+                      sessionName={
+                        metrics?.Titulo || 
+                        selectedSession.session_name || 
+                        `Sesión ${selectedSession.session_id}`
+                      }
+                      onSave={async (newName) => {
+                        const success = await updateSessionName(selectedSession.session_id, newName);
+                        if (success) {
+                          refreshSessions();
+                        }
+                        return success;
+                      }}
+                      className="text-3xl font-bold"
+                    />
+                    <p className="text-muted-foreground mt-2">
                       {new Date(selectedSession.created_at).toLocaleDateString('es-ES', {
                         weekday: 'long',
                         year: 'numeric',
@@ -129,6 +131,17 @@ const Analytics: React.FC = () => {
                       })}
                     </p>
                   </div>
+                  
+                  {selectedSession.url && (
+                    <div className="ml-6">
+                      <div className="text-sm text-muted-foreground mb-2">Foto del Vendedor</div>
+                      <img 
+                        src={selectedSession.url} 
+                        alt="Foto del vendedor en la reunión"
+                        className="w-24 h-24 rounded-lg object-cover border-2 border-border"
+                      />
+                    </div>
+                  )}
                 </div>
                 <Button
                   variant="outline"
@@ -164,7 +177,7 @@ const Analytics: React.FC = () => {
                   <CardHeader>
                     <CardTitle className="text-xl font-bold">Análisis Detallado</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="prose prose-slate dark:prose-invert max-w-none">
                     <AnalysisContent markdown={selectedSession.analisis_markdown} />
                   </CardContent>
                 </Card>

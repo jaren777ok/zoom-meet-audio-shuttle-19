@@ -7,10 +7,11 @@ import { useCameraCapture } from '@/hooks/useCameraCapture';
 
 interface CameraCaptureProps {
   userId: string;
+  sessionId?: string;
   onComplete: () => void;
 }
 
-const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => {
+const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, sessionId, onComplete }) => {
   const {
     isPermissionGranted,
     isRequestingPermission,
@@ -44,7 +45,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, onComplete }) => 
   }, [stopCamera]);
 
   const handleSendPhoto = async () => {
-    await sendPhotoToWebhook();
+    await sendPhotoToWebhook(userId, sessionId);
   };
 
   return (

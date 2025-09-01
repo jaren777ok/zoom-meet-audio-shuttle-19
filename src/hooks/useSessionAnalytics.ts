@@ -6,6 +6,9 @@ import { z } from 'zod';
 
 // Zod schema for metrics validation - estructura completa
 const MetricsSchema = z.object({
+  // Título de la sesión
+  Titulo: z.string().optional(),
+  
   // Clasificación del cliente
   Temperatura_Lead: z.string(),
   Intención_compra: z.string(),
@@ -41,6 +44,7 @@ export interface SessionAnalytic {
   metricas_json?: any;
   analisis_markdown?: string | null;
   session_name?: string | null;
+  url?: string | null;
   created_at: string;
   updated_at: string;
 }
