@@ -35,6 +35,8 @@ export const useVendorMetrics = (vendorId: string, dateRange?: { from?: Date; to
     queryFn: async (): Promise<VendorMetricsData> => {
       if (!vendorId) throw new Error('Vendor ID is required');
 
+      console.log('Fetching metrics for vendor:', vendorId);
+
       let query = supabase
         .from('session_analytics')
         .select('*')
@@ -51,7 +53,12 @@ export const useVendorMetrics = (vendorId: string, dateRange?: { from?: Date; to
 
       const { data: sessions, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching vendor metrics:', error);
+        throw error;
+      }
+
+      console.log('Found sessions:', sessions?.length || 0);
 
       const sessionData = sessions || [];
 

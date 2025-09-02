@@ -64,10 +64,8 @@ const CompanyDashboard = () => {
   };
 
   const handleViewVendorDetails = (vendorId: string) => {
-    toast({
-      title: "Métricas Detalladas",
-      description: "Próximamente: Vista detallada de métricas del vendedor",
-    });
+    // The modal is handled directly by the VendorProfileCard component
+    // This callback is just for consistency with the interface
   };
 
   if (isLoadingCompany) {
@@ -277,34 +275,42 @@ const CompanyDashboard = () => {
             </Card>
           </div>
 
-          {/* Top 10 Performers */}
+          {/* Top 3 Performers */}
           {topVendors.length > 0 && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-600" />
-                  Top 10 Mejores Vendedores
+                  Top 3 Mejores Vendedores
                 </CardTitle>
                 <Button variant="outline" size="sm" asChild>
-                  <a href="/company/team">Ver todos</a>
+                  <a href="/company/team">Ver Equipo Completo</a>
                 </Button>
               </CardHeader>
               <CardContent>
                 {isLoadingVendorMetrics ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {[...Array(6)].map((_, index) => (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[...Array(3)].map((_, index) => (
                       <Skeleton key={index} className="h-64" />
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {topVendors.map((vendor, index) => (
-                      <VendorCard
-                        key={vendor.id}
-                        vendor={vendor}
-                        rank={index + 1}
-                        onViewDetails={handleViewVendorDetails}
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {topVendors.slice(0, 3).map((vendor, index) => (
+                      <div key={vendor.id} className="relative">
+                        {index === 0 && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <Badge className="bg-yellow-600 text-white">
+                              🏆 #1
+                            </Badge>
+                          </div>
+                        )}
+                        <VendorCard
+                          vendor={vendor}
+                          rank={index + 1}
+                          onViewDetails={handleViewVendorDetails}
+                        />
+                      </div>
                     ))}
                   </div>
                 )}

@@ -51,11 +51,8 @@ const CompanyTeam = () => {
     });
 
   const handleViewVendorDetails = (vendorId: string) => {
-    // For now, just show a toast. Later this could open a modal or navigate to a detail page
-    toast({
-      title: "Métricas Detalladas",
-      description: "Próximamente: Vista detallada de métricas del vendedor",
-    });
+    // The modal is handled directly by the VendorProfileCard component
+    // This callback is just for consistency with the interface
   };
 
   if (isLoadingVendorMetrics) {
@@ -198,23 +195,37 @@ const CompanyTeam = () => {
             </CardContent>
           </Card>
 
-          {/* Top 3 Performers */}
+          {/* Top 10 Performers */}
           {filteredAndSortedVendors.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-yellow-600" />
-                  Top 3 Mejores Vendedores
+                  Top 10 Mejores Vendedores
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {filteredAndSortedVendors.slice(0, 3).map((vendor, index) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredAndSortedVendors.slice(0, 10).map((vendor, index) => (
                     <div key={vendor.id} className="relative">
                       {index === 0 && (
                         <div className="absolute -top-2 -right-2 z-10">
                           <Badge className="bg-yellow-600 text-white">
                             🏆 #1
+                          </Badge>
+                        </div>
+                      )}
+                      {index === 1 && (
+                        <div className="absolute -top-2 -right-2 z-10">
+                          <Badge className="bg-gray-400 text-white">
+                            🥈 #2
+                          </Badge>
+                        </div>
+                      )}
+                      {index === 2 && (
+                        <div className="absolute -top-2 -right-2 z-10">
+                          <Badge className="bg-amber-600 text-white">
+                            🥉 #3
                           </Badge>
                         </div>
                       )}
@@ -230,45 +241,54 @@ const CompanyTeam = () => {
             </Card>
           )}
 
-          {/* All Vendors Grid */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Todos los Vendedores ({filteredAndSortedVendors.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {filteredAndSortedVendors.length > 0 ? (
+          {/* All Other Vendors */}
+          {filteredAndSortedVendors.length > 10 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Otros Vendedores ({filteredAndSortedVendors.length - 10})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredAndSortedVendors.map((vendor, index) => (
+                  {filteredAndSortedVendors.slice(10).map((vendor, index) => (
                     <VendorCard
                       key={vendor.id}
                       vendor={vendor}
-                      rank={index + 1}
+                      rank={index + 11}
                       onViewDetails={handleViewVendorDetails}
                     />
                   ))}
                 </div>
-              ) : searchTerm ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Search className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg mb-2">No se encontraron vendedores</p>
-                  <p className="text-sm">
-                    Intenta con otros términos de búsqueda
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg mb-2">No hay vendedores asociados</p>
-                  <p className="text-sm">
-                    Los vendedores aparecerán aquí cuando se asocien a tu empresa
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* No Results States */}
+          {filteredAndSortedVendors.length === 0 && (
+            <Card>
+              <CardContent className="py-12">
+                {searchTerm ? (
+                  <div className="text-center text-muted-foreground">
+                    <Search className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg mb-2">No se encontraron vendedores</p>
+                    <p className="text-sm">
+                      Intenta con otros términos de búsqueda
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <Users className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg mb-2">No hay vendedores asociados</p>
+                    <p className="text-sm">
+                      Los vendedores aparecerán aquí cuando se asocien a tu empresa
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

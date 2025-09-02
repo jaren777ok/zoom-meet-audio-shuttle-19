@@ -176,6 +176,10 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
     setIsModalOpen(true);
   };
 
+  const handleViewMetrics = () => {
+    setIsModalOpen(true);
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
