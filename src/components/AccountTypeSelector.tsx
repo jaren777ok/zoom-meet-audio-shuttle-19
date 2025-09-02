@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, UserCheck, Users, TrendingUp } from 'lucide-react';
+import Prism from '@/components/Prism';
 
 interface AccountTypeSelectorProps {
   onSelectType: (type: 'empresa' | 'vendedor') => void;
@@ -9,8 +10,23 @@ interface AccountTypeSelectorProps {
 
 const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ onSelectType }) => {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl space-y-8">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+      {/* Prism Background */}
+      <div className="absolute inset-0 z-0">
+        <Prism 
+          animationType="rotate"
+          scale={4}
+          timeScale={0.3}
+          glow={0.8}
+          colorFrequency={0.5}
+          noise={0.1}
+          hueShift={0.5}
+          bloom={1.2}
+        />
+      </div>
+      
+      {/* Content overlay */}
+      <div className="relative z-10 w-full max-w-4xl space-y-8 backdrop-blur-sm bg-background/20 rounded-2xl p-8 border border-white/10">
         
         {/* Header */}
         <div className="text-center space-y-4">

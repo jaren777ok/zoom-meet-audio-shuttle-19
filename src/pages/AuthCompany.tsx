@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Building2, ArrowLeft, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import Prism from '@/components/Prism';
 
 interface AuthCompanyProps {
   onBack: () => void;
@@ -120,8 +121,24 @@ const AuthCompany: React.FC<AuthCompanyProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+      {/* Prism Background */}
+      <div className="absolute inset-0 z-0">
+        <Prism 
+          animationType="hover"
+          scale={3.5}
+          timeScale={0.4}
+          glow={1.2}
+          colorFrequency={0.8}
+          noise={0.05}
+          hueShift={2.5}
+          bloom={1.5}
+          hoverStrength={1.5}
+        />
+      </div>
+      
+      {/* Content overlay */}
+      <div className="relative z-10 w-full max-w-md space-y-6">
         
         {/* Header with back button */}
         <div className="flex items-center gap-4">
@@ -144,7 +161,7 @@ const AuthCompany: React.FC<AuthCompanyProps> = ({ onBack }) => {
         </div>
 
         {/* Auth Form */}
-        <Card className="bg-card border-border backdrop-blur-sm">
+        <Card className="bg-card/30 border-white/20 backdrop-blur-md shadow-2xl">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 rounded-t-lg rounded-b-none h-12">
