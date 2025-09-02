@@ -58,7 +58,7 @@ const CompanyTeam = () => {
   };
 
   const handleViewSessionDetails = (sessionId: string) => {
-    navigate(`/analytics`);
+    navigate(`/company/analytics/${sessionId}`);
   };
 
   if (isLoadingVendorMetrics) {

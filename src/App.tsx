@@ -16,6 +16,7 @@ import Sessions from "./pages/Sessions";
 import Analytics from "./pages/Analytics";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyTeam from "./pages/CompanyTeam";
+import CompanyAnalytics from "./pages/CompanyAnalytics";
 import VendorCompany from "./pages/VendorCompany";
 import NotFound from "./pages/NotFound";
 
@@ -74,6 +75,11 @@ const App = () => (
             <Route path="/company/team" element={
               <CompanyProtectedRoute>
                 <CompanyTeam />
+              </CompanyProtectedRoute>
+            } />
+            <Route path="/company/analytics/:sessionId" element={
+              <CompanyProtectedRoute>
+                <CompanyAnalytics />
               </CompanyProtectedRoute>
             } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

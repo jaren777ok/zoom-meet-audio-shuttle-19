@@ -71,7 +71,7 @@ const CompanyDashboard = () => {
   };
 
   const handleViewSessionDetails = (sessionId: string) => {
-    navigate(`/analytics`);
+    navigate(`/company/analytics/${sessionId}`);
   };
 
   if (isLoadingCompany) {

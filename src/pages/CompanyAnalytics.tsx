@@ -1,0 +1,240 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, BarChart3, RefreshCw } from 'lucide-react';
+import { ImageModal } from '@/components/ImageModal';
+import { marked } from 'marked';
+import CompanyNavigation from '@/components/CompanyNavigation';
+import MetricsKPISection from '@/components/analytics/MetricsKPISection';
+import ClientClassificationSection from '@/components/analytics/ClientClassificationSection';
+import ConversionsResultsSection from '@/components/analytics/ConversionsResultsSection';
+import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
+import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
+import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
+
+// Component for rendering analysis content
+const AnalysisContent: React.FC<{ markdown: string }> = ({ markdown }) => {
+  const [htmlContent, setHtmlContent] = useState<string>('');
+
+  useEffect(() => {
+    const convertMarkdown = async () => {
+      const html = await marked(markdown);
+      setHtmlContent(html);
+    };
+    convertMarkdown();
+  }, [markdown]);
+
+  return (
+    <div 
+      className="prose-lg leading-relaxed space-y-4 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_li]:mb-2 [&_strong]:font-bold [&_em]:italic [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto"
+      dangerouslySetInnerHTML={{ __html: htmlContent }}
+    />
+  );
+};
+
+const CompanyAnalytics: React.FC = () => {
+  const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null);
+  
+  const {
+    isLoading,
+    refreshSessions,
+    getSessionBySessionId,
+    parseMetrics,
+  } = useSessionAnalytics();
+
+  // Get the specific session
+  const selectedSession = sessionId ? getSessionBySessionId(sessionId) : null;
+  const metrics = selectedSession ? parseMetrics(selectedSession) : null;
+
+  // If no sessionId or session not found, show error
+  if (!sessionId || (!isLoading && !selectedSession)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <CompanyNavigation />
+          
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Sesión no encontrada</h3>
+                <p className="text-muted-foreground mb-4">
+                  La sesión solicitada no existe o no tienes permisos para verla.
+                </p>
+                <Button onClick={() => navigate('/company')}>
+                  Volver al Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <CompanyNavigation />
+          
+          <div className="space-y-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-1/3" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <CompanyNavigation />
+        
+        {/* Header de detalle */}
+        <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate('/company')}
+                  className="hover:bg-primary/10"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex-1">
+                  <h1 className="text-3xl font-bold">
+                    {metrics?.Titulo || 
+                     selectedSession?.session_name || 
+                     `Sesión ${selectedSession?.session_id}`}
+                  </h1>
+                  <p className="text-muted-foreground mt-2">
+                    {selectedSession && new Date(selectedSession.created_at).toLocaleDateString('es-ES', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+                
+                {selectedSession?.url && (
+                  <div className="ml-6">
+                    <div className="text-sm text-muted-foreground mb-2">Foto del Vendedor</div>
+                    <img 
+                      src={selectedSession.url} 
+                      alt="Foto del vendedor en la reunión"
+                      className="w-24 h-24 rounded-lg object-cover border-2 border-border cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => {
+                        setSelectedImage({ 
+                          url: selectedSession.url!, 
+                          alt: "Foto del vendedor en la reunión" 
+                        });
+                        setImageModalOpen(true);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={refreshSessions}
+                disabled={isLoading}
+                className="gap-2 shrink-0"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Actualizar
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Contenido del análisis */}
+        {metrics ? (
+          <div className="space-y-8">
+            {/* Métricas de Conectividad */}
+            {selectedSession && <ConnectivityMetricsSection session={selectedSession} />}
+            
+            {/* KPIs Principales */}
+            <MetricsKPISection metrics={metrics} />
+            
+            {/* Clasificación del Cliente */}
+            <ClientClassificationSection metrics={metrics} />
+            
+            {/* Conversiones y Resultados */}
+            <ConversionsResultsSection metrics={metrics} />
+            
+            {/* Análisis de Venta Perdida (condicional) */}
+            <LostSaleAnalysis metrics={metrics} />
+            
+            {/* Análisis en Markdown */}
+            {selectedSession?.analisis_markdown && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Análisis Detallado</CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-slate dark:prose-invert max-w-none">
+                  <AnalysisContent markdown={selectedSession.analisis_markdown} />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Análisis en Proceso</h3>
+                <p className="text-muted-foreground">
+                  {selectedSession?.analysis_status === 'pending' 
+                    ? 'El análisis de esta sesión está pendiente.'
+                    : selectedSession?.analysis_status === 'processing'
+                      ? 'Estamos analizando los datos de la sesión.'
+                      : 'No hay datos de análisis disponibles.'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Image Modal */}
+        {selectedImage && (
+          <ImageModal
+            isOpen={imageModalOpen}
+            onClose={() => {
+              setImageModalOpen(false);
+              setSelectedImage(null);
+            }}
+            imageUrl={selectedImage.url}
+            altText={selectedImage.alt}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CompanyAnalytics;
