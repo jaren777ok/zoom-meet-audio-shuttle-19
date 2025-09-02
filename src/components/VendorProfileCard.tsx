@@ -7,6 +7,7 @@ import './VendorProfileCard.css';
 interface VendorProfileCardProps {
   vendor: VendorMetrics;
   onViewDetails: (vendorId: string) => void;
+  onViewSessionDetails?: (sessionId: string) => void;
 }
 
 const DEFAULT_BEHIND_GRADIENT =
@@ -30,7 +31,8 @@ const easeInOutCubic = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2
 
 export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
   vendor,
-  onViewDetails
+  onViewDetails,
+  onViewSessionDetails
 }) => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
@@ -279,6 +281,7 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
         vendor={vendor}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onViewSessionDetails={onViewSessionDetails}
       />
     </>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ import VendorCard from '@/components/VendorCard';
 import { toast } from '@/hooks/use-toast';
 
 const CompanyTeam = () => {
+  const navigate = useNavigate();
   const { 
     vendorMetrics, 
     isLoadingVendorMetrics,
@@ -53,6 +55,10 @@ const CompanyTeam = () => {
   const handleViewVendorDetails = (vendorId: string) => {
     // The modal is handled directly by the VendorProfileCard component
     // This callback is just for consistency with the interface
+  };
+
+  const handleViewSessionDetails = (sessionId: string) => {
+    navigate(`/analytics`);
   };
 
   if (isLoadingVendorMetrics) {
@@ -233,6 +239,7 @@ const CompanyTeam = () => {
                         vendor={vendor}
                         rank={index + 1}
                         onViewDetails={handleViewVendorDetails}
+                        onViewSessionDetails={handleViewSessionDetails}
                       />
                     </div>
                   ))}
@@ -258,6 +265,7 @@ const CompanyTeam = () => {
                       vendor={vendor}
                       rank={index + 11}
                       onViewDetails={handleViewVendorDetails}
+                      onViewSessionDetails={handleViewSessionDetails}
                     />
                   ))}
                 </div>

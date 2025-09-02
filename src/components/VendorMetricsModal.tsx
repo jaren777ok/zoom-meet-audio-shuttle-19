@@ -15,12 +15,14 @@ interface VendorMetricsModalProps {
   vendor: VendorMetrics;
   isOpen: boolean;
   onClose: () => void;
+  onViewSessionDetails?: (sessionId: string) => void;
 }
 
 export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
   vendor,
   isOpen,
-  onClose
+  onClose,
+  onViewSessionDetails
 }) => {
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
   
@@ -173,10 +175,10 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
               {/* Detailed Sessions List */}
               <VendorDetailedSessionsList 
                 sessions={metricsData.detailedSessions}
-                onViewSessionDetails={(sessionId) => {
-                  // TODO: Implement navigation to individual session analytics
-                  console.log('View session details:', sessionId);
-                }}
+                onViewSessionDetails={onViewSessionDetails ? (sessionId) => {
+                  onViewSessionDetails(sessionId);
+                  onClose(); // Close modal on navigation
+                } : undefined}
               />
             </>
           ) : (
