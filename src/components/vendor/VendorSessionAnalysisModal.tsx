@@ -105,17 +105,17 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1">
                   <p className="text-sm font-medium text-muted-foreground mb-2">Vendedor</p>
                   <div className="flex items-center gap-3">
-                    {vendorPhotoUrl ? (
+                    {session.url ? (
                       <div 
                         className="w-16 h-16 rounded-full overflow-hidden border-2 border-border cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setIsImageModalOpen(true)}
                       >
                         <img
-                          src={vendorPhotoUrl}
+                          src={session.url}
                           alt={vendorName || 'Vendedor'}
                           className="w-full h-full object-cover"
                         />
@@ -127,13 +127,13 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
                     )}
                     <div>
                       <p className="text-lg font-medium">{vendorName || 'Vendedor'}</p>
-                      {vendorPhotoUrl && (
+                      {session.url && (
                         <button
                           onClick={() => setIsImageModalOpen(true)}
                           className="text-sm text-primary hover:underline flex items-center gap-1"
                         >
                           <ImageIcon className="h-3 w-3" />
-                          Ver foto completa
+                          Ver foto de la sesión
                         </button>
                       )}
                     </div>
@@ -161,66 +161,6 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
                 </div>
               </div>
               
-              {/* Internet Quality Section */}
-              {(session.internet_quality_start || session.internet_quality_end) && (
-                <div className="mt-6 pt-4 border-t">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <Wifi className="h-4 w-4" />
-                    Métricas de Conectividad
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {session.internet_quality_start && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Calidad Inicial</p>
-                        <p className="text-lg font-medium">{session.internet_quality_start}%</p>
-                      </div>
-                    )}
-                    {session.internet_quality_end && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Calidad Final</p>
-                        <p className="text-lg font-medium">{session.internet_quality_end}%</p>
-                      </div>
-                    )}
-                    {session.internet_quality_start && session.internet_quality_end && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Variación</p>
-                        <p className={`text-lg font-medium ${
-                          session.internet_quality_end >= session.internet_quality_start 
-                            ? 'text-green-600' 
-                            : 'text-red-600'
-                        }`}>
-                          {session.internet_quality_end >= session.internet_quality_start ? '+' : ''}
-                          {session.internet_quality_end - session.internet_quality_start}%
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Additional Network Info */}
-                  {(session.network_type || session.avg_connection_speed || session.connection_stability_score) && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                      {session.network_type && (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Tipo de Red</p>
-                          <p className="text-lg font-medium">{session.network_type}</p>
-                        </div>
-                      )}
-                      {session.avg_connection_speed && (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Velocidad Promedio</p>
-                          <p className="text-lg font-medium">{Math.round(session.avg_connection_speed)} Mbps</p>
-                        </div>
-                      )}
-                      {session.connection_stability_score && (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Estabilidad</p>
-                          <p className="text-lg font-medium">{Math.round(session.connection_stability_score)}%</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -280,12 +220,12 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
         </div>
         
         {/* Image Modal */}
-        {vendorPhotoUrl && (
+        {session.url && (
           <ImageModal
             isOpen={isImageModalOpen}
             onClose={() => setIsImageModalOpen(false)}
-            imageUrl={vendorPhotoUrl}
-            altText={`Foto de ${vendorName || 'Vendedor'}`}
+            imageUrl={session.url}
+            altText={`Foto de la sesión - ${vendorName || 'Vendedor'}`}
           />
         )}
       </DialogContent>

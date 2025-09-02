@@ -56,14 +56,14 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
   };
 
   const getQualityColor = (quality: number) => {
-    if (quality >= 80) return 'bg-green-500';
-    if (quality >= 60) return 'bg-yellow-500';
+    if (quality >= 8) return 'bg-green-500';
+    if (quality >= 6) return 'bg-yellow-500';
     return 'bg-red-500';
   };
 
   const getQualityText = (quality: number) => {
-    if (quality >= 80) return 'Excelente';
-    if (quality >= 60) return 'Buena';
+    if (quality >= 8) return 'Excelente';
+    if (quality >= 6) return 'Buena';
     return 'Pobre';
   };
 
@@ -124,7 +124,7 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
                     <Zap className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{metricsData.avgQuality}%</div>
+                    <div className="text-2xl font-bold">{metricsData.avgQuality}/10</div>
                     <Badge 
                       variant="secondary" 
                       className={`${getQualityColor(metricsData.avgQuality)} text-white mt-1`}
@@ -168,33 +168,33 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span>Excelente (≥80%)</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span>Excelente (≥8/10)</span>
+                        </div>
+                        <Badge variant="outline">
+                          {metricsData.qualityDistribution.excellent} sesiones
+                        </Badge>
                       </div>
-                      <Badge variant="outline">
-                        {metricsData.qualityDistribution.excellent} sesiones
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span>Buena (60-79%)</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                          <span>Buena (6-7/10)</span>
+                        </div>
+                        <Badge variant="outline">
+                          {metricsData.qualityDistribution.good} sesiones
+                        </Badge>
                       </div>
-                      <Badge variant="outline">
-                        {metricsData.qualityDistribution.good} sesiones
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span>Pobre (&lt;60%)</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                          <span>Pobre (&lt;6/10)</span>
+                        </div>
+                        <Badge variant="outline">
+                          {metricsData.qualityDistribution.poor} sesiones
+                        </Badge>
                       </div>
-                      <Badge variant="outline">
-                        {metricsData.qualityDistribution.poor} sesiones
-                      </Badge>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

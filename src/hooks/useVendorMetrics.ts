@@ -104,37 +104,37 @@ export const useVendorMetrics = (vendorId: string, dateRange?: { from?: Date; to
       // Calculate metrics
       const totalSessions = sessionData.length;
       
-      const qualityScores = sessionData
-        .map(s => s.internet_quality_start || s.internet_quality_end)
-        .filter(Boolean) as number[];
+      // Calcular calidad promedio considerando ambos valores inicial y final
+      const qualityScores: number[] = [];
+      sessionData.forEach(s => {
+        if (s.internet_quality_start && s.internet_quality_end) {
+          // Si tenemos ambos valores, usar el promedio
+          qualityScores.push((s.internet_quality_start + s.internet_quality_end) / 2);
+        } else if (s.internet_quality_start) {
+          qualityScores.push(s.internet_quality_start);
+        } else if (s.internet_quality_end) {
+          qualityScores.push(s.internet_quality_end);
+        }
+      });
       
       const avgQuality = qualityScores.length > 0 
         ? qualityScores.reduce((sum, score) => sum + score, 0) / qualityScores.length 
         : 0;
 
-      // Calculate quality distribution
+      // Calculate quality distribution (scale 1-10 to percentages)
       const qualityDistribution = {
-        excellent: qualityScores.filter(q => q >= 80).length,
-        good: qualityScores.filter(q => q >= 60 && q < 80).length,
-        poor: qualityScores.filter(q => q < 60).length,
+        excellent: qualityScores.filter(q => q >= 8).length,  // 8-10 = Excelente
+        good: qualityScores.filter(q => q >= 6 && q < 8).length, // 6-7.9 = Buena
+        poor: qualityScores.filter(q => q < 6).length, // 1-5.9 = Pobre
       };
 
-      // Calculate average duration from metrics if available
-      const durationsMs = sessionData
-        .map(s => {
-          try {
-            const metrics = typeof s.metricas_json === 'string' 
-              ? JSON.parse(s.metricas_json) 
-              : s.metricas_json;
-            return metrics?.duration || 0;
-          } catch {
-            return 0;
-          }
-        })
-        .filter(Boolean);
+      // Calculate average duration from session_duration_minutes
+      const durations = sessionData
+        .map(s => s.session_duration_minutes)
+        .filter(Boolean) as number[];
       
-      const avgDuration = durationsMs.length > 0
-        ? durationsMs.reduce((sum, d) => sum + d, 0) / durationsMs.length / 1000 / 60 // Convert to minutes
+      const avgDuration = durations.length > 0
+        ? durations.reduce((sum, d) => sum + d, 0) / durations.length
         : 0;
 
       // Parse detailed metrics from JSON  
@@ -171,8 +171,8 @@ export const useVendorMetrics = (vendorId: string, dateRange?: { from?: Date; to
 
       return {
         totalSessions,
-        avgQuality: Math.round(avgQuality),
-        avgDuration: Math.round(avgDuration),
+        avgQuality: Math.round(avgQuality * 10) / 10, // Mantener decimales para mayor precisión
+        avgDuration: Math.round(avgDuration * 10) / 10, // Mantener decimales
         recentSessions: sessionsWithMetrics.slice(0, 10),
         qualityDistribution,
         avgSatisfaction: Math.round(avgSatisfaction * 10) / 10,
