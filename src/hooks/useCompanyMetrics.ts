@@ -30,6 +30,8 @@ export interface VendorMetrics {
   // Joined data from profiles
   vendor_name: string | null;
   vendor_email: string | null;
+  profile_photo_url?: string;
+  display_name?: string;
 }
 
 export const useCompanyMetrics = () => {
@@ -100,7 +102,9 @@ export const useCompanyMetrics = () => {
           *,
           profiles!vendor_id (
             full_name,
-            email
+            email,
+            profile_photo_url,
+            display_name
           )
         `)
         .eq('company_id', companyAccount.id)
@@ -110,8 +114,10 @@ export const useCompanyMetrics = () => {
       
       return (data || []).map(item => ({
         ...item,
-        vendor_name: item.profiles?.full_name || null,
+        vendor_name: item.profiles?.display_name || item.profiles?.full_name || null,
         vendor_email: item.profiles?.email || null,
+        profile_photo_url: item.profiles?.profile_photo_url,
+        display_name: item.profiles?.display_name,
       })) as VendorMetrics[];
     },
     enabled: !!companyAccount?.id,

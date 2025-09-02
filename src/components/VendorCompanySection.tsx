@@ -3,16 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Link as LinkIcon, Unlink, Users } from 'lucide-react';
+import { Building2, Link as LinkIcon, Unlink, Users, Building, Code } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ProfilePhotoUploader } from '@/components/ProfilePhotoUploader';
+import { VendorNameEditor } from '@/components/VendorNameEditor';
 
 const VendorCompanySection: React.FC = () => {
   const { user } = useAuth();
-  const [companyCode, setCompanyCode] = useState('');
   const queryClient = useQueryClient();
+  const [companyCode, setCompanyCode] = useState('');
+
+  const handlePhotoUpdated = (newPhotoUrl: string) => {
+    queryClient.invalidateQueries({ queryKey: ['vendor-profile', user?.id] });
+  };
+
+  const handleNameUpdated = (newName: string) => {
+    queryClient.invalidateQueries({ queryKey: ['vendor-profile', user?.id] });
+  };
 
   // Get current vendor profile
   const { data: profile } = useQuery({
@@ -22,9 +32,9 @@ const VendorCompanySection: React.FC = () => {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('company_code')
+        .select('company_code, profile_photo_url, display_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
@@ -200,30 +210,41 @@ const VendorCompanySection: React.FC = () => {
       <CardContent className="space-y-4">
         {companyInfo ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-accent rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-success/10 rounded-lg border border-success/20">
               <div className="flex items-center gap-3">
-                <Users className="h-5 w-5 text-primary" />
+                <Building className="h-5 w-5 text-success" />
                 <div>
-                  <p className="font-medium">{companyInfo.company_name}</p>
-                  <Badge variant="outline" className="text-xs">
-                    {companyInfo.company_code}
-                  </Badge>
+                  <p className="font-medium text-success">Empresa Asociada</p>
+                  <p className="text-sm text-muted-foreground">{companyInfo.company_name}</p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDisassociate}
-                disabled={disassociateMutation.isPending}
-                className="flex items-center gap-2"
-              >
-                <Unlink className="h-4 w-4" />
-                Desasociar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Code className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-mono">{companyInfo.company_code}</span>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Estás asociado a esta empresa. Tus métricas y actividad serán visibles para los administradores de la empresa.
-            </p>
+
+            {/* Profile Photo Section */}
+            <ProfilePhotoUploader
+              currentPhotoUrl={profile?.profile_photo_url}
+              onPhotoUpdated={handlePhotoUpdated}
+            />
+
+            {/* Display Name Section */}
+            <VendorNameEditor
+              currentDisplayName={profile?.display_name}
+              onNameUpdated={handleNameUpdated}
+            />
+            
+            <Button
+              onClick={handleDisassociate}
+              disabled={disassociateMutation.isPending}
+              variant="destructive"
+              className="w-full"
+            >
+              <Unlink className="h-4 w-4 mr-2" />
+              {disassociateMutation.isPending ? 'Desasociando...' : 'Desasociar de Empresa'}
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">

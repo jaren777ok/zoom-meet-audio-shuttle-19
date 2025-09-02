@@ -1335,27 +1335,33 @@ export type Database = {
           account_type: string
           company_code: string | null
           created_at: string
+          display_name: string | null
           email: string | null
           full_name: string | null
           id: string
+          profile_photo_url: string | null
           updated_at: string
         }
         Insert: {
           account_type?: string
           company_code?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          profile_photo_url?: string | null
           updated_at?: string
         }
         Update: {
           account_type?: string
           company_code?: string | null
           created_at?: string
+          display_name?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          profile_photo_url?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -56,11 +57,12 @@ const VendorCard: React.FC<VendorCardProps> = ({ vendor, rank, onViewDetails }) 
                 #{rank}
               </div>
             )}
-            <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-primary font-semibold text-sm">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={vendor.profile_photo_url} alt={vendor.vendor_name || 'Vendedor'} />
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                 {getInitials(vendor.vendor_name)}
-              </span>
-            </div>
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1">
               <h3 className="font-semibold text-lg">
                 {vendor.vendor_name || 'Sin nombre'}
