@@ -66,6 +66,7 @@ export interface UseSessionAnalyticsReturn {
     connection_stability_score?: number;
     network_type?: string;
     avg_connection_speed?: number;
+    session_name?: string;
   }) => Promise<SessionAnalytic | null>;
   sendWebhook: (sessionId: string, userId: string) => Promise<boolean>;
   refreshSessions: () => Promise<void>;

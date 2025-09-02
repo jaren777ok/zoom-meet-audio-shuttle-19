@@ -68,6 +68,14 @@ export const useSystemAudioRecorder = ({
   const pendingChunks = useRef<Set<string>>(new Set());
   const sesionIDRef = useRef<string | null>(null);
 
+  // Generate sessionId immediately when hook is initialized
+  useEffect(() => {
+    if (!sesionIDRef.current && userInfo.userId) {
+      sesionIDRef.current = `${userInfo.userId}_${Date.now()}`;
+      console.log('🆔 Session ID generated on hook init:', sesionIDRef.current);
+    }
+  }, [userInfo.userId]);
+
   const formatTime = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -321,11 +329,8 @@ export const useSystemAudioRecorder = ({
     try {
       console.log('🎤 Starting dual recording with system audio:', captureSystemAudio);
       
-      // Generate unique session ID at the start of recording
-      if (!sesionIDRef.current) {
-        sesionIDRef.current = `${userInfo.userId}_${Date.now()}`;
-        console.log('🆔 New sesionID generated:', sesionIDRef.current);
-      }
+      // Session ID should already be generated, just log it
+      console.log('🆔 Using existing sesionID for recording:', sesionIDRef.current);
       
       // Reset state
       currentSegmentRef.current = 0;
@@ -503,9 +508,9 @@ export const useSystemAudioRecorder = ({
     currentSegmentRef.current = 0;
     pendingChunks.current.clear();
     
-    // Reset session ID for next session
-    sesionIDRef.current = null;
-    console.log('🆔 sesionID cleared for next session');
+    // Keep session ID intact for future use in analytics
+    // sesionIDRef.current = null; // Don't clear - let it persist for the session
+    console.log('🆔 sesionID preserved for analytics:', sesionIDRef.current);
     
     console.log('✅ Dual recording stopped successfully');
   }, []);

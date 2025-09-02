@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -66,6 +66,7 @@ const AudioRecorderApp = () => {
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
   const [isRequestingMicPermission, setIsRequestingMicPermission] = useState(false);
   const [startQuality, setStartQuality] = useState<any>(null);
+  const [sessionInitialized, setSessionInitialized] = useState(false);
 
   // AI Messages context for clearing messages when recording stops
   const { clearAllMessages } = useAIMessagesContext();
@@ -99,6 +100,38 @@ const AudioRecorderApp = () => {
     userInfo: userInfoForHook,
     captureSystemAudio: true // Always capture system audio for best AI performance
   });
+
+  // Initialize session record when sessionId becomes available
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (sessionId && user && !sessionInitialized) {
+        try {
+          console.log('🚀 Initializing session record with sessionId:', sessionId);
+          
+          const initialData = {
+            session_name: meetingInfo?.meetingObjective || `Sesión ${new Date().toLocaleString('es-ES')}`,
+          };
+          
+          const sessionRecord = await createSessionRecord(sessionId, initialData);
+          
+          if (sessionRecord) {
+            console.log('✅ Base session record created:', sessionRecord.id);
+            setSessionInitialized(true);
+            
+            toast({
+              title: "Sesión inicializada",
+              description: "Registro de sesión creado correctamente",
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error initializing session:', error);
+          // Don't show error toast here as it's handled in the hook
+        }
+      }
+    };
+
+    initializeSession();
+  }, [sessionId, user, sessionInitialized, meetingInfo, createSessionRecord]);
 
   const handleMeetingInfoSubmit = (info: MeetingInfo) => {
     setMeetingInfo(info);
@@ -181,6 +214,7 @@ const AudioRecorderApp = () => {
     if (!isRecording) {
       setCurrentStep('form');
       setShowFloatingChat(false);
+      setSessionInitialized(false); // Reset to allow new session creation
     }
   };
 
@@ -201,76 +235,83 @@ const AudioRecorderApp = () => {
       const networkStability = getNetworkStability();
       const endQuality = currentQuality;
       
-      // Verificar autenticación antes de procesar
-      if (!user) {
-        console.error('❌ No user authenticated for session save');
-        toast({
-          title: "Error de autenticación",
-          description: "Debes estar autenticado para guardar la sesión",
-          variant: "destructive",
-        });
-        return;
-      }
+        // Verificar autenticación antes de procesar
+        if (!user) {
+          console.error('❌ No user authenticated for session save');
+          toast({
+            title: "Error de autenticación",
+            description: "Debes estar autenticado para guardar la sesión",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      if (!sessionId) {
-        console.error('❌ No sessionId available');
-        toast({
-          title: "Error",
-          description: "No se pudo generar el ID de sesión",
-          variant: "destructive",
-        });
-        return;
-      }
+        if (!sessionId) {
+          console.error('❌ No sessionId available');
+          toast({
+            title: "Error",
+            description: "No se pudo generar el ID de sesión",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      try {
-        console.log('💾 Starting session save process...');
-        console.log('👤 User authenticated:', { userId: user.id, email: user.email });
-        console.log('🔢 Session ID:', sessionId);
-        
-        // Prepare connectivity data
-        const connectivityData = {
-          internet_quality_start: startQuality?.quality || null,
-          internet_quality_end: endQuality?.quality || null,
-          session_duration_minutes: sessionSummary.durationMinutes,
-          connection_stability_score: networkStability.stabilityScore,
-          network_type: endQuality?.networkType || startQuality?.networkType || null,
-          avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
-          session_name: meetingInfo?.meetingObjective || `Sesión ${new Date().toLocaleDateString()}`,
-        };
-        
-        console.log('📊 Connectivity data prepared:', connectivityData);
-        
-        // Crear registro en session_analytics usando el sessionId del hook con datos de conectividad
-        const sessionRecord = await createSessionRecord(sessionId, connectivityData);
+        try {
+          console.log('💾 Updating session with final connectivity data...');
+          console.log('👤 User authenticated:', { userId: user.id, email: user.email });
+          console.log('🔢 Session ID:', sessionId);
+          
+          // Prepare final connectivity data for update
+          const connectivityUpdateData = {
+            internet_quality_start: startQuality?.quality || null,
+            internet_quality_end: endQuality?.quality || null,
+            session_duration_minutes: sessionSummary.durationMinutes,
+            connection_stability_score: networkStability.stabilityScore,
+            network_type: endQuality?.networkType || startQuality?.networkType || null,
+            avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
+          };
+          
+          console.log('📊 Final connectivity data prepared:', connectivityUpdateData);
+          
+          // Update existing session record with final connectivity data
+          const { error: updateError } = await supabase
+            .from('session_analytics')
+            .update({
+              ...connectivityUpdateData,
+              analysis_status: 'pending',
+              updated_at: new Date().toISOString()
+            })
+            .eq('session_id', sessionId)
+            .eq('user_id', user.id);
 
-        if (sessionRecord) {
-          console.log('✅ Session record created successfully:', sessionRecord.id);
+          if (updateError) {
+            throw updateError;
+          }
+
+          console.log('✅ Session record updated successfully');
           
           toast({
-            title: "Sesión guardada",
-            description: "La sesión se ha guardado correctamente",
+            title: "Sesión finalizada",
+            description: "Los datos de conectividad han sido actualizados",
           });
           
           // Enviar webhook para análisis usando la función mejorada
           console.log('📡 Sending webhook for analysis...');
-          const result = await sendWebhook(sessionId, webhookUrl);
+          const result = await sendWebhook(sessionId, user.id);
           
           if (result) {
             console.log('✅ Webhook sent successfully');
           } else {
             console.error('❌ Webhook failed');
           }
-        } else {
-          throw new Error('No se pudo crear el registro de sesión');
+        } catch (error: any) {
+          console.error('❌ Error in session finalization process:', error);
+          toast({
+            title: "Error al finalizar sesión",
+            description: error.message || "No se pudo finalizar la sesión",
+            variant: "destructive",
+          });
         }
-      } catch (error: any) {
-        console.error('❌ Error in session save process:', error);
-        toast({
-          title: "Error al guardar sesión",
-          description: error.message || "No se pudo guardar la sesión",
-          variant: "destructive",
-        });
-      }
       
       // Clear all AI messages from Supabase
       await clearAllMessages();
