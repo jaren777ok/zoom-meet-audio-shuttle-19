@@ -35,7 +35,7 @@ const AudioRecorderApp = () => {
   
   const { user, signOut } = useAuth();
   const { isTrialActive, daysRemaining, loading: subscriptionLoading, submitPremiumRequest } = useSubscription();
-  const { createSessionRecord } = useSessionAnalytics();
+  const { createSessionRecord, sendWebhook } = useSessionAnalytics();
   
   // Network quality and session timer hooks
   const {
@@ -217,37 +217,23 @@ const AudioRecorderApp = () => {
           const sessionRecord = await createSessionRecord(sessionId, connectivityData);
 
           if (sessionRecord) {
-            // Enviar webhook para análisis
-            try {
-              const response = await fetch('https://cris.cloude.es/webhook/analisis_reunion', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  user_id: user.id,
-                  session_id: sessionId,
-                  timestamp: new Date().toISOString(),
-                }),
-              });
-
-              if (response.ok) {
-                // Actualizar registro con timestamp del webhook
-                await supabase
-                  .from('session_analytics')
-                  .update({ 
-                    webhook_sent_at: new Date().toISOString(),
-                    analysis_status: 'processing'
-                  })
-                  .eq('id', sessionRecord.id);
-                
-                console.log('Session analysis webhook sent successfully');
-                console.log('Connectivity metrics saved:', connectivityData);
-              } else {
-                console.error('Failed to send webhook:', response.status);
-              }
-            } catch (webhookError) {
-              console.error('Error sending webhook:', webhookError);
+            // Enviar webhook para análisis usando la función mejorada
+            const webhookSuccess = await sendWebhook(sessionId, user.id);
+            
+            if (webhookSuccess) {
+              // Actualizar registro con timestamp del webhook
+              await supabase
+                .from('session_analytics')
+                .update({ 
+                  webhook_sent_at: new Date().toISOString(),
+                  analysis_status: 'processing'
+                })
+                .eq('id', sessionRecord.id);
+              
+              console.log('Session analysis completed successfully');
+              console.log('Connectivity metrics saved:', connectivityData);
+            } else {
+              console.error('Failed to send webhook for analysis');
             }
           } else {
             console.error('Failed to create session record');
@@ -336,6 +322,7 @@ const AudioRecorderApp = () => {
         {currentStep === 'camera' && (
           <CameraCapture 
             userId={user?.id || ''} 
+            sessionId={sessionId}
             onComplete={handleCameraComplete}
           />
         )}

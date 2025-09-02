@@ -122,31 +122,60 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
       session_name?: string;
     }
   ): Promise<SessionAnalytic | null> => {
-    if (!user) return null;
+    if (!user) {
+      console.error('No user available for session creation');
+      return null;
+    }
     
     try {
+      console.log('Creating session record with data:', { sessionId, connectivityData, userId: user.id });
+      
+      // Validate and sanitize connectivity data
+      const sanitizedData = {
+        internet_quality_start: connectivityData?.internet_quality_start ? 
+          Math.max(0, Math.min(100, Number(connectivityData.internet_quality_start))) : null,
+        internet_quality_end: connectivityData?.internet_quality_end ? 
+          Math.max(0, Math.min(100, Number(connectivityData.internet_quality_end))) : null,
+        session_duration_minutes: connectivityData?.session_duration_minutes ? 
+          Math.max(0, Number(connectivityData.session_duration_minutes)) : null,
+        connection_stability_score: connectivityData?.connection_stability_score ? 
+          Math.max(0, Math.min(100, Number(connectivityData.connection_stability_score))) : null,
+        network_type: connectivityData?.network_type || null,
+        avg_connection_speed: connectivityData?.avg_connection_speed ? 
+          Math.max(0, Number(connectivityData.avg_connection_speed)) : null,
+      };
+
+      const insertData = {
+        user_id: user.id,
+        session_id: sessionId,
+        session_name: connectivityData?.session_name || `Sesión ${new Date().toLocaleString('es-ES')}`,
+        analysis_status: 'pending' as const,
+        ...sanitizedData,
+      };
+
+      console.log('Inserting data to Supabase:', insertData);
+
       const { data, error: insertError } = await supabase
         .from('session_analytics')
-        .insert({
-          user_id: user.id,
-          session_id: sessionId,
-          session_name: connectivityData?.session_name || `Sesión ${new Date().toLocaleString()}`,
-          analysis_status: 'pending',
-          ...connectivityData,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Supabase insert error:', insertError);
+        throw insertError;
+      }
       
+      console.log('Session record created successfully:', data);
       return data;
     } catch (err) {
+      console.error('Error creating session record:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error al crear registro de sesión';
       setError(errorMessage);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: errorMessage,
+        title: "Error al crear sesión",
+        description: `No se pudo crear el registro de la sesión: ${errorMessage}`,
       });
       return null;
     }
@@ -154,21 +183,33 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
 
   const sendWebhook = async (sessionId: string, userId: string): Promise<boolean> => {
     try {
+      console.log('Sending webhook for session analysis:', { sessionId, userId });
+      
+      const webhookPayload = {
+        session_id: sessionId,
+        user_id: userId,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Webhook payload:', webhookPayload);
+
       const response = await fetch('https://cris.cloude.es/webhook/analisis_reunion', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          user_id: userId,
-          session_id: sessionId,
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(webhookPayload),
       });
 
+      console.log('Webhook response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`Webhook failed: ${response.status}`);
+        const responseText = await response.text();
+        console.error('Webhook failed with response:', responseText);
+        throw new Error(`Webhook failed: ${response.status} - ${responseText}`);
       }
+
+      console.log('Webhook sent successfully');
 
       // Update webhook_sent_at timestamp
       await supabase
