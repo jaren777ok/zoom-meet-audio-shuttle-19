@@ -5,7 +5,7 @@ import { toast } from '@/hooks/use-toast';
 import { z } from 'zod';
 
 // Zod schema for metrics validation - estructura completa
-const MetricsSchema = z.object({
+export const MetricsSchema = z.object({
   // Título de la sesión
   Titulo: z.string().optional(),
   

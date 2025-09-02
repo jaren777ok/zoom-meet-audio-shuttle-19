@@ -12,7 +12,7 @@ import ClientClassificationSection from '@/components/analytics/ClientClassifica
 import ConversionsResultsSection from '@/components/analytics/ConversionsResultsSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
-import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
+import { useCompanySessionAnalytics } from '@/hooks/useCompanySessionAnalytics';
 
 // Component for rendering analysis content
 const AnalysisContent: React.FC<{ markdown: string }> = ({ markdown }) => {
@@ -39,20 +39,39 @@ const CompanyAnalytics: React.FC = () => {
   const navigate = useNavigate();
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [sessionLoading, setSessionLoading] = useState(false);
   
   const {
     isLoading,
     refreshSessions,
     getSessionBySessionId,
     parseMetrics,
-  } = useSessionAnalytics();
+  } = useCompanySessionAnalytics();
 
-  // Get the specific session
-  const selectedSession = sessionId ? getSessionBySessionId(sessionId) : null;
+  // Load the specific session when sessionId changes
+  useEffect(() => {
+    const loadSession = async () => {
+      if (!sessionId) return;
+      
+      setSessionLoading(true);
+      try {
+        const session = await getSessionBySessionId(sessionId);
+        setSelectedSession(session);
+      } catch (err) {
+        console.error('Error loading session:', err);
+        setSelectedSession(null);
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+
+    loadSession();
+  }, [sessionId, getSessionBySessionId]);
   const metrics = selectedSession ? parseMetrics(selectedSession) : null;
 
   // If no sessionId or session not found, show error
-  if (!sessionId || (!isLoading && !selectedSession)) {
+  if (!sessionId || (!isLoading && !sessionLoading && !selectedSession)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -78,7 +97,7 @@ const CompanyAnalytics: React.FC = () => {
   }
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || sessionLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
         <div className="max-w-6xl mx-auto space-y-6">
