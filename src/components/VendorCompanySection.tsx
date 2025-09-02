@@ -61,46 +61,77 @@ const VendorCompanySection: React.FC = () => {
     mutationFn: async (code: string) => {
       if (!user?.id) throw new Error('No user found');
       
-      console.log('Attempting to associate with code:', code);
-      
       // First verify the company code exists
       const { data: company, error: companyError } = await supabase
         .from('company_accounts')
-        .select('company_code, id')
+        .select('company_code, id, company_name')
         .eq('company_code', code.toUpperCase())
         .single();
       
-      console.log('Company query result:', { company, companyError });
-      
       if (companyError || !company) {
-        console.log('Company not found:', companyError);
-        throw new Error('Código de empresa no válido');
+        throw new Error('Código de empresa no válido o no existe');
       }
 
-      console.log('Company found, updating profile...');
+      // Check if vendor is already associated with a different company
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('company_code')
+        .eq('id', user.id)
+        .single();
+
+      if (currentProfile?.company_code && currentProfile.company_code !== code.toUpperCase()) {
+        throw new Error('Ya estás asociado con otra empresa. Primero desasóciate para cambiar.');
+      }
       
       // Update vendor profile with company code
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ company_code: code.toUpperCase() })
         .eq('id', user.id);
 
-      console.log('Profile update result:', { error });
+      if (profileError) {
+        throw new Error('Error al actualizar tu perfil: ' + profileError.message);
+      }
 
-      if (error) {
-        console.log('Profile update error:', error);
-        throw error;
+      // Wait a moment for trigger to process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Verify the association was completed by checking vendor_metrics
+      const { data: vendorMetrics, error: metricsError } = await supabase
+        .from('vendor_metrics')
+        .select('company_id')
+        .eq('vendor_id', user.id)
+        .single();
+
+      if (metricsError || !vendorMetrics || vendorMetrics.company_id !== company.id) {
+        // Try to manually create the vendor metrics if trigger failed
+        const { error: insertError } = await supabase
+          .from('vendor_metrics')
+          .upsert({
+            vendor_id: user.id,
+            company_id: company.id,
+            total_sessions: 0,
+            total_sales: 0,
+            total_revenue: 0,
+            avg_satisfaction: 0,
+            conversion_rate: 0
+          });
+
+        if (insertError) {
+          throw new Error('Error al completar la asociación: ' + insertError.message);
+        }
       }
       
-      return code.toUpperCase();
+      return { code: code.toUpperCase(), companyName: company.company_name };
     },
-    onSuccess: (code) => {
+    onSuccess: (result) => {
       toast({
         title: "¡Asociado exitosamente!",
-        description: `Te has asociado con la empresa usando el código: ${code}`,
+        description: `Te has asociado con ${result.companyName} usando el código: ${result.code}`,
       });
       queryClient.invalidateQueries({ queryKey: ['vendor-profile'] });
       queryClient.invalidateQueries({ queryKey: ['company-info'] });
+      queryClient.invalidateQueries({ queryKey: ['company-metrics'] });
       setCompanyCode('');
     },
     onError: (error: any) => {
