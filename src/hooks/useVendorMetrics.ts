@@ -52,6 +52,22 @@ export interface VendorMetricsData {
   detailedSessions: VendorSession[];
 }
 
+// Function to get session details by session_id
+export const getSessionDetails = async (sessionId: string) => {
+  const { data: session, error } = await supabase
+    .from('session_analytics')
+    .select('*')
+    .eq('session_id', sessionId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching session details:', error);
+    throw error;
+  }
+
+  return session;
+};
+
 export const useVendorMetrics = (vendorId: string, dateRange?: { from?: Date; to?: Date }) => {
   return useQuery({
     queryKey: ['vendor-metrics', vendorId, dateRange],

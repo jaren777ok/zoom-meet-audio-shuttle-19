@@ -5,11 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, TrendingUp, Users, Zap } from 'lucide-react';
 import { VendorMetrics } from '@/hooks/useCompanyMetrics';
-import { useVendorMetrics } from '@/hooks/useVendorMetrics';
+import { useVendorMetrics, getSessionDetails } from '@/hooks/useVendorMetrics';
+import { useQuery } from '@tanstack/react-query';
 import DateFilter from '@/components/DateFilter';
 import { format } from 'date-fns';
 import VendorMetricsKPISection from '@/components/vendor/VendorMetricsKPISection';
 import VendorDetailedSessionsList from '@/components/vendor/VendorDetailedSessionsList';
+import { VendorSessionAnalysisModal } from '@/components/vendor/VendorSessionAnalysisModal';
 
 interface VendorMetricsModalProps {
   vendor: VendorMetrics;
@@ -25,8 +27,33 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
   onViewSessionDetails
 }) => {
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [showSessionAnalysis, setShowSessionAnalysis] = useState(false);
   
   const { data: metricsData, isLoading } = useVendorMetrics(vendor.vendor_id, dateRange);
+  
+  // Query for session details when a session is selected
+  const { data: sessionDetails, isLoading: sessionLoading } = useQuery({
+    queryKey: ['session-details', selectedSessionId],
+    queryFn: () => selectedSessionId ? getSessionDetails(selectedSessionId) : null,
+    enabled: !!selectedSessionId && showSessionAnalysis,
+  });
+
+  const handleViewSessionDetails = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setShowSessionAnalysis(true);
+  };
+
+  const handleBackToMetrics = () => {
+    setShowSessionAnalysis(false);
+    setSelectedSessionId(null);
+  };
+
+  const handleCloseModal = () => {
+    setShowSessionAnalysis(false);
+    setSelectedSessionId(null);
+    onClose();
+  };
 
   const getQualityColor = (quality: number) => {
     if (quality >= 80) return 'bg-green-500';
@@ -175,10 +202,7 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
               {/* Detailed Sessions List */}
               <VendorDetailedSessionsList 
                 sessions={metricsData.detailedSessions}
-                onViewSessionDetails={onViewSessionDetails ? (sessionId) => {
-                  onViewSessionDetails(sessionId);
-                  onClose(); // Close modal on navigation
-                } : undefined}
+                onViewSessionDetails={handleViewSessionDetails}
               />
             </>
           ) : (
@@ -188,10 +212,19 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
           )}
 
           <div className="flex justify-end">
-            <Button onClick={onClose}>Cerrar</Button>
+            <Button onClick={handleCloseModal}>Cerrar</Button>
           </div>
         </div>
       </DialogContent>
+
+      {/* Session Analysis Modal */}
+      <VendorSessionAnalysisModal
+        session={sessionDetails || null}
+        isOpen={showSessionAnalysis}
+        onClose={handleCloseModal}
+        onBack={handleBackToMetrics}
+        vendorName={vendor.display_name || vendor.vendor_name}
+      />
     </Dialog>
   );
 };
