@@ -67,6 +67,7 @@ export interface UseSessionAnalyticsReturn {
     network_type?: string;
     avg_connection_speed?: number;
     session_name?: string;
+    analysis_status?: string;
   }) => Promise<SessionAnalytic | null>;
   updateSessionRecord: (sessionId: string, updates: {
     internet_quality_start?: number;
@@ -130,6 +131,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
       network_type?: string;
       avg_connection_speed?: number;
       session_name?: string;
+      analysis_status?: string;
     }
   ): Promise<SessionAnalytic | null> => {
     if (!user) {
@@ -145,12 +147,30 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     try {
       console.log('Creating base session record:', { sessionId, userId: user.id });
       
+      // Check if session already exists to prevent duplicates
+      const { data: existingSession, error: checkError } = await supabase
+        .from('session_analytics')
+        .select('id, session_id')
+        .eq('session_id', sessionId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" which is OK
+        console.error('❌ Error checking for existing session:', checkError);
+        throw checkError;
+      }
+
+      if (existingSession) {
+        console.log('⚠️ Session already exists, returning existing:', existingSession.id);
+        return existingSession as SessionAnalytic;
+      }
+      
       // Create minimal base record first
       const insertData = {
         user_id: user.id,
         session_id: sessionId,
         session_name: connectivityData?.session_name || `Sesión ${new Date().toLocaleString('es-ES')}`,
-        analysis_status: 'draft' as const,
+        analysis_status: connectivityData?.analysis_status || 'initialized',
       };
 
       console.log('Inserting minimal data to Supabase:', insertData);
@@ -163,6 +183,17 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
 
       if (insertError) {
         console.error('Supabase insert error:', insertError);
+        // Check if it's a duplicate key error and handle gracefully
+        if (insertError.code === '23505') { // PostgreSQL unique violation
+          console.log('⚠️ Duplicate session detected, trying to fetch existing...');
+          const { data: existingData } = await supabase
+            .from('session_analytics')
+            .select('*')
+            .eq('session_id', sessionId)
+            .eq('user_id', user.id)
+            .single();
+          return existingData || null;
+        }
         throw insertError;
       }
       
@@ -201,6 +232,19 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     try {
       console.log('Updating session record:', { sessionId, updates, userId: user.id });
       
+      // Find the session first to ensure it exists
+      const { data: existingSession, error: findError } = await supabase
+        .from('session_analytics')
+        .select('id')
+        .eq('session_id', sessionId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (findError) {
+        console.error('❌ Session not found for update:', findError);
+        throw new Error(`Session ${sessionId} not found`);
+      }
+      
       // Validate and sanitize connectivity data with proper limits
       const sanitizedUpdates = { ...updates };
       
@@ -222,8 +266,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
           ...sanitizedUpdates,
           updated_at: new Date().toISOString()
         })
-        .eq('session_id', sessionId)
-        .eq('user_id', user.id)
+        .eq('id', existingSession.id)
         .select()
         .single();
 

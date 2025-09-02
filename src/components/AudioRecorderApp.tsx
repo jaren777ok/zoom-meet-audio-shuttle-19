@@ -17,7 +17,7 @@ import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
-import CameraCapture from '@/components/CameraCapture';
+import ProductivityCenter from '@/components/ProductivityCenter';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
 import { TrialBanner } from '@/components/TrialBanner';
 import { PremiumAccessModal } from '@/components/PremiumAccessModal';
@@ -58,7 +58,15 @@ const AudioRecorderApp = () => {
   const intervalSeconds = 20; // Made this a constant to prevent re-renders
   const [showSettings, setShowSettings] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
-  const [currentStep, setCurrentStep] = useState<'form' | 'camera' | 'recording'>('form');
+  const [currentStep, setCurrentStep] = useState<'form' | 'productivity' | 'recording'>('form');
+  
+  // Generate sessionId ONCE per app instance to prevent duplications
+  const [sessionId] = useState(() => {
+    if (!user?.id) return null;
+    const id = `${user.id}_${Date.now()}`;
+    console.log('🆔 SessionId generated ONCE in AudioRecorderApp:', id);
+    return id;
+  });
   const [showFloatingChat, setShowFloatingChat] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -86,7 +94,7 @@ const AudioRecorderApp = () => {
     isRequestingPermissions,
     microphoneVolume,
     systemVolume,
-    sessionId,
+    sessionId: hookSessionId,
     setMicrophoneVolume,
     setSystemVolume,
     requestScreenPermissions,
@@ -98,18 +106,20 @@ const AudioRecorderApp = () => {
     intervalSeconds,
     meetingInfo: meetingInfoForHook,
     userInfo: userInfoForHook,
-    captureSystemAudio: true // Always capture system audio for best AI performance
+    captureSystemAudio: true, // Always capture system audio for best AI performance
+    sessionId: sessionId || '' // Pass sessionId from state
   });
 
-  // Initialize session record when sessionId becomes available
+  // Initialize session record when sessionId becomes available and we have meeting info
   useEffect(() => {
     const initializeSession = async () => {
-      if (sessionId && user && !sessionInitialized) {
+      if (sessionId && user && meetingInfo && !sessionInitialized) {
         try {
-          console.log('🚀 Initializing session record with sessionId:', sessionId);
+          console.log('🚀 Initializing session record with unique sessionId:', sessionId);
           
           const initialData = {
-            session_name: meetingInfo?.meetingObjective || `Sesión ${new Date().toLocaleString('es-ES')}`,
+            session_name: meetingInfo.meetingObjective || `Sesión ${new Date().toLocaleString('es-ES')}`,
+            analysis_status: 'initialized' // Add status tracking
           };
           
           const sessionRecord = await createSessionRecord(sessionId, initialData);
@@ -125,7 +135,11 @@ const AudioRecorderApp = () => {
           }
         } catch (error) {
           console.error('❌ Error initializing session:', error);
-          // Don't show error toast here as it's handled in the hook
+          // Check if it's a duplication error and handle gracefully
+          if (error instanceof Error && error.message.includes('duplicate')) {
+            console.log('⚠️ Session already exists, continuing...');
+            setSessionInitialized(true);
+          }
         }
       }
     };
@@ -135,15 +149,15 @@ const AudioRecorderApp = () => {
 
   const handleMeetingInfoSubmit = (info: MeetingInfo) => {
     setMeetingInfo(info);
-    setCurrentStep('camera');
+    setCurrentStep('productivity');
   };
 
-  const handleCameraComplete = () => {
+  const handleProductivityComplete = () => {
     setCurrentStep('recording');
   };
 
   // Handle system audio permission request
-  const handleRequestSystemAudio = async () => {
+  const handleRequestSystemAudio = async (): Promise<boolean> => {
     try {
       console.log('🔊 Solicitando permisos de audio del sistema...');
       const success = await requestScreenPermissions();
@@ -151,14 +165,16 @@ const AudioRecorderApp = () => {
       if (!success) {
         alert('⚠️ No se pudo obtener acceso al audio del sistema.\n\nAsegúrate de:\n1. Hacer clic en "Compartir"\n2. Seleccionar "Compartir audio" en el diálogo\n\nEsto es necesario para que la IA funcione correctamente.');
       }
+      return success;
     } catch (error) {
       console.error('❌ Error al solicitar permisos del sistema:', error);
       alert('❌ Error al solicitar permisos del sistema.');
+      return false;
     }
   };
 
   // Handle microphone permission request
-  const handleRequestMicrophone = async () => {
+  const handleRequestMicrophone = async (): Promise<boolean> => {
     setIsRequestingMicPermission(true);
     try {
       console.log('🎤 Solicitando permisos de micrófono...');
@@ -166,12 +182,15 @@ const AudioRecorderApp = () => {
       
       if (success) {
         setHasMicrophonePermission(true);
+        return true;
       } else {
         alert('⚠️ No se pudo obtener acceso al micrófono.\n\nEsto es necesario para grabar tu voz durante el coaching.');
+        return false;
       }
     } catch (error) {
       console.error('❌ Error al solicitar permisos del micrófono:', error);
       alert('❌ Error al solicitar permisos del micrófono.');
+      return false;
     } finally {
       setIsRequestingMicPermission(false);
     }
@@ -266,7 +285,7 @@ const AudioRecorderApp = () => {
             internet_quality_start: startQuality?.quality || null,
             internet_quality_end: endQuality?.quality || null,
             session_duration_minutes: sessionSummary.durationMinutes,
-            connection_stability_score: networkStability.stabilityScore,
+            connection_stability_score: Math.min(networkStability.stabilityScore, 9.99), // Cap at 9.99
             network_type: endQuality?.networkType || startQuality?.networkType || null,
             avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
             analysis_status: 'pending'
@@ -381,12 +400,19 @@ const AudioRecorderApp = () => {
           <MeetingInfoForm onSubmit={handleMeetingInfoSubmit} />
         )}
 
-        {/* Camera Capture */}
-        {currentStep === 'camera' && (
-          <CameraCapture 
+        {/* Productivity Center - Permissions + Photo */}
+        {currentStep === 'productivity' && sessionId && (
+          <ProductivityCenter 
             userId={user?.id || ''} 
             sessionId={sessionId}
-            onComplete={handleCameraComplete}
+            onRequestMicrophone={handleRequestMicrophone}
+            onRequestSystemAudio={handleRequestSystemAudio}
+            onComplete={handleProductivityComplete}
+            hasMicrophonePermission={hasMicrophonePermission}
+            hasSystemAudio={hasSystemAudio}
+            isSystemAudioSupported={isSystemAudioSupported}
+            systemStreamReady={systemStreamReady}
+            isRequestingPermissions={isRequestingPermissions}
           />
         )}
 

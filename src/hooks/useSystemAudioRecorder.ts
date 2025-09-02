@@ -17,6 +17,7 @@ interface UseSystemAudioRecorderProps {
   meetingInfo: MeetingInfo;
   userInfo: UserInfo;
   captureSystemAudio?: boolean;
+  sessionId: string; // Now passed from parent
 }
 
 export const useSystemAudioRecorder = ({
@@ -24,7 +25,8 @@ export const useSystemAudioRecorder = ({
   intervalSeconds,
   meetingInfo,
   userInfo,
-  captureSystemAudio = false
+  captureSystemAudio = false,
+  sessionId
 }: UseSystemAudioRecorderProps) => {
   console.log('🔄 useSystemAudioRecorder: Hook called with:', { 
     webhookUrl, 
@@ -66,15 +68,6 @@ export const useSystemAudioRecorder = ({
   const isRecordingRef = useRef<boolean>(false);
   const currentSegmentRef = useRef<number>(0);
   const pendingChunks = useRef<Set<string>>(new Set());
-  const sesionIDRef = useRef<string | null>(null);
-
-  // Generate sessionId immediately when hook is initialized
-  useEffect(() => {
-    if (!sesionIDRef.current && userInfo.userId) {
-      sesionIDRef.current = `${userInfo.userId}_${Date.now()}`;
-      console.log('🆔 Session ID generated on hook init:', sesionIDRef.current);
-    }
-  }, [userInfo.userId]);
 
   const formatTime = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -115,7 +108,7 @@ export const useSystemAudioRecorder = ({
       formData.append('system_audio', systemFile);
     }
     
-    formData.append('sesionID', sesionIDRef.current || '');
+    formData.append('sesionID', sessionId);
     formData.append('segment_number', segmentNumber.toString());
     formData.append('user_id', userInfo.userId);
     formData.append('user_email', userInfo.userEmail);
@@ -329,8 +322,8 @@ export const useSystemAudioRecorder = ({
     try {
       console.log('🎤 Starting dual recording with system audio:', captureSystemAudio);
       
-      // Session ID should already be generated, just log it
-      console.log('🆔 Using existing sesionID for recording:', sesionIDRef.current);
+      // Session ID provided from parent component
+      console.log('🆔 Using sessionID for recording:', sessionId);
       
       // Reset state
       currentSegmentRef.current = 0;
@@ -508,9 +501,7 @@ export const useSystemAudioRecorder = ({
     currentSegmentRef.current = 0;
     pendingChunks.current.clear();
     
-    // Keep session ID intact for future use in analytics
-    // sesionIDRef.current = null; // Don't clear - let it persist for the session
-    console.log('🆔 sesionID preserved for analytics:', sesionIDRef.current);
+    console.log('🆔 sessionID preserved for analytics:', sessionId);
     
     console.log('✅ Dual recording stopped successfully');
   }, []);
@@ -539,7 +530,7 @@ export const useSystemAudioRecorder = ({
     isRequestingPermissions,
     microphoneVolume,
     systemVolume,
-    sessionId: sesionIDRef.current,
+    sessionId,
     setMicrophoneVolume,
     setSystemVolume,
     requestScreenPermissions,
