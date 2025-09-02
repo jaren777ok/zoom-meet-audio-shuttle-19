@@ -1670,6 +1670,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      calculate_vendor_metrics: {
+        Args: { p_vendor_id: string }
+        Returns: undefined
+      }
       generate_analysis_session_id: {
         Args: {
           p_account_id: string

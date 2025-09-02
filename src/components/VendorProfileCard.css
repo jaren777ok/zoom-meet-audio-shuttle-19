@@ -107,6 +107,11 @@
   pointer-events: none;
 }
 
+/* Permitir pointer events para el botón */
+.pc-contact-btn {
+  pointer-events: auto !important;
+}
+
 .pc-inside {
   inset: 1px;
   position: absolute;
