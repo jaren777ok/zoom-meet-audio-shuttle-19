@@ -45,6 +45,7 @@ const AudioRecorderApp = () => {
     startMonitoring,
     stopMonitoring,
     getNetworkStability,
+    measureQuality,
   } = useNetworkQuality();
   
   const {
@@ -212,14 +213,17 @@ const AudioRecorderApp = () => {
     try {
       console.log('🚀 Iniciando grabación...');
       
-      // Start network monitoring and session timer
-      await startMonitoring();
+      // Start network monitoring with delayed initial measurement for accuracy
+      await startMonitoring(true); // Pass true for delayed measurement
       startTimer();
       
-      // Store initial network quality
-      if (currentQuality) {
-        setStartQuality(currentQuality);
-      }
+      // Set up listener for the delayed start quality measurement
+      setTimeout(async () => {
+        // Get the actual initial quality after delay and store it
+        const initialQuality = await measureQuality();
+        setStartQuality(initialQuality);
+        console.log('📊 Initial quality captured after delay:', initialQuality);
+      }, 16000); // Wait 16 seconds to ensure measurement is complete
       
       await startRecording();
       setShowFloatingChat(true);
@@ -280,14 +284,14 @@ const AudioRecorderApp = () => {
           console.log('👤 User authenticated:', { userId: user.id, email: user.email });
           console.log('🔢 Session ID:', sessionId);
           
-          // Prepare connectivity metrics for webhook
+          // Prepare connectivity metrics for webhook with proper data types
           const connectivityMetrics = {
-            internet_quality_start: startQuality?.quality || null,
-            internet_quality_end: endQuality?.quality || null,
-            session_duration_minutes: sessionSummary.durationMinutes,
-            connection_stability_score: Math.min(networkStability.stabilityScore, 9.99), // Cap at 9.99
-            network_type: endQuality?.networkType || startQuality?.networkType || null,
-            avg_connection_speed: endQuality?.speed || startQuality?.speed || null
+            internet_quality_start: Math.max(1, startQuality?.quality || 1), // Never null, minimum 1
+            internet_quality_end: Math.max(1, endQuality?.quality || 1), // Never null, minimum 1
+            session_duration_minutes: Math.max(1, Math.round(sessionSummary.durationMinutes)), // Integer, minimum 1
+            connection_stability_score: Math.min(9.99, Math.max(0, networkStability.stabilityScore)), // Between 0-9.99
+            network_type: endQuality?.networkType || startQuality?.networkType || 'unknown',
+            avg_connection_speed: Math.max(0.1, endQuality?.speed || startQuality?.speed || 1) // Minimum 0.1 Mbps
           };
           
           console.log('📊 Connectivity metrics prepared for webhook:', connectivityMetrics);
