@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Clock, Wifi, Image as ImageIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { SessionAnalytic } from '@/hooks/useSessionAnalytics';
 import MetricsKPISection from '@/components/analytics/MetricsKPISection';
@@ -11,6 +11,7 @@ import ConversionsResultsSection from '@/components/analytics/ConversionsResults
 import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import { AnalysisContent } from '@/components/analytics/AnalysisContent';
+import { ImageModal } from '@/components/ImageModal';
 
 interface VendorSessionAnalysisModalProps {
   session: SessionAnalytic | null;
@@ -18,6 +19,7 @@ interface VendorSessionAnalysisModalProps {
   onClose: () => void;
   onBack: () => void;
   vendorName?: string;
+  vendorPhotoUrl?: string;
 }
 
 export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProps> = ({
@@ -25,8 +27,10 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
   isOpen,
   onClose,
   onBack,
-  vendorName
+  vendorName,
+  vendorPhotoUrl
 }) => {
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   if (!session) {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -101,20 +105,122 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Vendedor</p>
+                  <div className="flex items-center gap-3">
+                    {vendorPhotoUrl ? (
+                      <div 
+                        className="w-16 h-16 rounded-full overflow-hidden border-2 border-border cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setIsImageModalOpen(true)}
+                      >
+                        <img
+                          src={vendorPhotoUrl}
+                          alt={vendorName || 'Vendedor'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-lg font-medium">{vendorName || 'Vendedor'}</p>
+                      {vendorPhotoUrl && (
+                        <button
+                          onClick={() => setIsImageModalOpen(true)}
+                          className="text-sm text-primary hover:underline flex items-center gap-1"
+                        >
+                          <ImageIcon className="h-3 w-3" />
+                          Ver foto completa
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Nombre de la Sesión</p>
                   <p className="text-lg">{session.session_name || 'Sesión sin nombre'}</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Vendedor</p>
-                  <p className="text-lg">{vendorName || 'Vendedor'}</p>
-                </div>
+                
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Fecha</p>
                   <p className="text-lg">{format(new Date(session.created_at), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Duración</p>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-lg">
+                      {session.session_duration_minutes ? `${Math.round(session.session_duration_minutes)}m` : 'No disponible'}
+                    </p>
+                  </div>
+                </div>
               </div>
+              
+              {/* Internet Quality Section */}
+              {(session.internet_quality_start || session.internet_quality_end) && (
+                <div className="mt-6 pt-4 border-t">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                    <Wifi className="h-4 w-4" />
+                    Métricas de Conectividad
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {session.internet_quality_start && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Calidad Inicial</p>
+                        <p className="text-lg font-medium">{session.internet_quality_start}%</p>
+                      </div>
+                    )}
+                    {session.internet_quality_end && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Calidad Final</p>
+                        <p className="text-lg font-medium">{session.internet_quality_end}%</p>
+                      </div>
+                    )}
+                    {session.internet_quality_start && session.internet_quality_end && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Variación</p>
+                        <p className={`text-lg font-medium ${
+                          session.internet_quality_end >= session.internet_quality_start 
+                            ? 'text-green-600' 
+                            : 'text-red-600'
+                        }`}>
+                          {session.internet_quality_end >= session.internet_quality_start ? '+' : ''}
+                          {session.internet_quality_end - session.internet_quality_start}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Additional Network Info */}
+                  {(session.network_type || session.avg_connection_speed || session.connection_stability_score) && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      {session.network_type && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Tipo de Red</p>
+                          <p className="text-lg font-medium">{session.network_type}</p>
+                        </div>
+                      )}
+                      {session.avg_connection_speed && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Velocidad Promedio</p>
+                          <p className="text-lg font-medium">{Math.round(session.avg_connection_speed)} Mbps</p>
+                        </div>
+                      )}
+                      {session.connection_stability_score && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Estabilidad</p>
+                          <p className="text-lg font-medium">{Math.round(session.connection_stability_score)}%</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -133,11 +239,14 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
               {/* Client Classification */}
               <ClientClassificationSection metrics={parsedMetrics} />
 
+              {/* Connectivity Metrics */}
+              <ConnectivityMetricsSection session={session} />
+
               {/* Conversions and Results */}
               <ConversionsResultsSection metrics={parsedMetrics} />
 
-              {/* Connectivity Metrics */}
-              <ConnectivityMetricsSection session={session} />
+              {/* Lost Sale Analysis (if applicable) */}
+              <LostSaleAnalysis metrics={parsedMetrics} />
 
               {/* Detailed Analysis (Markdown) */}
               {session.analisis_markdown && (
@@ -150,9 +259,6 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
                   </CardContent>
                 </Card>
               )}
-
-              {/* Lost Sale Analysis (if applicable) */}
-              <LostSaleAnalysis metrics={parsedMetrics} />
             </>
           ) : (
             <Card>
@@ -172,6 +278,16 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
             <Button onClick={onClose}>Cerrar</Button>
           </div>
         </div>
+        
+        {/* Image Modal */}
+        {vendorPhotoUrl && (
+          <ImageModal
+            isOpen={isImageModalOpen}
+            onClose={() => setIsImageModalOpen(false)}
+            imageUrl={vendorPhotoUrl}
+            altText={`Foto de ${vendorName || 'Vendedor'}`}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

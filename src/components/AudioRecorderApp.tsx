@@ -574,7 +574,7 @@ const AudioRecorderApp = () => {
                       <Button
                         onClick={handleStartRecording}
                         size="lg"
-                        className="bg-gradient-to-r from-neon-cyan to-neon-cyan-glow text-primary-foreground hover:opacity-90 transition-all duration-300 shadow-glow-cyan min-w-[200px]"
+                        className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white min-w-[200px] shadow-lg transform hover:scale-105 transition-all duration-200"
                         disabled={!hasSystemAudio || !hasMicrophonePermission || subscriptionLoading}
                       >
                         <DollarSign className="mr-2 h-5 w-5" />

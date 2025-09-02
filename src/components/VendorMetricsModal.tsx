@@ -224,6 +224,7 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
         onClose={handleCloseModal}
         onBack={handleBackToMetrics}
         vendorName={vendor.display_name || vendor.vendor_name}
+        vendorPhotoUrl={vendor.profile_photo_url}
       />
     </Dialog>
   );

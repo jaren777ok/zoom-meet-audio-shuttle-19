@@ -119,6 +119,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
       connection_stability_score?: number;
       network_type?: string;
       avg_connection_speed?: number;
+      session_name?: string;
     }
   ): Promise<SessionAnalytic | null> => {
     if (!user) return null;
@@ -129,6 +130,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
         .insert({
           user_id: user.id,
           session_id: sessionId,
+          session_name: connectivityData?.session_name || `Sesión ${new Date().toLocaleString()}`,
           analysis_status: 'pending',
           ...connectivityData,
         })
