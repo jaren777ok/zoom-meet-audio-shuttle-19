@@ -71,19 +71,24 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
 
       const result = await response.json();
       
-      if (!result.photo_url) {
+      // Handle array response format: [{"output": "url"}]
+      const photoUrl = Array.isArray(result) && result[0]?.output 
+        ? result[0].output 
+        : result.photo_url;
+      
+      if (!photoUrl) {
         throw new Error('No se recibió la URL de la foto procesada');
       }
 
       // Update profile in Supabase
       const { error } = await supabase
         .from('profiles')
-        .update({ profile_photo_url: result.photo_url })
+        .update({ profile_photo_url: photoUrl })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      onPhotoUpdated(result.photo_url);
+      onPhotoUpdated(photoUrl);
       setSelectedFile(null);
       setPreviewUrl(null);
       toast.success('Foto de perfil actualizada correctamente');
@@ -111,12 +116,19 @@ export const ProfilePhotoUploader: React.FC<ProfilePhotoUploaderProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col items-center gap-4">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={previewUrl || currentPhotoUrl} alt="Foto de perfil" />
-            <AvatarFallback>
-              <Camera className="h-8 w-8 text-muted-foreground" />
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative w-32 h-32 border-2 border-dashed border-muted-foreground/50 rounded-lg overflow-hidden bg-muted/20">
+            {(previewUrl || currentPhotoUrl) ? (
+              <img 
+                src={previewUrl || currentPhotoUrl} 
+                alt="Foto de perfil" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Camera className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+          </div>
 
           {!selectedFile ? (
             <div className="text-center">
