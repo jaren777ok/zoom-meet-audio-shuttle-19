@@ -78,7 +78,14 @@ export interface UseSessionAnalyticsReturn {
     avg_connection_speed?: number;
     analysis_status?: string;
   }) => Promise<SessionAnalytic | null>;
-  sendWebhook: (sessionId: string, userId: string) => Promise<boolean>;
+  sendWebhook: (sessionId: string, userId: string, connectivityMetrics?: {
+    internet_quality_start?: number;
+    internet_quality_end?: number;
+    session_duration_minutes?: number;
+    connection_stability_score?: number;
+    network_type?: string;
+    avg_connection_speed?: number;
+  }) => Promise<boolean>;
   refreshSessions: () => Promise<void>;
   getSessionBySessionId: (sessionId: string) => SessionAnalytic | null;
   parseMetrics: (session: SessionAnalytic) => SessionMetrics | null;
@@ -290,14 +297,22 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     }
   };
 
-  const sendWebhook = async (sessionId: string, userId: string): Promise<boolean> => {
+  const sendWebhook = async (sessionId: string, userId: string, connectivityMetrics?: {
+    internet_quality_start?: number;
+    internet_quality_end?: number;
+    session_duration_minutes?: number;
+    connection_stability_score?: number;
+    network_type?: string;
+    avg_connection_speed?: number;
+  }): Promise<boolean> => {
     try {
-      console.log('Sending webhook for session analysis:', { sessionId, userId });
+      console.log('Sending webhook for session analysis:', { sessionId, userId, connectivityMetrics });
       
       const webhookPayload = {
         session_id: sessionId,
         user_id: userId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        ...(connectivityMetrics && { connectivity_metrics: connectivityMetrics })
       };
 
       console.log('Webhook payload:', webhookPayload);
