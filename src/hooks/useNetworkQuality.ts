@@ -176,7 +176,7 @@ export const useNetworkQuality = () => {
     const standardDeviation = Math.sqrt(variance);
     
     // Stability score (lower variance = higher stability)
-    const stabilityScore = Math.max(0, Math.min(10, 10 - (standardDeviation * 2)));
+    const stabilityScore = Math.max(0, Math.min(9.99, 10 - (standardDeviation * 2)));
     
     return {
       measurements: [...measurements],

@@ -68,6 +68,15 @@ export interface UseSessionAnalyticsReturn {
     avg_connection_speed?: number;
     session_name?: string;
   }) => Promise<SessionAnalytic | null>;
+  updateSessionRecord: (sessionId: string, updates: {
+    internet_quality_start?: number;
+    internet_quality_end?: number;
+    session_duration_minutes?: number;
+    connection_stability_score?: number;
+    network_type?: string;
+    avg_connection_speed?: number;
+    analysis_status?: string;
+  }) => Promise<SessionAnalytic | null>;
   sendWebhook: (sessionId: string, userId: string) => Promise<boolean>;
   refreshSessions: () => Promise<void>;
   getSessionBySessionId: (sessionId: string) => SessionAnalytic | null;
@@ -134,32 +143,17 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     }
     
     try {
-      console.log('Creating session record with data:', { sessionId, connectivityData, userId: user.id });
+      console.log('Creating base session record:', { sessionId, userId: user.id });
       
-      // Validate and sanitize connectivity data
-      const sanitizedData = {
-        internet_quality_start: connectivityData?.internet_quality_start ? 
-          Math.max(0, Math.min(100, Number(connectivityData.internet_quality_start))) : null,
-        internet_quality_end: connectivityData?.internet_quality_end ? 
-          Math.max(0, Math.min(100, Number(connectivityData.internet_quality_end))) : null,
-        session_duration_minutes: connectivityData?.session_duration_minutes ? 
-          Math.max(0, Number(connectivityData.session_duration_minutes)) : null,
-        connection_stability_score: connectivityData?.connection_stability_score ? 
-          Math.max(0, Math.min(100, Number(connectivityData.connection_stability_score))) : null,
-        network_type: connectivityData?.network_type || null,
-        avg_connection_speed: connectivityData?.avg_connection_speed ? 
-          Math.max(0, Number(connectivityData.avg_connection_speed)) : null,
-      };
-
+      // Create minimal base record first
       const insertData = {
         user_id: user.id,
         session_id: sessionId,
         session_name: connectivityData?.session_name || `Sesión ${new Date().toLocaleString('es-ES')}`,
-        analysis_status: 'pending' as const,
-        ...sanitizedData,
+        analysis_status: 'draft' as const,
       };
 
-      console.log('Inserting data to Supabase:', insertData);
+      console.log('Inserting minimal data to Supabase:', insertData);
 
       const { data, error: insertError } = await supabase
         .from('session_analytics')
@@ -172,7 +166,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
         throw insertError;
       }
       
-      console.log('Session record created successfully:', data);
+      console.log('Base session record created successfully:', data);
       return data;
     } catch (err) {
       console.error('Error creating session record:', err);
@@ -182,6 +176,72 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
         variant: "destructive",
         title: "Error al crear sesión",
         description: `No se pudo crear el registro de la sesión: ${errorMessage}`,
+      });
+      return null;
+    }
+  };
+
+  const updateSessionRecord = async (
+    sessionId: string, 
+    updates: {
+      internet_quality_start?: number;
+      internet_quality_end?: number;
+      session_duration_minutes?: number;
+      connection_stability_score?: number;
+      network_type?: string;
+      avg_connection_speed?: number;
+      analysis_status?: string;
+    }
+  ): Promise<SessionAnalytic | null> => {
+    if (!user) {
+      console.error('❌ No user available for session update');
+      return null;
+    }
+
+    try {
+      console.log('Updating session record:', { sessionId, updates, userId: user.id });
+      
+      // Validate and sanitize connectivity data with proper limits
+      const sanitizedUpdates = { ...updates };
+      
+      if (sanitizedUpdates.connection_stability_score !== undefined) {
+        sanitizedUpdates.connection_stability_score = Math.max(0, Math.min(9.99, Number(sanitizedUpdates.connection_stability_score) || 0));
+      }
+      if (sanitizedUpdates.internet_quality_start !== undefined) {
+        sanitizedUpdates.internet_quality_start = Math.max(1, Math.min(10, Number(sanitizedUpdates.internet_quality_start) || 1));
+      }
+      if (sanitizedUpdates.internet_quality_end !== undefined) {
+        sanitizedUpdates.internet_quality_end = Math.max(1, Math.min(10, Number(sanitizedUpdates.internet_quality_end) || 1));
+      }
+
+      console.log('Sanitized updates:', sanitizedUpdates);
+
+      const { data, error: updateError } = await supabase
+        .from('session_analytics')
+        .update({
+          ...sanitizedUpdates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('session_id', sessionId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Supabase update error:', updateError);
+        throw updateError;
+      }
+      
+      console.log('Session record updated successfully:', data);
+      return data;
+    } catch (err) {
+      console.error('Error updating session record:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar registro de sesión';
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Error al actualizar sesión",
+        description: errorMessage,
       });
       return null;
     }
@@ -315,6 +375,7 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     isLoading,
     error,
     createSessionRecord,
+    updateSessionRecord,
     sendWebhook,
     refreshSessions,
     getSessionBySessionId,

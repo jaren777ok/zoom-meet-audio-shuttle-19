@@ -36,7 +36,7 @@ const AudioRecorderApp = () => {
   
   const { user, signOut } = useAuth();
   const { isTrialActive, daysRemaining, loading: subscriptionLoading, submitPremiumRequest } = useSubscription();
-  const { createSessionRecord, sendWebhook } = useSessionAnalytics();
+  const { createSessionRecord, updateSessionRecord, sendWebhook } = useSessionAnalytics();
   
   // Network quality and session timer hooks
   const {
@@ -269,40 +269,33 @@ const AudioRecorderApp = () => {
             connection_stability_score: networkStability.stabilityScore,
             network_type: endQuality?.networkType || startQuality?.networkType || null,
             avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
+            analysis_status: 'pending'
           };
           
           console.log('📊 Final connectivity data prepared:', connectivityUpdateData);
           
-          // Update existing session record with final connectivity data
-          const { error: updateError } = await supabase
-            .from('session_analytics')
-            .update({
-              ...connectivityUpdateData,
-              analysis_status: 'pending',
-              updated_at: new Date().toISOString()
-            })
-            .eq('session_id', sessionId)
-            .eq('user_id', user.id);
-
-          if (updateError) {
-            throw updateError;
-          }
-
-          console.log('✅ Session record updated successfully');
+          // Update existing session record with final connectivity data using new function
+          const updatedRecord = await updateSessionRecord(sessionId, connectivityUpdateData);
           
-          toast({
-            title: "Sesión finalizada",
-            description: "Los datos de conectividad han sido actualizados",
-          });
-          
-          // Enviar webhook para análisis usando la función mejorada
-          console.log('📡 Sending webhook for analysis...');
-          const result = await sendWebhook(sessionId, user.id);
-          
-          if (result) {
-            console.log('✅ Webhook sent successfully');
+          if (updatedRecord) {
+            console.log('✅ Session record updated successfully');
+            
+            toast({
+              title: "Sesión finalizada",
+              description: "Los datos de conectividad han sido actualizados",
+            });
+            
+            // Enviar webhook para análisis de forma independiente
+            console.log('📡 Sending webhook for analysis...');
+            const result = await sendWebhook(sessionId, user.id);
+            
+            if (result) {
+              console.log('✅ Webhook sent successfully');
+            } else {
+              console.error('❌ Webhook failed but session was saved');
+            }
           } else {
-            console.error('❌ Webhook failed');
+            throw new Error('Failed to update session record');
           }
         } catch (error: any) {
           console.error('❌ Error in session finalization process:', error);
