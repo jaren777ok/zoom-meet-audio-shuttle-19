@@ -15,6 +15,7 @@ import { useNetworkQuality } from '@/hooks/useNetworkQuality';
 import { useSessionTimer } from '@/hooks/useSessionTimer';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import MeetingInfoForm from '@/components/MeetingInfoForm';
 import CameraCapture from '@/components/CameraCapture';
 import { FloatingAIChat } from '@/components/FloatingAIChat';
@@ -200,47 +201,75 @@ const AudioRecorderApp = () => {
       const networkStability = getNetworkStability();
       const endQuality = currentQuality;
       
-      // Usar el mismo sessionId del hook y enviar webhook para análisis
-      if (user && sessionId) {
-        try {
-          // Prepare connectivity data
-          const connectivityData = {
-            internet_quality_start: startQuality?.quality || null,
-            internet_quality_end: endQuality?.quality || null,
-            session_duration_minutes: sessionSummary.durationMinutes,
-            connection_stability_score: networkStability.stabilityScore,
-            network_type: endQuality?.networkType || startQuality?.networkType || null,
-            avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
-          };
-          
-          // Crear registro en session_analytics usando el sessionId del hook con datos de conectividad
-          const sessionRecord = await createSessionRecord(sessionId, connectivityData);
+      // Verificar autenticación antes de procesar
+      if (!user) {
+        console.error('❌ No user authenticated for session save');
+        toast({
+          title: "Error de autenticación",
+          description: "Debes estar autenticado para guardar la sesión",
+          variant: "destructive",
+        });
+        return;
+      }
 
-          if (sessionRecord) {
-            // Enviar webhook para análisis usando la función mejorada
-            const webhookSuccess = await sendWebhook(sessionId, user.id);
-            
-            if (webhookSuccess) {
-              // Actualizar registro con timestamp del webhook
-              await supabase
-                .from('session_analytics')
-                .update({ 
-                  webhook_sent_at: new Date().toISOString(),
-                  analysis_status: 'processing'
-                })
-                .eq('id', sessionRecord.id);
-              
-              console.log('Session analysis completed successfully');
-              console.log('Connectivity metrics saved:', connectivityData);
-            } else {
-              console.error('Failed to send webhook for analysis');
-            }
+      if (!sessionId) {
+        console.error('❌ No sessionId available');
+        toast({
+          title: "Error",
+          description: "No se pudo generar el ID de sesión",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        console.log('💾 Starting session save process...');
+        console.log('👤 User authenticated:', { userId: user.id, email: user.email });
+        console.log('🔢 Session ID:', sessionId);
+        
+        // Prepare connectivity data
+        const connectivityData = {
+          internet_quality_start: startQuality?.quality || null,
+          internet_quality_end: endQuality?.quality || null,
+          session_duration_minutes: sessionSummary.durationMinutes,
+          connection_stability_score: networkStability.stabilityScore,
+          network_type: endQuality?.networkType || startQuality?.networkType || null,
+          avg_connection_speed: endQuality?.speed || startQuality?.speed || null,
+          session_name: meetingInfo?.meetingObjective || `Sesión ${new Date().toLocaleDateString()}`,
+        };
+        
+        console.log('📊 Connectivity data prepared:', connectivityData);
+        
+        // Crear registro en session_analytics usando el sessionId del hook con datos de conectividad
+        const sessionRecord = await createSessionRecord(sessionId, connectivityData);
+
+        if (sessionRecord) {
+          console.log('✅ Session record created successfully:', sessionRecord.id);
+          
+          toast({
+            title: "Sesión guardada",
+            description: "La sesión se ha guardado correctamente",
+          });
+          
+          // Enviar webhook para análisis usando la función mejorada
+          console.log('📡 Sending webhook for analysis...');
+          const result = await sendWebhook(sessionId, webhookUrl);
+          
+          if (result) {
+            console.log('✅ Webhook sent successfully');
           } else {
-            console.error('Failed to create session record');
+            console.error('❌ Webhook failed');
           }
-        } catch (error) {
-          console.error('Error in session analysis flow:', error);
+        } else {
+          throw new Error('No se pudo crear el registro de sesión');
         }
+      } catch (error: any) {
+        console.error('❌ Error in session save process:', error);
+        toast({
+          title: "Error al guardar sesión",
+          description: error.message || "No se pudo guardar la sesión",
+          variant: "destructive",
+        });
       }
       
       // Clear all AI messages from Supabase

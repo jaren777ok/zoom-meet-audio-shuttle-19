@@ -123,8 +123,13 @@ export const useSessionAnalytics = (): UseSessionAnalyticsReturn => {
     }
   ): Promise<SessionAnalytic | null> => {
     if (!user) {
-      console.error('No user available for session creation');
-      return null;
+      console.error('❌ No user available for session creation - user must be authenticated');
+      throw new Error('Usuario no autenticado. Por favor inicia sesión.');
+    }
+
+    if (!sessionId) {
+      console.error('❌ SessionId is required');
+      throw new Error('ID de sesión requerido');
     }
     
     try {
