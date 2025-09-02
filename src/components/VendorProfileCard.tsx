@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { VendorMetrics } from '@/hooks/useCompanyMetrics';
+import { VendorMetricsModal } from './VendorMetricsModal';
 import './VendorProfileCard.css';
 
 interface VendorProfileCardProps {
@@ -33,6 +34,7 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
 }) => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLElement>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const animationHandlers = useMemo(() => {
     let rafId: number | null = null;
@@ -171,7 +173,7 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
   );
 
   const handleContactClick = () => {
-    onViewDetails(vendor.vendor_id);
+    setIsModalOpen(true);
   };
 
   const getInitials = (name: string) => {
@@ -190,11 +192,12 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
   };
 
   return (
-    <div 
-      ref={wrapRef} 
-      className="pc-card-wrapper" 
-      style={cardStyle}
-    >
+    <>
+      <div 
+        ref={wrapRef} 
+        className="pc-card-wrapper" 
+        style={cardStyle}
+      >
       <section 
         ref={cardRef} 
         className="pc-card"
@@ -266,6 +269,13 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
           </div>
         </div>
       </section>
-    </div>
+      </div>
+      
+      <VendorMetricsModal
+        vendor={vendor}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 };

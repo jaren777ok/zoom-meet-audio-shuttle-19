@@ -51,7 +51,7 @@
 
 .pc-card-wrapper:hover,
 .pc-card-wrapper.active {
-  --card-opacity: 1;
+  --card-opacity: 0.3;
 }
 
 .pc-card-wrapper:hover::before,
@@ -82,14 +82,14 @@
   background-image:
     radial-gradient(
       farthest-side circle at var(--pointer-x) var(--pointer-y),
-      hsla(266, 100%, 90%, var(--card-opacity)) 4%,
-      hsla(266, 50%, 80%, calc(var(--card-opacity) * 0.75)) 10%,
-      hsla(266, 25%, 70%, calc(var(--card-opacity) * 0.5)) 50%,
-      hsla(266, 0%, 60%, 0) 100%
+      hsla(266, 60%, 70%, var(--card-opacity)) 4%,
+      hsla(266, 40%, 60%, calc(var(--card-opacity) * 0.5)) 10%,
+      hsla(266, 20%, 50%, calc(var(--card-opacity) * 0.3)) 50%,
+      hsla(266, 0%, 40%, 0) 100%
     ),
-    radial-gradient(35% 52% at 55% 20%, #00ffaac4 0%, #073aff00 100%),
-    radial-gradient(100% 100% at 50% 50%, #00c1ffff 1%, #073aff00 76%),
-    conic-gradient(from 124deg at 50% 50%, #c137ffff 0%, #07c6ffff 40%, #07c6ffff 60%, #c137ffff 100%);
+    radial-gradient(35% 52% at 55% 20%, #00ffaa44 0%, #073aff00 100%),
+    radial-gradient(100% 100% at 50% 50%, #00c1ff88 1%, #073aff00 76%),
+    conic-gradient(from 124deg at 50% 50%, #c137ff88 0%, #07c6ff88 40%, #07c6ff88 60%, #c137ff88 100%);
   overflow: hidden;
 }
 
@@ -185,7 +185,7 @@
 
 .pc-card:hover .pc-shine,
 .pc-card.active .pc-shine {
-  filter: brightness(0.85) contrast(1.5) saturate(0.5);
+  filter: brightness(0.7) contrast(1.2) saturate(0.4);
   animation: none;
 }
 
@@ -260,7 +260,7 @@
   left: 50%;
   transform: translateX(-50%) scale(1);
   bottom: 2px;
-  opacity: calc(1.75 - var(--pointer-from-center));
+  opacity: 1;
   object-fit: cover;
   height: 100%;
 }
