@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Search, BarChart3, RefreshCw } from 'lucide-react';
 import { ImageModal } from '@/components/ImageModal';
-import { marked } from 'marked';
 import AppNavigation from '@/components/AppNavigation';
 import SessionAnalysisCard from '@/components/analytics/SessionAnalysisCard';
 import MetricsKPISection from '@/components/analytics/MetricsKPISection';
@@ -14,29 +13,10 @@ import ClientClassificationSection from '@/components/analytics/ClientClassifica
 import ConversionsResultsSection from '@/components/analytics/ConversionsResultsSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
+import { AnalysisContent } from '@/components/analytics/AnalysisContent';
 import DateFilter, { DateRange } from '@/components/DateFilter';
 import EditableSessionName from '@/components/EditableSessionName';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
-
-// Component for rendering analysis content
-const AnalysisContent: React.FC<{ markdown: string }> = ({ markdown }) => {
-  const [htmlContent, setHtmlContent] = useState<string>('');
-
-  useEffect(() => {
-    const convertMarkdown = async () => {
-      const html = await marked(markdown);
-      setHtmlContent(html);
-    };
-    convertMarkdown();
-  }, [markdown]);
-
-  return (
-    <div 
-      className="prose-lg leading-relaxed space-y-4 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-medium [&_h3]:mb-2 [&_p]:mb-4 [&_ul]:mb-4 [&_ol]:mb-4 [&_li]:mb-2 [&_strong]:font-bold [&_em]:italic [&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_code]:bg-muted [&_code]:px-2 [&_code]:py-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto"
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-    />
-  );
-};
 
 const Analytics: React.FC = () => {
   const { sessionId } = useParams<{ sessionId?: string }>();
@@ -80,10 +60,6 @@ const Analytics: React.FC = () => {
     return filtered;
   }, [sessions, searchTerm, dateRange, filterSessionsByDateRange]);
 
-  // Función para convertir markdown a HTML
-  const convertMarkdownToHTML = async (markdown: string): Promise<string> => {
-    return await marked(markdown);
-  };
 
   // Vista detalle de sesión
   if (selectedSession) {

@@ -10,6 +10,7 @@ import ClientClassificationSection from '@/components/analytics/ClientClassifica
 import ConversionsResultsSection from '@/components/analytics/ConversionsResultsSection';
 import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
+import { AnalysisContent } from '@/components/analytics/AnalysisContent';
 
 interface VendorSessionAnalysisModalProps {
   session: SessionAnalytic | null;
@@ -137,6 +138,18 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
 
               {/* Connectivity Metrics */}
               <ConnectivityMetricsSection session={session} />
+
+              {/* Detailed Analysis (Markdown) */}
+              {session.analisis_markdown && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-bold">Análisis Detallado</CardTitle>
+                  </CardHeader>
+                  <CardContent className="prose prose-slate dark:prose-invert max-w-none">
+                    <AnalysisContent markdown={session.analisis_markdown} />
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Lost Sale Analysis (if applicable) */}
               <LostSaleAnalysis metrics={parsedMetrics} />
