@@ -280,16 +280,15 @@ export const useCompanyMetrics = (dateRange?: { from: Date | undefined; to: Date
   // Get top 10 vendors
   const topVendors = vendorMetrics?.slice(0, 10) || [];
 
-  // Calculate additional metrics - Fixed calculation
+  // Calculate additional metrics - Correct calculation
   const activeVendors = vendorMetrics?.filter(vendor => vendor.total_sessions > 0).length || 0;
-  const totalActiveVendors = Math.max(activeVendors, vendorMetrics?.length || 0);
-  const averageRevenuePerVendor = totalActiveVendors > 0 ? (companyMetrics?.total_revenue || 0) / totalActiveVendors : 0;
+  const averageRevenuePerVendor = activeVendors > 0 ? (companyMetrics?.total_revenue || 0) / activeVendors : 0;
 
   return {
     companyMetrics,
     vendorMetrics: vendorMetrics || [],
     topVendors,
-    activeVendors: totalActiveVendors,
+    activeVendors,
     averageRevenuePerVendor,
     isLoadingCompanyMetrics,
     isLoadingVendorMetrics,
