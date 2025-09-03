@@ -48,12 +48,19 @@
     --gradient-zoom: linear-gradient(135deg, hsl(218 100% 52%), hsl(218 100% 72%));
     --gradient-light: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
     
-    /* KPI Gradients - Specific Colors as Requested */
-    --gradient-active-vendors: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); /* Blue */
-    --gradient-conversion-rate: linear-gradient(135deg, #f97316 0%, #ea580c 100%); /* Orange */
-    --gradient-avg-revenue: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); /* Purple */
-    --gradient-total-sessions: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); /* Red */
-    --gradient-total-sales: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); /* Green */
+    /* KPI Colors - Specific Colors as Requested (HSL) */
+    --color-active-vendors: 217 91% 60%; /* Blue */
+    --color-conversion-rate: 25 95% 53%; /* Orange */
+    --color-avg-revenue: 258 90% 66%; /* Purple */
+    --color-total-sessions: 0 84% 60%; /* Red */
+    --color-total-sales: 142 76% 36%; /* Green */
+    
+    /* KPI Gradients */
+    --gradient-active-vendors: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 50%) 100%);
+    --gradient-conversion-rate: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(25 95% 43%) 100%);
+    --gradient-avg-revenue: linear-gradient(135deg, hsl(258 90% 66%) 0%, hsl(258 90% 56%) 100%);
+    --gradient-total-sessions: linear-gradient(135deg, hsl(0 84% 60%) 0%, hsl(0 84% 50%) 100%);
+    --gradient-total-sales: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 76% 26%) 100%);
     
     /* Professional shadows */
     --shadow-zoom: 0 4px 20px hsl(218 100% 52% / 0.15);
@@ -123,12 +130,19 @@
     --gradient-zoom: linear-gradient(135deg, hsl(218 100% 65%), hsl(218 100% 75%));
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 4%));
     
-    /* Dark KPI Gradients - Specific Colors as Requested */
-    --gradient-active-vendors: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%); /* Blue */
-    --gradient-conversion-rate: linear-gradient(135deg, #fb923c 0%, #f97316 100%); /* Orange */
-    --gradient-avg-revenue: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%); /* Purple */
-    --gradient-total-sessions: linear-gradient(135deg, #f87171 0%, #ef4444 100%); /* Red */
-    --gradient-total-sales: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); /* Green */
+    /* Dark KPI Colors - Brighter variants */
+    --color-active-vendors: 217 91% 70%; /* Brighter Blue */
+    --color-conversion-rate: 25 95% 63%; /* Brighter Orange */
+    --color-avg-revenue: 258 90% 76%; /* Brighter Purple */
+    --color-total-sessions: 0 84% 70%; /* Brighter Red */
+    --color-total-sales: 142 76% 46%; /* Brighter Green */
+    
+    /* Dark KPI Gradients */
+    --gradient-active-vendors: linear-gradient(135deg, hsl(217 91% 70%) 0%, hsl(217 91% 60%) 100%);
+    --gradient-conversion-rate: linear-gradient(135deg, hsl(25 95% 63%) 0%, hsl(25 95% 53%) 100%);
+    --gradient-avg-revenue: linear-gradient(135deg, hsl(258 90% 76%) 0%, hsl(258 90% 66%) 100%);
+    --gradient-total-sessions: linear-gradient(135deg, hsl(0 84% 70%) 0%, hsl(0 84% 60%) 100%);
+    --gradient-total-sales: linear-gradient(135deg, hsl(142 76% 46%) 0%, hsl(142 76% 36%) 100%);
     
     /* Dark shadows */
     --shadow-zoom: 0 4px 20px hsl(218 100% 65% / 0.25);

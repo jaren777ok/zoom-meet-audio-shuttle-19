@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign, Star, Percent, Target } from 'lucide-react';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useCompanyAccount } from '@/hooks/useCompanyAccount';
-import { useCompanyMetrics } from '@/hooks/useCompanyMetrics';
+import { useSimpleCompanyMetrics } from '@/hooks/useSimpleCompanyMetrics';
 import { DateRangeFilter } from '@/components/DateRangeFilter';
 import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -39,15 +39,7 @@ const CompanyDashboard = () => {
     isUpdatingName
   } = useCompanyAccount();
 
-  const {
-    companyMetrics,
-    topVendors,
-    vendorMetrics,
-    activeVendors,
-    averageRevenuePerVendor,
-    isLoadingCompanyMetrics,
-    isLoadingVendorMetrics
-  } = useCompanyMetrics(dateRange);
+  const { data: metrics, isLoading: isLoadingMetrics } = useSimpleCompanyMetrics(dateRange);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
@@ -143,16 +135,21 @@ const CompanyDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             {/* Vendedores Activos - BLUE */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-active-vendors)] opacity-10"></div>
+              <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-active-vendors)' }}></div>
               <CardContent className="p-6 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Vendedores Activos</p>
-                    <p className="text-4xl font-bold bg-[var(--gradient-active-vendors)] bg-clip-text text-transparent">
-                      {isLoadingVendorMetrics ? '...' : activeVendors}
+                    <p className="text-4xl font-bold" style={{ 
+                      background: 'var(--gradient-active-vendors)', 
+                      WebkitBackgroundClip: 'text', 
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      {isLoadingMetrics ? '...' : metrics?.activeVendors || 0}
                     </p>
                   </div>
-                  <div className="w-16 h-16 rounded-full bg-[var(--gradient-active-vendors)] flex items-center justify-center shadow-elegant">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-active-vendors)' }}>
                     <Users className="h-8 w-8 text-white" />
                   </div>
                 </div>
@@ -161,16 +158,21 @@ const CompanyDashboard = () => {
 
             {/* Tasa de Conversión - ORANGE */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-conversion-rate)] opacity-10"></div>
+              <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-conversion-rate)' }}></div>
               <CardContent className="p-6 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Tasa de Conversión</p>
-                    <p className="text-4xl font-bold bg-[var(--gradient-conversion-rate)] bg-clip-text text-transparent">
-                      {isLoadingCompanyMetrics ? '...' : `${companyMetrics?.conversion_rate?.toFixed(1) || '0'}%`}
+                    <p className="text-4xl font-bold" style={{ 
+                      background: 'var(--gradient-conversion-rate)', 
+                      WebkitBackgroundClip: 'text', 
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      {isLoadingMetrics ? '...' : `${metrics?.conversionRate?.toFixed(1) || '0'}%`}
                     </p>
                   </div>
-                  <div className="w-16 h-16 rounded-full bg-[var(--gradient-conversion-rate)] flex items-center justify-center shadow-elegant">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-conversion-rate)' }}>
                     <Percent className="h-8 w-8 text-white" />
                   </div>
                 </div>
@@ -179,16 +181,21 @@ const CompanyDashboard = () => {
 
             {/* Ingresos Promedio - PURPLE */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-avg-revenue)] opacity-10"></div>
+              <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-avg-revenue)' }}></div>
               <CardContent className="p-6 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Ingresos Promedio</p>
-                    <p className="text-3xl font-bold bg-[var(--gradient-avg-revenue)] bg-clip-text text-transparent">
-                      {isLoadingCompanyMetrics ? '...' : `$${Math.round(averageRevenuePerVendor).toLocaleString()}`}
+                    <p className="text-3xl font-bold" style={{ 
+                      background: 'var(--gradient-avg-revenue)', 
+                      WebkitBackgroundClip: 'text', 
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      {isLoadingMetrics ? '...' : `$${Math.round(metrics?.averageRevenuePerVendor || 0).toLocaleString()}`}
                     </p>
                   </div>
-                  <div className="w-16 h-16 rounded-full bg-[var(--gradient-avg-revenue)] flex items-center justify-center shadow-elegant">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-avg-revenue)' }}>
                     <Target className="h-8 w-8 text-white" />
                   </div>
                 </div>
@@ -197,16 +204,21 @@ const CompanyDashboard = () => {
 
             {/* Total Sesiones - RED */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-total-sessions)] opacity-10"></div>
+              <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-total-sessions)' }}></div>
               <CardContent className="p-6 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Total Sesiones</p>
-                    <p className="text-4xl font-bold bg-[var(--gradient-total-sessions)] bg-clip-text text-transparent">
-                      {isLoadingCompanyMetrics ? '...' : companyMetrics?.total_sessions || 0}
+                    <p className="text-4xl font-bold" style={{ 
+                      background: 'var(--gradient-total-sessions)', 
+                      WebkitBackgroundClip: 'text', 
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      {isLoadingMetrics ? '...' : metrics?.totalSessions || 0}
                     </p>
                   </div>
-                  <div className="w-16 h-16 rounded-full bg-[var(--gradient-total-sessions)] flex items-center justify-center shadow-elegant">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-total-sessions)' }}>
                     <BarChart3 className="h-8 w-8 text-white" />
                   </div>
                 </div>
@@ -215,16 +227,21 @@ const CompanyDashboard = () => {
 
             {/* Total Ventas - GREEN */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-total-sales)] opacity-10"></div>
+              <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-total-sales)' }}></div>
               <CardContent className="p-6 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Total Ventas</p>
-                    <p className="text-4xl font-bold bg-[var(--gradient-total-sales)] bg-clip-text text-transparent">
-                      {isLoadingCompanyMetrics ? '...' : companyMetrics?.total_sales || 0}
+                    <p className="text-4xl font-bold" style={{ 
+                      background: 'var(--gradient-total-sales)', 
+                      WebkitBackgroundClip: 'text', 
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      {isLoadingMetrics ? '...' : metrics?.totalSales || 0}
                     </p>
                   </div>
-                  <div className="w-16 h-16 rounded-full bg-[var(--gradient-total-sales)] flex items-center justify-center shadow-elegant">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-total-sales)' }}>
                     <DollarSign className="h-8 w-8 text-white" />
                   </div>
                 </div>
@@ -346,46 +363,6 @@ const CompanyDashboard = () => {
             </Card>
           </div>
 
-          {/* Top 3 Performers */}
-          {topVendors.length > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-600" />
-                  Top 3 Mejores Vendedores
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoadingVendorMetrics ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[...Array(3)].map((_, index) => (
-                      <Skeleton key={index} className="h-64" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {topVendors.slice(0, 3).map((vendor, index) => (
-                      <div key={vendor.id} className="relative">
-                        {index === 0 && (
-                          <div className="absolute -top-2 -right-2 z-10">
-                            <Badge className="bg-yellow-600 text-white">
-                              🏆 #1
-                            </Badge>
-                          </div>
-                        )}
-                        <VendorCard
-                          vendor={vendor}
-                          rank={index + 1}
-                          onViewDetails={handleViewVendorDetails}
-                          onViewSessionDetails={handleViewSessionDetails}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
 
 
         </div>
