@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign } from 'lucide-react';
+import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign, Star } from 'lucide-react';
 import { useCompanyAccount } from '@/hooks/useCompanyAccount';
 import { useCompanyMetrics } from '@/hooks/useCompanyMetrics';
 import { toast } from '@/hooks/use-toast';
@@ -13,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CompanyNavigation from '@/components/CompanyNavigation';
 import VendorCard from '@/components/VendorCard';
+import { CompanyMetricsCharts } from '@/components/charts/CompanyMetricsCharts';
 import faviconZoom from '@/assets/favicon-zoom.png';
 
 const CompanyDashboard = () => {
@@ -31,6 +32,7 @@ const CompanyDashboard = () => {
   const {
     companyMetrics,
     topVendors,
+    vendorMetrics,
     isLoadingCompanyMetrics,
     isLoadingVendorMetrics
   } = useCompanyMetrics();
@@ -325,90 +327,77 @@ const CompanyDashboard = () => {
             </Card>
           )}
 
-          {/* Team Overview */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Resumen del Equipo ({companyMembers.length} vendedores)
-              </CardTitle>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/company/team">Gestionar Equipo</a>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {isLoadingMembers ? (
+          {/* Performance Charts */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Satisfacción y Conversión</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
-                  {[...Array(3)].map((_, index) => (
-                    <div key={index} className="flex items-center space-x-4">
-                      <Skeleton className="h-12 w-12 rounded-full" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-[250px]" />
-                        <Skeleton className="h-4 w-[200px]" />
-                      </div>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Satisfacción Promedio</p>
+                      <p className="text-3xl font-bold text-blue-600">{companyMetrics?.avg_satisfaction.toFixed(1) || '0'}/10</p>
                     </div>
-                  ))}
-                </div>
-              ) : companyMembers.length > 0 ? (
-                <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    <div className="p-4 bg-accent/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Promedio Satisfacción</p>
-                      <p className="text-2xl font-bold">{companyMetrics?.avg_satisfaction.toFixed(1) || '0'}/5</p>
-                    </div>
-                    <div className="p-4 bg-accent/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Tasa Conversión</p>
-                      <p className="text-2xl font-bold">{companyMetrics?.conversion_rate.toFixed(1) || '0'}%</p>
-                    </div>
-                    <div className="p-4 bg-accent/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Vendedores Activos</p>
-                      <p className="text-2xl font-bold">{companyMembers.length}</p>
+                    <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center">
+                      <Star className="h-8 w-8 text-white" />
                     </div>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Últimos miembros unidos:</h4>
-                    {companyMembers.slice(0, 5).map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                            <Users className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{member.full_name || 'Sin nombre'}</p>
-                            <p className="text-xs text-muted-foreground">{member.email}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="outline" className="text-xs">Vendedor</Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatDistanceToNow(new Date(member.created_at), { 
-                              addSuffix: true, 
-                              locale: es 
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tasa de Conversión</p>
+                      <p className="text-3xl font-bold text-green-600">{companyMetrics?.conversion_rate.toFixed(1) || '0'}%</p>
+                    </div>
+                    <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center">
+                      <TrendingUp className="h-8 w-8 text-white" />
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Users className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="mb-2 text-lg">No hay vendedores asociados</p>
-                  <p className="text-sm mb-4">
-                    Comparte tu código empresarial con tus vendedores para que se unan a tu equipo.
-                  </p>
-                  <div className="bg-accent p-4 rounded-lg inline-block">
-                    <p className="text-sm font-medium">Código de tu empresa:</p>
-                    <code className="text-lg font-bold text-primary">
-                      {companyAccount?.company_code || 'Cargando...'}
-                    </code>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resumen de Actividad</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Equipo Activo</p>
+                      <p className="text-3xl font-bold text-purple-600">{companyMembers.length}</p>
+                    </div>
+                    <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center">
+                      <Users className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Ingresos por Vendedor</p>
+                      <p className="text-2xl font-bold text-orange-600">
+                        ${companyMembers.length > 0 ? Math.round((companyMetrics?.total_revenue || 0) / companyMembers.length).toLocaleString() : '0'}
+                      </p>
+                    </div>
+                    <div className="w-16 h-16 rounded-full bg-orange-600 flex items-center justify-center">
+                      <DollarSign className="h-8 w-8 text-white" />
+                    </div>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Company Performance Charts */}
+          {vendorMetrics.length > 0 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">Análisis de Rendimiento</h2>
+              <CompanyMetricsCharts 
+                vendorMetrics={vendorMetrics}
+                isLoading={isLoadingVendorMetrics}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

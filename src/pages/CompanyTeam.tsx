@@ -18,6 +18,7 @@ import {
 import { useCompanyMetrics } from '@/hooks/useCompanyMetrics';
 import CompanyNavigation from '@/components/CompanyNavigation';
 import VendorCard from '@/components/VendorCard';
+import { TeamMetricsCharts } from '@/components/charts/TeamMetricsCharts';
 import { toast } from '@/hooks/use-toast';
 
 const CompanyTeam = () => {
@@ -150,9 +151,9 @@ const CompanyTeam = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Satisfacción</p>
-                    <p className="text-2xl font-bold">
-                      {companyMetrics?.avg_satisfaction.toFixed(1) || 0}/5
-                    </p>
+                     <p className="text-2xl font-bold">
+                       {companyMetrics?.avg_satisfaction.toFixed(1) || 0}/10
+                     </p>
                   </div>
                   <Star className="h-6 w-6 text-yellow-600" />
                 </div>
@@ -296,6 +297,17 @@ const CompanyTeam = () => {
                 )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Team Analytics Charts */}
+          {filteredAndSortedVendors.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold">Análisis de Equipo</h2>
+              <TeamMetricsCharts 
+                vendorMetrics={filteredAndSortedVendors}
+                isLoading={isLoadingVendorMetrics}
+              />
+            </div>
           )}
         </div>
       </div>

@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import VendorMetricsKPISection from '@/components/vendor/VendorMetricsKPISection';
 import VendorDetailedSessionsList from '@/components/vendor/VendorDetailedSessionsList';
 import { VendorSessionAnalysisModal } from '@/components/vendor/VendorSessionAnalysisModal';
+import { VendorMetricsCharts } from '@/components/charts/VendorMetricsCharts';
 
 interface VendorMetricsModalProps {
   vendor: VendorMetrics;
@@ -158,46 +159,8 @@ export const VendorMetricsModal: React.FC<VendorMetricsModalProps> = ({
               {/* KPIs Principales */}
               <VendorMetricsKPISection metricsData={metricsData} />
 
-              {/* Quality Distribution */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Distribución de Calidad de Conexión</CardTitle>
-                  <CardDescription>
-                    Distribución de las sesiones por calidad de conexión
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span>Excelente (≥8/10)</span>
-                        </div>
-                        <Badge variant="outline">
-                          {metricsData.qualityDistribution.excellent} sesiones
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                          <span>Buena (6-7/10)</span>
-                        </div>
-                        <Badge variant="outline">
-                          {metricsData.qualityDistribution.good} sesiones
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                          <span>Pobre (&lt;6/10)</span>
-                        </div>
-                        <Badge variant="outline">
-                          {metricsData.qualityDistribution.poor} sesiones
-                        </Badge>
-                      </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Interactive Charts */}
+              <VendorMetricsCharts metricsData={metricsData} />
 
               {/* Detailed Sessions List */}
               <VendorDetailedSessionsList 
