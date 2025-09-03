@@ -101,99 +101,61 @@ export const VendorMetricsCharts: React.FC<VendorMetricsChartsProps> = ({
         </CardContent>
       </Card>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Quality Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribución de Calidad</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={qualityData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {qualityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* KPI Comparison */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Comparación de KPIs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={kpiData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
-                  }}
-                  formatter={(value, name) => [
-                    `${Number(value).toFixed(1)}${name === 'Conversión' ? '%' : ''}`,
-                    name === 'value' ? 'Valor' : name
-                  ]}
-                />
-                <Bar dataKey="value" name="Valor">
-                  {kpiData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Session Performance Details */}
+      {/* Internet Connection Quality */}
       <Card>
         <CardHeader>
-          <CardTitle>Detalle de Sesiones - Duración y Conversiones</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            📶 Calidad de Conexión de Internet
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={recentSessions}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="session" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-                formatter={(value, name) => [
-                  name === 'duracion' ? `${value} min` : value,
-                  name === 'duracion' ? 'Duración' : 'Conversiones'
-                ]}
-              />
-              <Bar yAxisId="left" dataKey="duracion" fill="#8b5cf6" name="Duración (min)" />
-              <Bar yAxisId="right" dataKey="conversiones" fill="#f97316" name="Conversiones" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="font-medium text-green-700 dark:text-green-300">Buena</span>
+                </div>
+                <p className="text-sm text-green-600 dark:text-green-400 mt-1">8-10 pts</p>
+              </div>
+              <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                {metricsData.qualityDistribution.excellent}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <span className="font-medium text-yellow-700 dark:text-yellow-300">Regular</span>
+                </div>
+                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">6-7 pts</p>
+              </div>
+              <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+                {metricsData.qualityDistribution.good}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="font-medium text-red-700 dark:text-red-300">Mala</span>
+                </div>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">1-5 pts</p>
+              </div>
+              <div className="text-2xl font-bold text-red-700 dark:text-red-300">
+                {metricsData.qualityDistribution.poor}
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Total de sesiones:</strong> {metricsData.totalSessions} • 
+              <strong className="ml-2">Calidad promedio:</strong> {metricsData.avgQuality.toFixed(1)}/10
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
