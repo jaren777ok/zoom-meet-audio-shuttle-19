@@ -143,17 +143,17 @@ const CompanyDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             {/* Vendedores Activos */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5"></div>
+              <div className="absolute inset-0 bg-[var(--gradient-users)] opacity-10"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Vendedores Activos</p>
-                      <p className="text-3xl font-bold text-primary">
+                      <p className="text-3xl font-bold bg-[var(--gradient-users)] bg-clip-text text-transparent">
                         {isLoadingVendorMetrics ? '...' : activeVendors}
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-elegant">
+                    <div className="w-12 h-12 rounded-full bg-[var(--gradient-users)] flex items-center justify-center shadow-elegant">
                       <Users className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -161,9 +161,15 @@ const CompanyDashboard = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={vendorMetrics.slice(0, 5).map((vendor, index) => ({ 
                         name: `V${index + 1}`, 
-                        value: vendor.total_sessions > 0 ? 1 : 0
+                        value: vendor.total_sessions > 0 ? 100 : 20
                       }))}>
-                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={1} />
+                        <Bar dataKey="value" fill="url(#gradientUsers)" radius={2} />
+                        <defs>
+                          <linearGradient id="gradientUsers" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="var(--gradient-users)" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="var(--gradient-users)" stopOpacity={0.3}/>
+                          </linearGradient>
+                        </defs>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -173,17 +179,17 @@ const CompanyDashboard = () => {
 
             {/* Tasa de Conversión */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-accent/5"></div>
+              <div className="absolute inset-0 bg-[var(--gradient-conversion)] opacity-10"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Tasa de Conversión</p>
-                      <p className="text-3xl font-bold text-accent">
+                      <p className="text-3xl font-bold bg-[var(--gradient-conversion)] bg-clip-text text-transparent">
                         {isLoadingCompanyMetrics ? '...' : `${companyMetrics?.conversion_rate?.toFixed(1) || '0'}%`}
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-elegant">
+                    <div className="w-12 h-12 rounded-full bg-[var(--gradient-conversion)] flex items-center justify-center shadow-elegant">
                       <Percent className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -191,16 +197,22 @@ const CompanyDashboard = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={vendorMetrics.slice(0, 6).map((vendor, index) => ({ 
                         name: `${index + 1}`, 
-                        conversion: vendor.conversion_rate
+                        conversion: vendor.conversion_rate || 0
                       }))}>
                         <Area 
                           type="monotone" 
                           dataKey="conversion" 
-                          fill="hsl(var(--accent))" 
-                          fillOpacity={0.6}
-                          stroke="hsl(var(--accent))"
+                          fill="url(#gradientConversion)" 
+                          fillOpacity={0.8}
+                          stroke="var(--gradient-conversion)"
                           strokeWidth={2}
                         />
+                        <defs>
+                          <linearGradient id="gradientConversion" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f093fb" stopOpacity={0.9}/>
+                            <stop offset="95%" stopColor="#f5576c" stopOpacity={0.3}/>
+                          </linearGradient>
+                        </defs>
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -210,17 +222,17 @@ const CompanyDashboard = () => {
 
             {/* Ingresos por Vendedor */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-secondary/5"></div>
+              <div className="absolute inset-0 bg-[var(--gradient-revenue)] opacity-10"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Ingresos Promedio</p>
-                      <p className="text-3xl font-bold text-secondary">
+                      <p className="text-3xl font-bold bg-[var(--gradient-revenue)] bg-clip-text text-transparent">
                         {isLoadingCompanyMetrics ? '...' : `$${Math.round(averageRevenuePerVendor).toLocaleString()}`}
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-secondary to-secondary/80 flex items-center justify-center shadow-elegant">
+                    <div className="w-12 h-12 rounded-full bg-[var(--gradient-revenue)] flex items-center justify-center shadow-elegant">
                       <Target className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -228,15 +240,21 @@ const CompanyDashboard = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={vendorMetrics.slice(0, 5).map((vendor, index) => ({ 
                         name: `${index + 1}`, 
-                        revenue: vendor.total_revenue
+                        revenue: vendor.total_revenue || 0
                       }))}>
                         <Line 
                           type="monotone" 
                           dataKey="revenue" 
-                          stroke="hsl(var(--secondary))" 
-                          strokeWidth={2}
-                          dot={false}
+                          stroke="url(#gradientRevenue)" 
+                          strokeWidth={3}
+                          dot={{ fill: '#4facfe', strokeWidth: 2, r: 4 }}
                         />
+                        <defs>
+                          <linearGradient id="gradientRevenue" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="5%" stopColor="#4facfe" stopOpacity={1}/>
+                            <stop offset="95%" stopColor="#00f2fe" stopOpacity={1}/>
+                          </linearGradient>
+                        </defs>
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -246,17 +264,17 @@ const CompanyDashboard = () => {
 
             {/* Total Sesiones */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-muted/10"></div>
+              <div className="absolute inset-0 bg-[var(--gradient-sessions)] opacity-10"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Total Sesiones</p>
-                      <p className="text-3xl font-bold text-foreground">
+                      <p className="text-3xl font-bold bg-[var(--gradient-sessions)] bg-clip-text text-transparent">
                         {isLoadingCompanyMetrics ? '...' : companyMetrics?.total_sessions || 0}
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center shadow-elegant">
+                    <div className="w-12 h-12 rounded-full bg-[var(--gradient-sessions)] flex items-center justify-center shadow-elegant">
                       <BarChart3 className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -264,15 +282,21 @@ const CompanyDashboard = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={vendorMetrics.slice(0, 7).map((vendor, index) => ({ 
                         name: `${index + 1}`, 
-                        sessions: vendor.total_sessions
+                        sessions: vendor.total_sessions || 0
                       }))}>
                         <Line 
                           type="monotone" 
                           dataKey="sessions" 
-                          stroke="hsl(var(--muted-foreground))" 
-                          strokeWidth={2}
-                          dot={false}
+                          stroke="url(#gradientSessions)" 
+                          strokeWidth={3}
+                          dot={{ fill: '#43e97b', strokeWidth: 2, r: 3 }}
                         />
+                        <defs>
+                          <linearGradient id="gradientSessions" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="5%" stopColor="#43e97b" stopOpacity={1}/>
+                            <stop offset="95%" stopColor="#38f9d7" stopOpacity={1}/>
+                          </linearGradient>
+                        </defs>
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -282,17 +306,17 @@ const CompanyDashboard = () => {
 
             {/* Total Ventas */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-br from-destructive/10 to-destructive/5"></div>
+              <div className="absolute inset-0 bg-[var(--gradient-sales)] opacity-10"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Total Ventas</p>
-                      <p className="text-3xl font-bold text-destructive">
+                      <p className="text-3xl font-bold bg-[var(--gradient-sales)] bg-clip-text text-transparent">
                         {isLoadingCompanyMetrics ? '...' : companyMetrics?.total_sales || 0}
                       </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-destructive to-destructive/80 flex items-center justify-center shadow-elegant">
+                    <div className="w-12 h-12 rounded-full bg-[var(--gradient-sales)] flex items-center justify-center shadow-elegant">
                       <DollarSign className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -300,9 +324,15 @@ const CompanyDashboard = () => {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={vendorMetrics.slice(0, 6).map((vendor, index) => ({ 
                         name: `${index + 1}`, 
-                        sales: vendor.total_sales
+                        sales: vendor.total_sales || 0
                       }))}>
-                        <Bar dataKey="sales" fill="hsl(var(--destructive))" radius={1} />
+                        <Bar dataKey="sales" fill="url(#gradientSales)" radius={3} />
+                        <defs>
+                          <linearGradient id="gradientSales" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#fa709a" stopOpacity={0.9}/>
+                            <stop offset="95%" stopColor="#fee140" stopOpacity={0.7}/>
+                          </linearGradient>
+                        </defs>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

@@ -49,13 +49,13 @@
     --gradient-light: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
     
     /* KPI Gradients - Enhanced for Dashboard */
-    --gradient-users: linear-gradient(135deg, hsl(218 100% 52%), hsl(218 100% 62%));
-    --gradient-sessions: linear-gradient(135deg, hsl(270 75% 60%), hsl(270 85% 70%));
-    --gradient-sales: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 86% 46%));
-    --gradient-revenue: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 100% 57%));
-    --gradient-conversion: linear-gradient(135deg, hsl(168 85% 35%), hsl(175 85% 45%));
-    --gradient-active: linear-gradient(135deg, hsl(221 83% 48%), hsl(230 90% 58%));
-    --gradient-average: linear-gradient(135deg, hsl(283 85% 60%), hsl(295 90% 70%));
+    --gradient-users: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-sessions: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --gradient-sales: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --gradient-revenue: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-conversion: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-active: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-average: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     
     /* Professional shadows */
     --shadow-zoom: 0 4px 20px hsl(218 100% 52% / 0.15);
@@ -126,13 +126,13 @@
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 4%));
     
     /* Dark KPI Gradients - Enhanced for Dashboard */
-    --gradient-users: linear-gradient(135deg, hsl(218 100% 65%), hsl(218 100% 75%));
-    --gradient-sessions: linear-gradient(135deg, hsl(270 75% 70%), hsl(270 85% 80%));
-    --gradient-sales: linear-gradient(135deg, hsl(142 76% 46%), hsl(142 86% 56%));
-    --gradient-revenue: linear-gradient(135deg, hsl(45 93% 57%), hsl(45 100% 67%));
-    --gradient-conversion: linear-gradient(135deg, hsl(168 85% 45%), hsl(175 85% 55%));
-    --gradient-active: linear-gradient(135deg, hsl(221 83% 58%), hsl(230 90% 68%));
-    --gradient-average: linear-gradient(135deg, hsl(283 85% 70%), hsl(295 90% 80%));
+    --gradient-users: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-sessions: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); 
+    --gradient-sales: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --gradient-revenue: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-conversion: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-active: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-average: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     
     /* Dark shadows */
     --shadow-zoom: 0 4px 20px hsl(218 100% 65% / 0.25);

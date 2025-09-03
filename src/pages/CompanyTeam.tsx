@@ -155,7 +155,7 @@ const CompanyTeam = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Conversión Promedio</p>
                     <p className="text-3xl font-bold bg-[var(--gradient-users)] bg-clip-text text-transparent">
-                      {companyMetrics?.conversion_rate.toFixed(1) || 0}%
+                      {companyMetrics?.conversion_rate?.toFixed(1) || 0}%
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-[var(--gradient-users)] flex items-center justify-center">
@@ -172,7 +172,7 @@ const CompanyTeam = () => {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">Satisfacción</p>
                     <p className="text-3xl font-bold bg-[var(--gradient-revenue)] bg-clip-text text-transparent">
-                      {companyMetrics?.avg_satisfaction.toFixed(1) || 0}/10
+                      {companyMetrics?.avg_satisfaction?.toFixed(1) || 0}/10
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-[var(--gradient-revenue)] flex items-center justify-center">
