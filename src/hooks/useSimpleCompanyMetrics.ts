@@ -9,6 +9,7 @@ export interface SimpleCompanyMetrics {
   totalRevenue: number;
   conversionRate: number;
   averageRevenuePerVendor: number;
+  customerSatisfaction: number;
 }
 
 export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to: Date | undefined }) => {
@@ -25,6 +26,7 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
           totalRevenue: 0,
           conversionRate: 0,
           averageRevenuePerVendor: 0,
+          customerSatisfaction: 0,
         };
       }
 
@@ -44,6 +46,7 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
           totalRevenue: 0,
           conversionRate: 0,
           averageRevenuePerVendor: 0,
+          customerSatisfaction: 0,
         };
       }
 
@@ -62,6 +65,7 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
           totalRevenue: 0,
           conversionRate: 0,
           averageRevenuePerVendor: 0,
+          customerSatisfaction: 0,
         };
       }
 
@@ -99,12 +103,15 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
           totalRevenue: 0,
           conversionRate: 0,
           averageRevenuePerVendor: 0,
+          customerSatisfaction: 0,
         };
       }
 
       // Calculate metrics
       let totalSales = 0;
       let totalRevenue = 0;
+      let totalSatisfactionSum = 0;
+      let satisfactionCount = 0;
       const activeVendorIds = new Set<string>();
 
       sessions.forEach(session => {
@@ -126,6 +133,12 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
           if (metrics.Ganancia_en_Dinero && !isNaN(parseFloat(metrics.Ganancia_en_Dinero))) {
             totalRevenue += parseFloat(metrics.Ganancia_en_Dinero);
           }
+
+          // Sum customer satisfaction ratings
+          if (metrics.Puntuación_Satisfacción_Cliente && !isNaN(parseFloat(metrics.Puntuación_Satisfacción_Cliente))) {
+            totalSatisfactionSum += parseFloat(metrics.Puntuación_Satisfacción_Cliente);
+            satisfactionCount++;
+          }
         }
       });
 
@@ -133,6 +146,7 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
       const totalSessions = sessions.length;
       const conversionRate = totalSessions > 0 ? (totalSales / totalSessions) * 100 : 0;
       const averageRevenuePerVendor = activeVendors > 0 ? totalRevenue / activeVendors : 0;
+      const customerSatisfaction = satisfactionCount > 0 ? totalSatisfactionSum / satisfactionCount : 0;
 
       return {
         activeVendors,
@@ -141,6 +155,7 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
         totalRevenue,
         conversionRate,
         averageRevenuePerVendor,
+        customerSatisfaction,
       };
     },
     enabled: !!user?.id,

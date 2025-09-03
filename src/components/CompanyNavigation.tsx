@@ -7,7 +7,6 @@ import { Switch } from '@/components/ui/switch';
 import { Building2, Users, BarChart3, LogOut, Sun, Moon, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from 'next-themes';
-import faviconZoom from '@/assets/favicon-zoom.png';
 
 const CompanyNavigation: React.FC = () => {
   const location = useLocation();
@@ -33,23 +32,21 @@ const CompanyNavigation: React.FC = () => {
     <Card className="mb-6">
       <CardContent className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <img src={faviconZoom} alt="Favicon" className="h-6 w-6 dark:drop-shadow-none drop-shadow-[1px_1px_2px_rgba(0,0,0,0.8)]" />
-            <span className="font-bold text-lg">
-              <span className="text-primary">ZOOM</span>{' '}
-              <span className={`${theme === 'light' ? 'drop-shadow-[1px_1px_2px_rgba(0,0,0,0.7)]' : ''}`}>
-                HACK
-              </span>
-            </span>
-            <Badge variant="secondary" className="ml-2">
-              EMPRESA
-            </Badge>
-            {user?.email && (
-              <Badge variant="outline" className="ml-1">
-                {user.email}
+            <div className="flex items-center gap-2">
+              <img 
+                src="/src/assets/zoom-hack-logo-main.png" 
+                alt="Zoom Hack" 
+                className="h-8 w-auto object-contain dark:drop-shadow-none drop-shadow-[2px_2px_4px_rgba(0,0,0,0.8)]" 
+              />
+              <Badge variant="secondary" className="ml-2">
+                EMPRESA
               </Badge>
-            )}
-          </div>
+              {user?.email && (
+                <Badge variant="outline" className="ml-1">
+                  {user.email}
+                </Badge>
+              )}
+            </div>
           
           <nav className="flex items-center gap-2">
             {navItems.map((item) => (

@@ -120,7 +120,7 @@ const CompanyDashboard = () => {
           <div className="text-center space-y-4 py-8">
             <div className="flex items-center justify-center mb-4">
               <img 
-                src="/src/assets/zoom-hack-logo-official.png" 
+                src="/src/assets/zoom-hack-logo-main.png" 
                 alt="Zoom Hack" 
                 className="h-20 w-auto object-contain dark:drop-shadow-none drop-shadow-[2px_2px_4px_rgba(0,0,0,0.8)]" 
               />
@@ -139,8 +139,8 @@ const CompanyDashboard = () => {
             />
           </div>
 
-          {/* Company KPIs - 5 Main Metrics (Clean Design, No Charts) */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          {/* Company KPIs - 6 Main Metrics (Clean Design, No Charts) - 2x3 Layout */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {/* Vendedores Activos - BLUE */}
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
               <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-active-vendors)' }}></div>
@@ -251,6 +251,24 @@ const CompanyDashboard = () => {
                   </div>
                   <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-total-sales)' }}>
                     <DollarSign className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Satisfacción del Cliente - GOLD */}
+            <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-yellow-400 to-orange-500"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Satisfacción del Cliente</p>
+                    <p className="text-3xl font-bold bg-gradient-to-br from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                      {isLoadingMetrics ? '...' : `${metrics?.customerSatisfaction?.toFixed(1) || '0.0'} ⭐`}
+                    </p>
+                  </div>
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant bg-gradient-to-br from-yellow-400 to-orange-500">
+                    <Star className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </CardContent>
