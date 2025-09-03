@@ -17,6 +17,7 @@ import { AnalysisContent } from '@/components/analytics/AnalysisContent';
 import DateFilter, { DateRange } from '@/components/DateFilter';
 import EditableSessionName from '@/components/EditableSessionName';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
+import Silk from '@/components/Silk';
 
 const Analytics: React.FC = () => {
   const { sessionId } = useParams<{ sessionId?: string }>();
@@ -64,9 +65,19 @@ const Analytics: React.FC = () => {
   // Vista detalle de sesión
   if (selectedSession) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <AppNavigation />
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <Silk
+            speed={5}
+            scale={1}
+            color="#7B7481"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </div>
+        <div className="relative z-10 p-4">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <AppNavigation />
           
           {/* Header de detalle */}
           <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5">
@@ -202,14 +213,25 @@ const Analytics: React.FC = () => {
           )}
         </div>
       </div>
+      </div>
     );
   }
 
   // Vista principal de lista
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <AppNavigation />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B7481"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      <div className="relative z-10 p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <AppNavigation />
         
         {/* Header principal */}
         <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5">
@@ -332,6 +354,7 @@ const Analytics: React.FC = () => {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 };

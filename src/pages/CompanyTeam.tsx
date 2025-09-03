@@ -21,6 +21,7 @@ import CompanyNavigation from '@/components/CompanyNavigation';
 import VendorCard from '@/components/VendorCard';
 import { DateRangeFilter } from '@/components/DateRangeFilter';
 import { toast } from '@/hooks/use-toast';
+import Silk from '@/components/Silk';
 
 const CompanyTeam = () => {
   const navigate = useNavigate();
@@ -70,17 +71,28 @@ const CompanyTeam = () => {
 
   if (isLoadingVendorMetrics) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="p-4">
-          <CompanyNavigation />
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <Silk
+            speed={5}
+            scale={1}
+            color="#7B7481"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
         </div>
-        <div className="px-4 pb-4">
-          <div className="max-w-6xl mx-auto space-y-6">
+        <div className="relative z-10">
+          <div className="p-4">
+            <CompanyNavigation />
+          </div>
+          <div className="px-4 pb-4">
+            <div className="max-w-6xl mx-auto space-y-6">
             <Skeleton className="h-8 w-64" />
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {[...Array(6)].map((_, index) => (
                 <Skeleton key={index} className="h-80" />
               ))}
+            </div>
             </div>
           </div>
         </div>
@@ -89,13 +101,23 @@ const CompanyTeam = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="p-4">
-        <CompanyNavigation />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B7481"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
       </div>
-      
-      <div className="px-4 pb-4">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <div className="relative z-10">
+        <div className="p-4">
+          <CompanyNavigation />
+        </div>
+        
+        <div className="px-4 pb-4">
+          <div className="max-w-6xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -258,6 +280,7 @@ const CompanyTeam = () => {
             </Card>
           )}
 
+          </div>
         </div>
       </div>
     </div>

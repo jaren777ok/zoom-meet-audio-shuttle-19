@@ -6,6 +6,7 @@ import AppNavigation from '@/components/AppNavigation';
 import DateFilter, { DateRange } from '@/components/DateFilter';
 import { useMeetingSessions } from '@/hooks/useMeetingSessions';
 import { History, Calendar, Users, Search } from 'lucide-react';
+import Silk from '@/components/Silk';
 
 const Sessions: React.FC = () => {
   const { sessions } = useMeetingSessions();
@@ -43,9 +44,19 @@ const Sessions: React.FC = () => {
   }, [sessions, searchTerm, dateRange]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <AppNavigation />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B7481"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      <div className="relative z-10 p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <AppNavigation />
         {/* Header */}
         <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5">
           <CardHeader className="text-center pb-6">
@@ -122,6 +133,7 @@ const Sessions: React.FC = () => {
         {/* Sessions List Component */}
         <SessionsList filteredSessions={filteredSessions} />
       </div>
+    </div>
     </div>
   );
 };
