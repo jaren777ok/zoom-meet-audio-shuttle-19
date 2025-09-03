@@ -193,14 +193,14 @@ const CompanyDashboard = () => {
               <CardContent className="p-6 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Ingresos Promedio</p>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Ingresos</p>
                     <p className="text-3xl font-bold" style={{ 
                       background: 'var(--gradient-avg-revenue)', 
                       WebkitBackgroundClip: 'text', 
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text'
                     }}>
-                      {isLoadingMetrics ? '...' : `$${Math.round(metrics?.averageRevenuePerVendor || 0).toLocaleString()}`}
+                      {isLoadingMetrics ? '...' : `$${Math.round(metrics?.totalRevenue || 0).toLocaleString()}`}
                     </p>
                   </div>
                   <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-elegant" style={{ background: 'var(--gradient-avg-revenue)' }}>
