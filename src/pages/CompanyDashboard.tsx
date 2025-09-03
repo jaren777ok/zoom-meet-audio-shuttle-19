@@ -466,66 +466,6 @@ const CompanyDashboard = () => {
             </Card>
           )}
 
-          {/* Performance Charts */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Satisfacción y Conversión</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Satisfacción Promedio</p>
-                      <p className="text-3xl font-bold text-blue-600">{companyMetrics?.avg_satisfaction.toFixed(1) || '0'}/10</p>
-                    </div>
-                    <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center">
-                      <Star className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tasa de Conversión</p>
-                      <p className="text-3xl font-bold text-green-600">{companyMetrics?.conversion_rate.toFixed(1) || '0'}%</p>
-                    </div>
-                    <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center">
-                      <TrendingUp className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumen de Actividad</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Equipo Activo</p>
-                      <p className="text-3xl font-bold text-purple-600">{companyMembers.length}</p>
-                    </div>
-                    <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center">
-                      <Users className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Ingresos por Vendedor</p>
-                      <p className="text-2xl font-bold text-orange-600">
-                        ${companyMembers.length > 0 ? Math.round((companyMetrics?.total_revenue || 0) / companyMembers.length).toLocaleString() : '0'}
-                      </p>
-                    </div>
-                    <div className="w-16 h-16 rounded-full bg-orange-600 flex items-center justify-center">
-                      <DollarSign className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
         </div>
       </div>

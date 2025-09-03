@@ -24,11 +24,6 @@ import { toast } from '@/hooks/use-toast';
 
 const CompanyTeam = () => {
   const navigate = useNavigate();
-  const { 
-    vendorMetrics, 
-    isLoadingVendorMetrics,
-    companyMetrics
-  } = useCompanyMetrics();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'performance' | 'sales' | 'sessions' | 'satisfaction'>('performance');
@@ -36,6 +31,12 @@ const CompanyTeam = () => {
     from: Date | undefined;
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
+
+  const { 
+    vendorMetrics, 
+    isLoadingVendorMetrics,
+    companyMetrics
+  } = useCompanyMetrics(dateRange);
 
   // Filter and sort vendors
   const filteredAndSortedVendors = vendorMetrics
