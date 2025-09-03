@@ -371,7 +371,8 @@
 .pc-status {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
-  line-height: 1;
+  line-height: 0.8;
+  margin-top: -2px;
 }
 
 .pc-contact-btn {
@@ -420,6 +421,7 @@
   margin: 0;
   font-size: min(5svh, 3em);
   margin: 0;
+  line-height: 0.9;
   background-image: linear-gradient(to bottom, #fff, #6f6fbe);
   background-size: 1em 1.5em;
   -webkit-text-fill-color: transparent;
@@ -430,11 +432,12 @@
 .pc-details p {
   font-weight: 600;
   position: relative;
-  top: -8px;
+  top: -15px;
   white-space: nowrap;
   font-size: 16px;
   margin: 0 auto;
   width: min-content;
+  line-height: 0.8;
   background-image: linear-gradient(to bottom, #fff, #4a4ac0);
   background-size: 1em 1.5em;
   -webkit-text-fill-color: transparent;

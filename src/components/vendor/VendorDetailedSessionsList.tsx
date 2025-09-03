@@ -104,14 +104,6 @@ const VendorDetailedSessionsList: React.FC<VendorDetailedSessionsListProps> = ({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {session.internet_quality_start && (
-                        <Badge 
-                          variant="secondary"
-                          className={`${getQualityColor(session.internet_quality_start)} text-white`}
-                        >
-                          {session.internet_quality_start}%
-                        </Badge>
-                      )}
                       {onViewSessionDetails && (
                         <Button 
                           variant="outline" 
