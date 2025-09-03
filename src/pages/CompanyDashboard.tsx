@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign, Star, Percent, Target } from 'lucide-react';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useCompanyAccount } from '@/hooks/useCompanyAccount';
+import { useCompanyMetrics } from '@/hooks/useCompanyMetrics';
 import { useSimpleCompanyMetrics } from '@/hooks/useSimpleCompanyMetrics';
 import { DateRangeFilter } from '@/components/DateRangeFilter';
 import { toast } from '@/hooks/use-toast';
@@ -40,6 +41,13 @@ const CompanyDashboard = () => {
   } = useCompanyAccount();
 
   const { data: metrics, isLoading: isLoadingMetrics } = useSimpleCompanyMetrics(dateRange);
+  
+  // Keep original hook for vendor data and top performers
+  const {
+    topVendors,
+    vendorMetrics,
+    isLoadingVendorMetrics
+  } = useCompanyMetrics(dateRange);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
@@ -364,6 +372,47 @@ const CompanyDashboard = () => {
           </div>
 
 
+
+          {/* Top 3 Performers */}
+          {topVendors && topVendors.length > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-600" />
+                  Top 3 Mejores Vendedores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingVendorMetrics ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[...Array(3)].map((_, index) => (
+                      <Skeleton key={index} className="h-64" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {topVendors.slice(0, 3).map((vendor, index) => (
+                      <div key={vendor.id} className="relative">
+                        {index === 0 && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <Badge className="bg-yellow-600 text-white">
+                              🏆 #1
+                            </Badge>
+                          </div>
+                        )}
+                        <VendorCard
+                          vendor={vendor}
+                          rank={index + 1}
+                          onViewDetails={handleViewVendorDetails}
+                          onViewSessionDetails={handleViewSessionDetails}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
         </div>
       </div>

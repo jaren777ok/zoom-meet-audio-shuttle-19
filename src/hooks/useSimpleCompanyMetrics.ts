@@ -47,17 +47,32 @@ export const useSimpleCompanyMetrics = (dateRange?: { from: Date | undefined; to
         };
       }
 
-      // Build the query to get session analytics with profiles
+      // First get all profiles for this company
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, company_code')
+        .eq('company_code', companyAccount.company_code);
+
+      if (profilesError) throw profilesError;
+      if (!profiles || profiles.length === 0) {
+        return {
+          activeVendors: 0,
+          totalSessions: 0,
+          totalSales: 0,
+          totalRevenue: 0,
+          conversionRate: 0,
+          averageRevenuePerVendor: 0,
+        };
+      }
+
+      // Get the user IDs
+      const userIds = profiles.map(p => p.id);
+
+      // Build the query to get session analytics for these users
       let query = supabase
         .from('session_analytics')
-        .select(`
-          *,
-          profiles!inner(
-            id,
-            company_code
-          )
-        `)
-        .eq('profiles.company_code', companyAccount.company_code);
+        .select('*')
+        .in('user_id', userIds);
 
       // Add date filtering if provided
       if (dateRange?.from) {
