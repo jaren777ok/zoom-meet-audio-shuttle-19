@@ -9,13 +9,13 @@ const Index = () => {
         <Silk
           speed={5}
           scale={1}
-          color="#7B7481"
+          color="#172B7D"
           noiseIntensity={1.5}
           rotation={0}
         />
       </div>
       <div className="relative z-10 p-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <AppNavigation />
           <AudioRecorderApp />
         </div>

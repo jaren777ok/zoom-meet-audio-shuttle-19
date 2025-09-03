@@ -115,7 +115,7 @@ const CompanyDashboard = () => {
         <Silk
           speed={5}
           scale={1}
-          color="#7B7481"
+          color="#172B7D"
           noiseIntensity={1.5}
           rotation={0}
         />
