@@ -3,12 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import DocumentUploader from '@/components/DocumentUploader';
 import AppNavigation from '@/components/AppNavigation';
 import { Brain, FileText, Zap } from 'lucide-react';
+import Silk from '@/components/Silk';
 
 const Knowledge: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <AppNavigation />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B7481"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      <div className="relative z-10 p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <AppNavigation />
         {/* Header */}
         <Card className="border-0 bg-gradient-to-r from-primary/10 to-primary/5">
           <CardHeader className="text-center pb-6">
@@ -62,6 +73,7 @@ const Knowledge: React.FC = () => {
 
         {/* Document Uploader Component */}
         <DocumentUploader />
+        </div>
       </div>
     </div>
   );

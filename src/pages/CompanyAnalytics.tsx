@@ -13,6 +13,7 @@ import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
 import { AnalysisContent } from '@/components/analytics/AnalysisContent';
 import { useCompanySessionAnalytics } from '@/hooks/useCompanySessionAnalytics';
+import Silk from '@/components/Silk';
 
 const CompanyAnalytics: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -53,24 +54,35 @@ const CompanyAnalytics: React.FC = () => {
   // If no sessionId or session not found, show error
   if (!sessionId || (!isLoading && !sessionLoading && !selectedSession)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <CompanyNavigation />
-          
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Sesión no encontrada</h3>
-                <p className="text-muted-foreground mb-4">
-                  La sesión solicitada no existe o no tienes permisos para verla.
-                </p>
-                <Button onClick={() => navigate('/company')}>
-                  Volver al Dashboard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <Silk
+            speed={5}
+            scale={1}
+            color="#7B7481"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </div>
+        <div className="relative z-10 p-4">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <CompanyNavigation />
+            
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Sesión no encontrada</h3>
+                  <p className="text-muted-foreground mb-4">
+                    La sesión solicitada no existe o no tienes permisos para verla.
+                  </p>
+                  <Button onClick={() => navigate('/company')}>
+                    Volver al Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );
@@ -79,25 +91,36 @@ const CompanyAnalytics: React.FC = () => {
   // Loading state
   if (isLoading || sessionLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <CompanyNavigation />
-          
-          <div className="space-y-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-1/3" />
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <Silk
+            speed={5}
+            scale={1}
+            color="#7B7481"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </div>
+        <div className="relative z-10 p-4">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <CompanyNavigation />
+            
+            <div className="space-y-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-1/3" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -105,7 +128,17 @@ const CompanyAnalytics: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B7481"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      <div className="relative z-10 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         <CompanyNavigation />
         
@@ -231,6 +264,7 @@ const CompanyAnalytics: React.FC = () => {
             altText={selectedImage.alt}
           />
         )}
+      </div>
       </div>
     </div>
   );

@@ -1,10 +1,7 @@
 /* eslint-disable react/no-unknown-property */
-import { Canvas, useFrame, extend } from '@react-three/fiber';
-import { useRef, useMemo } from 'react';
-import { Color, ShaderMaterial } from 'three';
-
-// Extend ShaderMaterial
-extend({ ShaderMaterial });
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { forwardRef, useRef, useMemo, useLayoutEffect } from 'react';
+import { Color } from 'three';
 
 const hexToNormalizedRGB = (hex: string) => {
   hex = hex.replace('#', '');
@@ -17,8 +14,10 @@ const hexToNormalizedRGB = (hex: string) => {
 
 const vertexShader = `
 varying vec2 vUv;
+varying vec3 vPosition;
 
 void main() {
+  vPosition = position;
   vUv = uv;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
@@ -26,9 +25,10 @@ void main() {
 
 const fragmentShader = `
 varying vec2 vUv;
+varying vec3 vPosition;
 
 uniform float uTime;
-uniform vec3 uColor;
+uniform vec3  uColor;
 uniform float uSpeed;
 uniform float uScale;
 uniform float uRotation;
@@ -50,10 +50,10 @@ vec2 rotateUvs(vec2 uv, float angle) {
 }
 
 void main() {
-  float rnd = noise(gl_FragCoord.xy);
-  vec2 uv = rotateUvs(vUv * uScale, uRotation);
-  vec2 tex = uv * uScale;
-  float tOffset = uSpeed * uTime;
+  float rnd        = noise(gl_FragCoord.xy);
+  vec2  uv         = rotateUvs(vUv * uScale, uRotation);
+  vec2  tex        = uv * uScale;
+  float tOffset    = uSpeed * uTime;
 
   tex.y += 0.03 * sin(8.0 * tex.x - tOffset);
 
@@ -70,15 +70,50 @@ void main() {
 `;
 
 interface SilkPlaneProps {
-  speed: number;
-  scale: number;
-  color: string;
-  noiseIntensity: number;
-  rotation: number;
+  uniforms: any;
 }
 
-function SilkPlane({ speed, scale, color, noiseIntensity, rotation }: SilkPlaneProps) {
-  const materialRef = useRef<ShaderMaterial>(null!);
+const SilkPlane = forwardRef<any, SilkPlaneProps>(function SilkPlane({ uniforms }, ref) {
+  const { viewport } = useThree();
+
+  useLayoutEffect(() => {
+    if (ref && typeof ref === 'object' && ref.current) {
+      ref.current.scale.set(viewport.width, viewport.height, 1);
+    }
+  }, [ref, viewport]);
+
+  useFrame((_, delta) => {
+    if (ref && typeof ref === 'object' && ref.current) {
+      ref.current.material.uniforms.uTime.value += 0.1 * delta;
+    }
+  });
+
+  return (
+    <mesh ref={ref}>
+      <planeGeometry args={[1, 1, 1, 1]} />
+      <shaderMaterial 
+        attach="material"
+        args={[{
+          uniforms,
+          vertexShader,
+          fragmentShader
+        }]}
+      />
+    </mesh>
+  );
+});
+SilkPlane.displayName = 'SilkPlane';
+
+interface SilkProps {
+  speed?: number;
+  scale?: number;
+  color?: string;
+  noiseIntensity?: number;
+  rotation?: number;
+}
+
+const Silk = ({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }: SilkProps) => {
+  const meshRef = useRef<any>();
 
   const uniforms = useMemo(
     () => ({
@@ -92,46 +127,10 @@ function SilkPlane({ speed, scale, color, noiseIntensity, rotation }: SilkPlaneP
     [speed, scale, noiseIntensity, color, rotation]
   );
 
-  useFrame((_, delta) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value += 0.1 * delta;
-    }
-  });
-
-  return (
-    <mesh scale={[window.innerWidth / 100, window.innerHeight / 100, 1]}>
-      <planeGeometry args={[1, 1]} />
-      <shaderMaterial
-        ref={materialRef}
-        args={[{
-          uniforms,
-          vertexShader,
-          fragmentShader
-        }]}
-      />
-    </mesh>
-  );
-}
-
-interface SilkProps {
-  speed?: number;
-  scale?: number;
-  color?: string;
-  noiseIntensity?: number;
-  rotation?: number;
-}
-
-const Silk = ({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }: SilkProps) => {
   return (
     <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
-      <Canvas camera={{ position: [0, 0, 1], fov: 75 }}>
-        <SilkPlane 
-          speed={speed}
-          scale={scale}
-          color={color}
-          noiseIntensity={noiseIntensity}
-          rotation={rotation}
-        />
+      <Canvas dpr={[1, 2]} frameloop="always" camera={{ position: [0, 0, 1], fov: 75 }}>
+        <SilkPlane ref={meshRef} uniforms={uniforms} />
       </Canvas>
     </div>
   );
