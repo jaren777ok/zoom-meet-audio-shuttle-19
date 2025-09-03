@@ -48,6 +48,12 @@
     --gradient-zoom: linear-gradient(135deg, hsl(218 100% 52%), hsl(218 100% 72%));
     --gradient-light: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
     
+    /* KPI Gradients */
+    --gradient-users: linear-gradient(135deg, hsl(218 100% 52%), hsl(218 100% 62%));
+    --gradient-sessions: linear-gradient(135deg, hsl(270 75% 60%), hsl(270 85% 70%));
+    --gradient-sales: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 86% 46%));
+    --gradient-revenue: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 100% 57%));
+    
     /* Professional shadows */
     --shadow-zoom: 0 4px 20px hsl(218 100% 52% / 0.15);
     --shadow-zoom-strong: 0 8px 30px hsl(218 100% 52% / 0.25);
@@ -114,6 +120,12 @@
     /* Dark gradients */
     --gradient-zoom: linear-gradient(135deg, hsl(218 100% 65%), hsl(218 100% 75%));
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 4%));
+    
+    /* Dark KPI Gradients */
+    --gradient-users: linear-gradient(135deg, hsl(218 100% 65%), hsl(218 100% 75%));
+    --gradient-sessions: linear-gradient(135deg, hsl(270 75% 70%), hsl(270 85% 80%));
+    --gradient-sales: linear-gradient(135deg, hsl(142 76% 46%), hsl(142 86% 56%));
+    --gradient-revenue: linear-gradient(135deg, hsl(45 93% 57%), hsl(45 100% 67%));
     
     /* Dark shadows */
     --shadow-zoom: 0 4px 20px hsl(218 100% 65% / 0.25);
