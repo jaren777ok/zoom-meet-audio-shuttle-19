@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign, Star } from 'lucide-react';
+import { Copy, RefreshCw, Edit2, Check, X, Users, Calendar, Building2, Code2, BarChart3, TrendingUp, Mail, Trophy, DollarSign, Star, Percent, Target } from 'lucide-react';
 import { AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { useCompanyAccount } from '@/hooks/useCompanyAccount';
 import { useCompanyMetrics } from '@/hooks/useCompanyMetrics';
+import { DateRangeFilter } from '@/components/DateRangeFilter';
 import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -19,6 +20,14 @@ import faviconZoom from '@/assets/favicon-zoom.png';
 
 const CompanyDashboard = () => {
   const navigate = useNavigate();
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined
+  });
+
   const { 
     companyAccount, 
     companyMembers, 
@@ -34,9 +43,11 @@ const CompanyDashboard = () => {
     companyMetrics,
     topVendors,
     vendorMetrics,
+    activeVendors,
+    averageRevenuePerVendor,
     isLoadingCompanyMetrics,
     isLoadingVendorMetrics
-  } = useCompanyMetrics();
+  } = useCompanyMetrics(dateRange);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
@@ -120,32 +131,39 @@ const CompanyDashboard = () => {
             </Badge>
           </div>
 
-          {/* Company KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Date Filter */}
+          <div className="flex justify-center mb-6">
+            <DateRangeFilter
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+            />
+          </div>
+
+          {/* Company KPIs - 5 Main Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             {/* Vendedores Activos */}
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-users)] opacity-10"></div>
+            <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/5"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Vendedores Activos</p>
-                      <p className="text-4xl font-bold bg-[var(--gradient-users)] bg-clip-text text-transparent">
-                        {companyMembers.length}
+                      <p className="text-3xl font-bold text-primary">
+                        {isLoadingVendorMetrics ? '...' : activeVendors}
                       </p>
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--gradient-users)] flex items-center justify-center shadow-lg">
-                      <Users className="h-8 w-8 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-elegant">
+                      <Users className="h-6 w-6 text-white" />
                     </div>
                   </div>
-                  <div className="h-12">
+                  <div className="h-8">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={vendorMetrics.slice(0, 6).map((vendor, index) => ({ 
+                      <BarChart data={vendorMetrics.slice(0, 5).map((vendor, index) => ({ 
                         name: `V${index + 1}`, 
-                        value: vendor.total_sessions,
-                        performance: vendor.performance_score 
+                        value: vendor.total_sessions > 0 ? 1 : 0
                       }))}>
-                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={2} opacity={0.7} />
+                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={1} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -153,34 +171,106 @@ const CompanyDashboard = () => {
               </CardContent>
             </Card>
 
+            {/* Tasa de Conversión */}
+            <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-accent/5"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Tasa de Conversión</p>
+                      <p className="text-3xl font-bold text-accent">
+                        {isLoadingCompanyMetrics ? '...' : `${companyMetrics?.conversion_rate?.toFixed(1) || '0'}%`}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-elegant">
+                      <Percent className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <div className="h-8">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={vendorMetrics.slice(0, 6).map((vendor, index) => ({ 
+                        name: `${index + 1}`, 
+                        conversion: vendor.conversion_rate
+                      }))}>
+                        <Area 
+                          type="monotone" 
+                          dataKey="conversion" 
+                          fill="hsl(var(--accent))" 
+                          fillOpacity={0.6}
+                          stroke="hsl(var(--accent))"
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ingresos por Vendedor */}
+            <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-secondary/5"></div>
+              <CardContent className="p-6 relative">
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Ingresos Promedio</p>
+                      <p className="text-3xl font-bold text-secondary">
+                        {isLoadingCompanyMetrics ? '...' : `$${Math.round(averageRevenuePerVendor).toLocaleString()}`}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-secondary to-secondary/80 flex items-center justify-center shadow-elegant">
+                      <Target className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <div className="h-8">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={vendorMetrics.slice(0, 5).map((vendor, index) => ({ 
+                        name: `${index + 1}`, 
+                        revenue: vendor.total_revenue
+                      }))}>
+                        <Line 
+                          type="monotone" 
+                          dataKey="revenue" 
+                          stroke="hsl(var(--secondary))" 
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Total Sesiones */}
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-sessions)] opacity-10"></div>
+            <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-muted/10"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Total Sesiones</p>
-                      <p className="text-4xl font-bold bg-[var(--gradient-sessions)] bg-clip-text text-transparent">
-                        {companyMetrics?.total_sessions || 0}
+                      <p className="text-3xl font-bold text-foreground">
+                        {isLoadingCompanyMetrics ? '...' : companyMetrics?.total_sessions || 0}
                       </p>
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--gradient-sessions)] flex items-center justify-center shadow-lg">
-                      <BarChart3 className="h-8 w-8 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center shadow-elegant">
+                      <BarChart3 className="h-6 w-6 text-white" />
                     </div>
                   </div>
-                  <div className="h-12">
+                  <div className="h-8">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={vendorMetrics.slice(0, 8).map((vendor, index) => ({ 
-                        name: `Sem ${index + 1}`, 
-                        sessions: Math.max(1, vendor.total_sessions),
-                        trend: vendor.total_sessions * (0.8 + Math.random() * 0.4)
+                      <LineChart data={vendorMetrics.slice(0, 7).map((vendor, index) => ({ 
+                        name: `${index + 1}`, 
+                        sessions: vendor.total_sessions
                       }))}>
                         <Line 
                           type="monotone" 
                           dataKey="sessions" 
-                          stroke="hsl(270 75% 60%)" 
-                          strokeWidth={3}
+                          stroke="hsl(var(--muted-foreground))" 
+                          strokeWidth={2}
                           dot={false}
                         />
                       </LineChart>
@@ -191,80 +281,30 @@ const CompanyDashboard = () => {
             </Card>
 
             {/* Total Ventas */}
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-sales)] opacity-10"></div>
+            <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
+              <div className="absolute inset-0 bg-gradient-to-br from-destructive/10 to-destructive/5"></div>
               <CardContent className="p-6 relative">
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Total Ventas</p>
-                      <p className="text-4xl font-bold bg-[var(--gradient-sales)] bg-clip-text text-transparent">
-                        {companyMetrics?.total_sales || 0}
+                      <p className="text-3xl font-bold text-destructive">
+                        {isLoadingCompanyMetrics ? '...' : companyMetrics?.total_sales || 0}
                       </p>
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--gradient-sales)] flex items-center justify-center shadow-lg">
-                      <DollarSign className="h-8 w-8 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-destructive to-destructive/80 flex items-center justify-center shadow-elegant">
+                      <DollarSign className="h-6 w-6 text-white" />
                     </div>
                   </div>
-                  <div className="h-12">
+                  <div className="h-8">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={vendorMetrics.slice(0, 7).map((vendor, index) => ({ 
-                        name: `M${index + 1}`, 
-                        sales: Math.max(0, vendor.total_sales),
-                        cumulative: vendorMetrics.slice(0, index + 1).reduce((acc, v) => acc + v.total_sales, 0)
+                      <BarChart data={vendorMetrics.slice(0, 6).map((vendor, index) => ({ 
+                        name: `${index + 1}`, 
+                        sales: vendor.total_sales
                       }))}>
-                        <Area 
-                          type="monotone" 
-                          dataKey="sales" 
-                          fill="hsl(142 76% 36%)" 
-                          fillOpacity={0.6}
-                          stroke="hsl(142 76% 36%)"
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
+                        <Bar dataKey="sales" fill="hsl(var(--destructive))" radius={1} />
+                      </BarChart>
                     </ResponsiveContainer>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Ingresos Totales */}
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="absolute inset-0 bg-[var(--gradient-revenue)] opacity-10"></div>
-              <CardContent className="p-6 relative">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Ingresos Totales</p>
-                      <p className="text-4xl font-bold bg-[var(--gradient-revenue)] bg-clip-text text-transparent">
-                        ${companyMetrics?.total_revenue ? companyMetrics.total_revenue.toLocaleString() : '0'}
-                      </p>
-                    </div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--gradient-revenue)] flex items-center justify-center shadow-lg">
-                      <TrendingUp className="h-8 w-8 text-white" />
-                    </div>
-                  </div>
-                  <div className="h-12 flex items-center">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Ingresos', value: companyMetrics?.total_revenue || 1, fill: 'hsl(45 93% 47%)' },
-                            { name: 'Meta', value: Math.max(1000, (companyMetrics?.total_revenue || 0) * 0.3), fill: 'hsl(45 93% 47% / 0.3)' }
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={15}
-                          outerRadius={24}
-                          startAngle={90}
-                          endAngle={-270}
-                          dataKey="value"
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="ml-2 text-xs text-muted-foreground">
-                      Progreso del mes
-                    </div>
                   </div>
                 </div>
               </CardContent>

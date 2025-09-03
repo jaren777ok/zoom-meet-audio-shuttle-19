@@ -34,7 +34,7 @@ export interface VendorMetrics {
   display_name?: string;
 }
 
-export const useCompanyMetrics = () => {
+export const useCompanyMetrics = (dateRange?: { from: Date | undefined; to: Date | undefined }) => {
   const { user } = useAuth();
 
   // Get company account to find company_id
@@ -60,18 +60,30 @@ export const useCompanyMetrics = () => {
 
   // Get company metrics from session_analytics data
   const { data: companyMetrics, isLoading: isLoadingCompanyMetrics } = useQuery({
-    queryKey: ['company-metrics', companyAccount?.id],
+    queryKey: ['company-metrics', companyAccount?.id, dateRange?.from, dateRange?.to],
     queryFn: async () => {
       if (!companyAccount?.id) return null;
       
-      // Get all sessions from vendors associated with this company
-      const { data: sessions, error: sessionsError } = await supabase
+      // Build query with date filtering
+      let query = supabase
         .from('session_analytics')
         .select(`
           *,
           profiles!inner(company_code)
         `)
         .eq('profiles.company_code', companyAccount.company_code);
+
+      // Add date filtering if provided
+      if (dateRange?.from) {
+        query = query.gte('created_at', dateRange.from.toISOString());
+      }
+      if (dateRange?.to) {
+        const endDate = new Date(dateRange.to);
+        endDate.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endDate.toISOString());
+      }
+
+      const { data: sessions, error: sessionsError } = await query;
 
       if (sessionsError) {
         console.error('Error fetching sessions:', sessionsError);
@@ -152,7 +164,7 @@ export const useCompanyMetrics = () => {
 
   // Get vendor metrics with calculated performance scores
   const { data: vendorMetrics, isLoading: isLoadingVendorMetrics } = useQuery({
-    queryKey: ['vendor-metrics', companyAccount?.id],
+    queryKey: ['vendor-metrics', companyAccount?.id, dateRange?.from, dateRange?.to],
     queryFn: async () => {
       if (!companyAccount?.id) return [];
       
@@ -167,11 +179,23 @@ export const useCompanyMetrics = () => {
 
       // Calculate metrics for each vendor
       const vendorMetricsPromises = profiles.map(async (profile) => {
-        // Get sessions for this vendor
-        const { data: sessions, error: sessionsError } = await supabase
+        // Build query with date filtering for vendor sessions
+        let sessionQuery = supabase
           .from('session_analytics')
           .select('*')
           .eq('user_id', profile.id);
+
+        // Add date filtering if provided
+        if (dateRange?.from) {
+          sessionQuery = sessionQuery.gte('created_at', dateRange.from.toISOString());
+        }
+        if (dateRange?.to) {
+          const endDate = new Date(dateRange.to);
+          endDate.setHours(23, 59, 59, 999);
+          sessionQuery = sessionQuery.lte('created_at', endDate.toISOString());
+        }
+
+        const { data: sessions, error: sessionsError } = await sessionQuery;
 
         if (sessionsError) {
           console.error('Error fetching sessions for vendor:', sessionsError);
@@ -256,10 +280,16 @@ export const useCompanyMetrics = () => {
   // Get top 10 vendors
   const topVendors = vendorMetrics?.slice(0, 10) || [];
 
+  // Calculate additional metrics
+  const activeVendors = vendorMetrics?.filter(vendor => vendor.total_sessions > 0).length || 0;
+  const averageRevenuePerVendor = activeVendors > 0 ? (companyMetrics?.total_revenue || 0) / activeVendors : 0;
+
   return {
     companyMetrics,
     vendorMetrics: vendorMetrics || [],
     topVendors,
+    activeVendors,
+    averageRevenuePerVendor,
     isLoadingCompanyMetrics,
     isLoadingVendorMetrics,
     companyAccount,
