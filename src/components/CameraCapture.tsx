@@ -181,13 +181,6 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ userId, sessionId, onComp
           </div>
         )}
 
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 text-center">
-            <AlertCircle className="h-5 w-5 text-red-400 mx-auto mb-2" />
-            <p className="text-sm text-red-400">{error}</p>
-          </div>
-        )}
 
         {/* Hidden canvas for photo capture */}
         <canvas ref={canvasRef} className="hidden" />

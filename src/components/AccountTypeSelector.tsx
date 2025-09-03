@@ -38,10 +38,7 @@ const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ onSelectType 
             />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Bienvenido a Zoom Hack
-            </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-lg">
               Selecciona el tipo de cuenta que mejor se adapte a tus necesidades
             </p>
           </div>
@@ -133,12 +130,6 @@ const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ onSelectType 
           </Card>
         </div>
 
-        {/* Footer */}
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            ¿No estás seguro? Puedes cambiar el tipo de cuenta más tarde desde tu perfil
-          </p>
-        </div>
       </div>
     </div>
   );

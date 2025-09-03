@@ -118,12 +118,12 @@ const CompanyDashboard = () => {
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Company Header */}
           <div className="text-center space-y-4 py-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <img src={faviconZoom} alt="Zoom Hack" className="h-12 w-12" />
-              <h1 className="text-4xl font-bold">
-                <span className="text-primary">ZOOM</span>{' '}
-                <span className="text-foreground">HACK</span>
-              </h1>
+            <div className="flex items-center justify-center mb-4">
+              <img 
+                src="/src/assets/zoom-hack-logo-official.png" 
+                alt="Zoom Hack" 
+                className="h-20 w-auto object-contain dark:drop-shadow-none drop-shadow-[2px_2px_4px_rgba(0,0,0,0.8)]" 
+              />
             </div>
             <p className="text-xl text-muted-foreground">Panel de Administración Empresarial</p>
             <Badge variant="secondary" className="text-lg px-4 py-1">
@@ -145,7 +145,7 @@ const CompanyDashboard = () => {
             <Card className="relative overflow-hidden border-0 shadow-card hover:shadow-zoom transition-all duration-300 hover:scale-105">
               <div className="absolute inset-0 opacity-10" style={{ background: 'var(--gradient-active-vendors)' }}></div>
               <CardContent className="p-6 relative">
-                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground mb-2">Vendedores Activos</p>
                     <p className="text-4xl font-bold" style={{ 
@@ -397,6 +397,20 @@ const CompanyDashboard = () => {
                           <div className="absolute -top-2 -right-2 z-10">
                             <Badge className="bg-yellow-600 text-white">
                               🏆 #1
+                            </Badge>
+                          </div>
+                        )}
+                        {index === 1 && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <Badge className="bg-gray-400 text-white">
+                              🥈 #2
+                            </Badge>
+                          </div>
+                        )}
+                        {index === 2 && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <Badge className="bg-amber-600 text-white">
+                              🥉 #3
                             </Badge>
                           </div>
                         )}
