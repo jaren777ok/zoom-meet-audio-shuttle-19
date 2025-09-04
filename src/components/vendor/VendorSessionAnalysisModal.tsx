@@ -12,6 +12,7 @@ import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetri
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import { AnalysisContent } from '@/components/analytics/AnalysisContent';
 import { ImageModal } from '@/components/ImageModal';
+import { RecordingLinkEditor } from '@/components/RecordingLinkEditor';
 
 interface VendorSessionAnalysisModalProps {
   session: SessionAnalytic | null;
@@ -163,6 +164,14 @@ export const VendorSessionAnalysisModal: React.FC<VendorSessionAnalysisModalProp
               
             </CardContent>
           </Card>
+
+          {/* Recording Link Section */}
+          <RecordingLinkEditor
+            recordingUrl={session.recording_url}
+            sessionId={session.session_id}
+            onUpdate={async () => Promise.resolve(false)} // Company view - read only
+            isReadOnly={true}
+          />
 
           {/* Navigation Breadcrumb */}
           <div className="text-sm text-muted-foreground">
