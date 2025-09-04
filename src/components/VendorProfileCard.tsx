@@ -270,7 +270,6 @@ export const VendorProfileCard: React.FC<VendorProfileCardProps> = ({
           <div className="pc-content">
             <div className="pc-details">
               <h3>{vendor.display_name || vendor.vendor_name}</h3>
-              <p>Vendedor Profesional</p>
             </div>
           </div>
         </div>

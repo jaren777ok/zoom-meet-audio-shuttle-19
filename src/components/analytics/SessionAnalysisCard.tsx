@@ -3,8 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, TrendingUp, TrendingDown, Wifi, Timer, Zap } from 'lucide-react';
 import { SessionAnalytic } from '@/hooks/useSessionAnalytics';
-import { NetworkQualityIndicator } from '@/components/NetworkQualityIndicator';
-import { NetworkQuality } from '@/hooks/useNetworkQuality';
 
 interface SessionAnalysisCardProps {
   session: SessionAnalytic;
@@ -16,9 +14,9 @@ const SessionAnalysisCard: React.FC<SessionAnalysisCardProps> = ({ session, onCl
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Completado</Badge>;
+        return <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Completado</Badge>;
       case 'processing':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Procesando</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">Procesando</Badge>;
       case 'pending':
         return <Badge variant="outline">Pendiente</Badge>;
       case 'error':
@@ -86,64 +84,149 @@ const SessionAnalysisCard: React.FC<SessionAnalysisCardProps> = ({ session, onCl
 
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 border-muted hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 bg-gradient-to-br from-card to-card/80 backdrop-blur-sm"
+      className="group cursor-pointer transition-all duration-500 border-0 bg-gradient-to-br from-slate-800/80 via-slate-700/90 to-slate-900/80 backdrop-blur-sm hover:from-slate-700/90 hover:via-slate-600/90 hover:to-slate-800/90 shadow-2xl hover:shadow-3xl relative overflow-hidden"
       onClick={onClick}
+      style={{
+        background: `
+          linear-gradient(135deg, 
+            rgba(15, 23, 42, 0.95) 0%,
+            rgba(30, 41, 59, 0.9) 20%,
+            rgba(51, 65, 85, 0.85) 40%,
+            rgba(71, 85, 105, 0.9) 60%,
+            rgba(30, 41, 59, 0.95) 80%,
+            rgba(15, 23, 42, 0.98) 100%
+          ),
+          radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 50%)
+        `,
+        boxShadow: `
+          0 4px 20px rgba(0, 0, 0, 0.3),
+          0 8px 32px rgba(0, 0, 0, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+        `,
+        border: '1px solid rgba(148, 163, 184, 0.2)'
+      }}
     >
-      <CardHeader className="pb-3">
+      {/* Shine overlay */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        style={{
+          background: 'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%)',
+          transform: 'translateX(-100%)',
+          animation: 'group-hover:shine 0.8s ease-out forwards'
+        }}
+      />
+      
+      <CardHeader className="pb-3 relative z-10">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold truncate group-hover:text-primary transition-colors duration-200">
+          <CardTitle className="text-lg font-semibold truncate group-hover:text-blue-300 transition-colors duration-200 text-white drop-shadow-sm">
             {session.metricas_json?.Titulo || session.session_name || `Sesión ${session.session_id.slice(-8)}`}
           </CardTitle>
           <div className="flex items-center gap-2">
             {getStatusBadge(session.analysis_status)}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-slate-300">
           <Calendar className="h-4 w-4" />
           <span>{formattedDate}</span>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0 space-y-4">
+      <CardContent className="pt-0 space-y-4 relative z-10">
         {/* Métricas principales */}
         {quickMetrics ? (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5">
-                <TrendingUp className="h-4 w-4 text-primary" />
+              <div 
+                className="flex items-center gap-2 p-3 rounded-lg border border-blue-500/30 relative overflow-hidden"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(59, 130, 246, 0.1) 0%,
+                      rgba(37, 99, 235, 0.15) 100%
+                    )
+                  `,
+                  boxShadow: `
+                    inset 0 1px 0 rgba(59, 130, 246, 0.2),
+                    0 2px 8px rgba(59, 130, 246, 0.1)
+                  `
+                }}
+              >
+                <TrendingUp className="h-4 w-4 text-blue-400" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Prob. Cierre</p>
-                  <p className="font-semibold text-sm">{quickMetrics.closingRate}</p>
+                  <p className="text-xs text-slate-300">Prob. Cierre</p>
+                  <p className="font-semibold text-sm text-white">{quickMetrics.closingRate}</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-yellow-500/10">
+              <div 
+                className="flex items-center gap-2 p-3 rounded-lg border border-yellow-500/30 relative overflow-hidden"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(234, 179, 8, 0.1) 0%,
+                      rgba(202, 138, 4, 0.15) 100%
+                    )
+                  `,
+                  boxShadow: `
+                    inset 0 1px 0 rgba(234, 179, 8, 0.2),
+                    0 2px 8px rgba(234, 179, 8, 0.1)
+                  `
+                }}
+              >
                 <div className="flex">
                   {Array.from({ length: 5 }, (_, i) => (
                     <div
                       key={i}
                       className={`h-2 w-2 rounded-full mr-1 transition-colors ${
-                        i < quickMetrics.satisfaction ? 'bg-yellow-400' : 'bg-gray-200 dark:bg-gray-700'
+                        i < quickMetrics.satisfaction ? 'bg-yellow-400 shadow-sm' : 'bg-slate-600'
                       }`}
                     />
                   ))}
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">CSAT</p>
-                  <p className="font-semibold text-sm">{quickMetrics.satisfaction}/5</p>
+                  <p className="text-xs text-slate-300">CSAT</p>
+                  <p className="font-semibold text-sm text-white">{quickMetrics.satisfaction}/5</p>
                 </div>
               </div>
             </div>
 
             {quickMetrics.abandoned && (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-destructive">
-                <TrendingDown className="h-4 w-4" />
-                <span className="text-xs font-medium">Carrito Abandonado</span>
+              <div 
+                className="flex items-center gap-2 p-2 rounded-lg border border-red-500/30"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(239, 68, 68, 0.1) 0%,
+                      rgba(220, 38, 38, 0.15) 100%
+                    )
+                  `,
+                  boxShadow: `
+                    inset 0 1px 0 rgba(239, 68, 68, 0.2),
+                    0 2px 8px rgba(239, 68, 68, 0.1)
+                  `
+                }}
+              >
+                <TrendingDown className="h-4 w-4 text-red-400" />
+                <span className="text-xs font-medium text-red-300">Carrito Abandonado</span>
               </div>
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-muted-foreground p-2 rounded-lg bg-muted/50">
+          <div 
+            className="flex items-center gap-2 text-slate-400 p-3 rounded-lg border border-slate-600/30"
+            style={{
+              background: `
+                linear-gradient(135deg, 
+                  rgba(51, 65, 85, 0.3) 0%,
+                  rgba(30, 41, 59, 0.4) 100%
+                )
+              `,
+              boxShadow: 'inset 0 1px 0 rgba(148, 163, 184, 0.1)'
+            }}
+          >
             <Clock className="h-4 w-4" />
             <span className="text-sm">
               {session.analysis_status === 'pending' ? 'Esperando análisis...' : 'Sin datos disponibles'}
@@ -153,44 +236,74 @@ const SessionAnalysisCard: React.FC<SessionAnalysisCardProps> = ({ session, onCl
 
         {/* Métricas de conectividad */}
         {connectivityMetrics && (
-          <div className="border-t pt-3 space-y-2">
-            <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <div className="border-t border-slate-600/50 pt-3 space-y-2">
+            <h4 className="text-xs font-medium text-slate-300 flex items-center gap-1">
               <Wifi className="h-3 w-3" />
               Métricas de Conectividad
             </h4>
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="flex items-center gap-2 p-2 rounded bg-blue-500/10">
-                <Zap className="h-3 w-3 text-blue-500" />
+              <div 
+                className="flex items-center gap-2 p-2 rounded border border-blue-500/30"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(59, 130, 246, 0.08) 0%,
+                      rgba(37, 99, 235, 0.12) 100%
+                    )
+                  `
+                }}
+              >
+                <Zap className="h-3 w-3 text-blue-400" />
                 <div>
-                  <p className="text-muted-foreground">Calidad Internet</p>
-                  <p className="font-medium">
+                  <p className="text-slate-300">Calidad Internet</p>
+                  <p className="font-medium text-white">
                     {connectivityMetrics.qualityStart || 'N/A'}/10
                     {connectivityMetrics.qualityEnd && connectivityMetrics.qualityEnd !== connectivityMetrics.qualityStart && (
-                      <span className="text-muted-foreground ml-1">→ {connectivityMetrics.qualityEnd}/10</span>
+                      <span className="text-slate-400 ml-1">→ {connectivityMetrics.qualityEnd}/10</span>
                     )}
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 p-2 rounded bg-green-500/10">
-                <Timer className="h-3 w-3 text-green-500" />
+              <div 
+                className="flex items-center gap-2 p-2 rounded border border-green-500/30"
+                style={{
+                  background: `
+                    linear-gradient(135deg, 
+                      rgba(34, 197, 94, 0.08) 0%,
+                      rgba(22, 163, 74, 0.12) 100%
+                    )
+                  `
+                }}
+              >
+                <Timer className="h-3 w-3 text-green-400" />
                 <div>
-                  <p className="text-muted-foreground">Duración</p>
-                  <p className="font-medium">{formatDuration(connectivityMetrics.duration)}</p>
+                  <p className="text-slate-300">Duración</p>
+                  <p className="font-medium text-white">{formatDuration(connectivityMetrics.duration)}</p>
                 </div>
               </div>
               
               {connectivityMetrics.stabilityScore > 0 && (
-                <div className="col-span-2 flex items-center gap-2 p-2 rounded bg-purple-500/10">
+                <div 
+                  className="col-span-2 flex items-center gap-2 p-2 rounded border border-purple-500/30"
+                  style={{
+                    background: `
+                      linear-gradient(135deg, 
+                        rgba(168, 85, 247, 0.08) 0%,
+                        rgba(147, 51, 234, 0.12) 100%
+                      )
+                    `
+                  }}
+                >
                   <div className="flex items-center gap-1">
                     <div className={`h-2 w-2 rounded-full ${
-                      connectivityMetrics.stabilityScore >= 8 ? 'bg-green-500' :
-                      connectivityMetrics.stabilityScore >= 6 ? 'bg-yellow-500' : 'bg-red-500'
+                      connectivityMetrics.stabilityScore >= 8 ? 'bg-green-400' :
+                      connectivityMetrics.stabilityScore >= 6 ? 'bg-yellow-400' : 'bg-red-400'
                     }`} />
-                    <span className="text-muted-foreground">Estabilidad:</span>
+                    <span className="text-slate-300">Estabilidad:</span>
                   </div>
-                  <span className="font-medium">{connectivityMetrics.stabilityScore.toFixed(1)}/10</span>
-                  <span className="text-muted-foreground text-xs capitalize ml-auto">
+                  <span className="font-medium text-white">{connectivityMetrics.stabilityScore.toFixed(1)}/10</span>
+                  <span className="text-slate-400 text-xs capitalize ml-auto">
                     {connectivityMetrics.networkType}
                   </span>
                 </div>

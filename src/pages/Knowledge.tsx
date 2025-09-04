@@ -10,7 +10,7 @@ const Knowledge: React.FC = () => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
         <Silk
-          speed={5}
+          speed={6}
           scale={1}
           color="#172B7D"
           noiseIntensity={1.5}
@@ -45,7 +45,7 @@ const Knowledge: React.FC = () => {
               <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
               <h3 className="font-semibold mb-1">Documentos Compatibles</h3>
               <p className="text-sm text-muted-foreground">
-                PDF y DOCX hasta 10MB
+                PDF y DOCX hasta 80MB
               </p>
             </CardContent>
           </Card>

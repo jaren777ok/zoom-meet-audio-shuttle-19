@@ -784,15 +784,15 @@ const AudioRecorderApp = () => {
               </h3>
               <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">1</div>
+                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-white font-bold">1</div>
                   <span>Configura tu sesión de ventas</span>
                 </div>
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">2</div>
+                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-white font-bold">2</div>
                   <span>La IA analiza tu técnica</span>
                 </div>
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-black font-bold">3</div>
+                  <div className="w-8 h-8 bg-neon-cyan rounded-full flex items-center justify-center text-white font-bold">3</div>
                   <span>Recibe coaching personalizado</span>
                 </div>
               </div>

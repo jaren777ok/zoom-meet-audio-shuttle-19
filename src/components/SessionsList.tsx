@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useMeetingSessions } from '@/hooks/useMeetingSessions';
-import { History, Users, Building, Target, Trash2, Play } from 'lucide-react';
+import { History, Users, Building, Target, Trash2, Play, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { SessionDetailsModal } from './SessionDetailsModal';
 
 interface SessionsListProps {
   onLoadSession?: (session: any) => void;
@@ -15,6 +16,8 @@ const SessionsList: React.FC<SessionsListProps> = ({ onLoadSession, filteredSess
   const { sessions, deleteSession } = useMeetingSessions();
   const displaySessions = filteredSessions || sessions;
   const { toast } = useToast();
+  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const handleDelete = async (id: string) => {
     try {
@@ -42,6 +45,11 @@ const SessionsList: React.FC<SessionsListProps> = ({ onLoadSession, filteredSess
     }
   };
 
+  const handleViewDetails = (session: any) => {
+    setSelectedSession(session);
+    setIsDetailsOpen(true);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -67,6 +75,15 @@ const SessionsList: React.FC<SessionsListProps> = ({ onLoadSession, filteredSess
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">{session.session_name}</h3>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDetails(session)}
+                      className="text-xs"
+                    >
+                      <Info className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
                     {onLoadSession && (
                       <Button
                         variant="outline"
@@ -115,6 +132,12 @@ const SessionsList: React.FC<SessionsListProps> = ({ onLoadSession, filteredSess
           </div>
         )}
       </CardContent>
+      
+      <SessionDetailsModal
+        session={selectedSession}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+      />
     </Card>
   );
 };

@@ -47,7 +47,7 @@ const Sessions: React.FC = () => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
         <Silk
-          speed={5}
+          speed={6}
           scale={1}
           color="#172B7D"
           noiseIntensity={1.5}

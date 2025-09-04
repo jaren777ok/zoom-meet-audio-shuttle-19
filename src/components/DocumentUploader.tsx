@@ -40,12 +40,12 @@ const DocumentUploader: React.FC = () => {
       return;
     }
 
-    // Validate file size (max 100MB)
-    if (file.size > 100 * 1024 * 1024) {
+    // Validate file size (max 80MB)
+    if (file.size > 80 * 1024 * 1024) {
       toast({
         variant: "destructive",
         title: "Archivo demasiado grande",
-        description: "El archivo no puede ser mayor a 100MB"
+        description: "El archivo no puede ser mayor a 80MB"
       });
       return;
     }
@@ -135,7 +135,7 @@ const DocumentUploader: React.FC = () => {
                   {isLoading ? 'Procesando archivo...' : 'Arrastra un archivo aquí o haz clic para seleccionar'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Archivos PDF y DOCX hasta 100MB
+                  Archivos PDF y DOCX hasta 80MB
                 </p>
               </>
             )}
