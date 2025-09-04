@@ -16,7 +16,9 @@ import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetri
 import { AnalysisContent } from '@/components/analytics/AnalysisContent';
 import DateFilter, { DateRange } from '@/components/DateFilter';
 import EditableSessionName from '@/components/EditableSessionName';
+import { RecordingLinkEditor } from '@/components/RecordingLinkEditor';
 import { useSessionAnalytics } from '@/hooks/useSessionAnalytics';
+import { useRecordingUrl } from '@/hooks/useRecordingUrl';
 import Silk from '@/components/Silk';
 
 const Analytics: React.FC = () => {
@@ -37,6 +39,8 @@ const Analytics: React.FC = () => {
     updateSessionName,
     filterSessionsByDateRange,
   } = useSessionAnalytics();
+  
+  const { updateRecordingUrl } = useRecordingUrl();
 
   // Si hay sessionId en la URL, mostrar vista detalle
   const selectedSession = sessionId ? getSessionBySessionId(sessionId) : null;
@@ -154,6 +158,13 @@ const Analytics: React.FC = () => {
           {/* Contenido del análisis */}
           {metrics ? (
             <div className="space-y-8">
+              {/* Recording Link Section */}
+              <RecordingLinkEditor
+                recordingUrl={selectedSession.recording_url}
+                sessionId={selectedSession.session_id}
+                onUpdate={updateRecordingUrl}
+              />
+              
               {/* Métricas de Conectividad */}
               <ConnectivityMetricsSection session={selectedSession} />
               

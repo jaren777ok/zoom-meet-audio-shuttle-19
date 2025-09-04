@@ -1402,6 +1402,7 @@ export type Database = {
           internet_quality_start: number | null
           metricas_json: Json | null
           network_type: string | null
+          recording_url: string | null
           session_duration_minutes: number | null
           session_id: string
           session_name: string | null
@@ -1421,6 +1422,7 @@ export type Database = {
           internet_quality_start?: number | null
           metricas_json?: Json | null
           network_type?: string | null
+          recording_url?: string | null
           session_duration_minutes?: number | null
           session_id: string
           session_name?: string | null
@@ -1440,6 +1442,7 @@ export type Database = {
           internet_quality_start?: number | null
           metricas_json?: Json | null
           network_type?: string | null
+          recording_url?: string | null
           session_duration_minutes?: number | null
           session_id?: string
           session_name?: string | null

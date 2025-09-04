@@ -12,7 +12,9 @@ import ConversionsResultsSection from '@/components/analytics/ConversionsResults
 import LostSaleAnalysis from '@/components/analytics/LostSaleAnalysis';
 import ConnectivityMetricsSection from '@/components/analytics/ConnectivityMetricsSection';
 import { AnalysisContent } from '@/components/analytics/AnalysisContent';
+import { RecordingLinkEditor } from '@/components/RecordingLinkEditor';
 import { useCompanySessionAnalytics } from '@/hooks/useCompanySessionAnalytics';
+import { useRecordingUrl } from '@/hooks/useRecordingUrl';
 import Silk from '@/components/Silk';
 
 const CompanyAnalytics: React.FC = () => {
@@ -29,6 +31,8 @@ const CompanyAnalytics: React.FC = () => {
     getSessionBySessionId,
     parseMetrics,
   } = useCompanySessionAnalytics();
+  
+  const { updateRecordingUrl } = useRecordingUrl();
 
   // Load the specific session when sessionId changes
   useEffect(() => {
@@ -207,6 +211,14 @@ const CompanyAnalytics: React.FC = () => {
         {/* Contenido del análisis */}
         {metrics ? (
           <div className="space-y-8">
+            {/* Recording Link Section */}
+            <RecordingLinkEditor
+              recordingUrl={selectedSession?.recording_url}
+              sessionId={selectedSession?.session_id || ''}
+              onUpdate={updateRecordingUrl}
+              isReadOnly={true}
+            />
+            
             {/* Métricas de Conectividad */}
             {selectedSession && <ConnectivityMetricsSection session={selectedSession} />}
             

@@ -45,6 +45,7 @@ export interface SessionAnalytic {
   analisis_markdown?: string | null;
   session_name?: string | null;
   url?: string | null;
+  recording_url?: string | null;
   internet_quality_start?: number | null;
   internet_quality_end?: number | null;
   session_duration_minutes?: number | null;
