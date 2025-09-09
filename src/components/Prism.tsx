@@ -43,44 +43,90 @@ const Prism = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const H = Math.max(0.001, height);
-    const BW = Math.max(0.001, baseWidth);
-    const BASE_HALF = BW * 0.5;
-    const GLOW = Math.max(0.0, glow);
-    const NOISE = Math.max(0.0, noise);
-    const offX = offset?.x ?? 0;
-    const offY = offset?.y ?? 0;
-    const SAT = transparent ? 1.5 : 1;
-    const SCALE = Math.max(0.001, scale);
-    const HUE = hueShift || 0;
-    const CFREQ = Math.max(0.0, colorFrequency || 1);
-    const BLOOM = Math.max(0.0, bloom || 1);
-    const RSX = 1;
-    const RSY = 1;
-    const RSZ = 1;
-    const TS = Math.max(0, timeScale || 1);
-    const HOVSTR = Math.max(0, hoverStrength || 1);
-    const INERT = Math.max(0, Math.min(1, inertia || 0.12));
+    // Add safety check for WebGL support
+    const testCanvas = document.createElement('canvas');
+    const testContext = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+    if (!testContext) {
+      console.warn('WebGL not supported, Prism component will not render');
+      return;
+    }
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const renderer = new Renderer({
-      dpr,
-      alpha: transparent,
-      antialias: false
-    });
-    const gl = renderer.gl;
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    gl.disable(gl.BLEND);
+    let renderer: Renderer | null = null;
+    let gl: any = null;
+    let ro: ResizeObserver | null = null;
+    let raf = 0;
+    let onPointerMove: ((e: MouseEvent) => void) | null = null;
 
-    Object.assign(gl.canvas.style, {
-      position: 'absolute',
-      inset: '0',
-      width: '100%',
-      height: '100%',
-      display: 'block'
-    });
-    container.appendChild(gl.canvas);
+    const pointer = { x: 0, y: 0, inside: true };
+
+    const stopRAF = () => {
+      if (!raf) return;
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+
+    const onLeave = () => {
+      pointer.inside = false;
+    };
+
+    const onBlur = () => {
+      pointer.inside = false;
+    };
+
+    try {
+      const H = Math.max(0.001, height);
+      const BW = Math.max(0.001, baseWidth);
+      const BASE_HALF = BW * 0.5;
+      const GLOW = Math.max(0.0, glow);
+      const NOISE = Math.max(0.0, noise);
+      const offX = offset?.x ?? 0;
+      const offY = offset?.y ?? 0;
+      const SAT = transparent ? 1.5 : 1;
+      const SCALE = Math.max(0.001, scale);
+      const HUE = hueShift || 0;
+      const CFREQ = Math.max(0.0, colorFrequency || 1);
+      const BLOOM = Math.max(0.0, bloom || 1);
+      const RSX = 1;
+      const RSY = 1;
+      const RSZ = 1;
+      const TS = Math.max(0, timeScale || 1);
+      const HOVSTR = Math.max(0, hoverStrength || 1);
+      const INERT = Math.max(0, Math.min(1, inertia || 0.12));
+
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      
+      // Create renderer with proper error handling
+      renderer = new Renderer({
+        dpr,
+        alpha: transparent,
+        antialias: false
+      });
+      
+      if (!renderer || !renderer.gl) {
+        console.error('Failed to create OGL renderer');
+        return;
+      }
+      
+      gl = renderer.gl;
+      gl.disable(gl.DEPTH_TEST);
+      gl.disable(gl.CULL_FACE);
+      gl.disable(gl.BLEND);
+
+      // Ensure canvas is HTMLCanvasElement before accessing style
+      const canvas = gl.canvas as HTMLCanvasElement;
+      if (canvas && canvas.style) {
+        Object.assign(canvas.style, {
+          position: 'absolute',
+          inset: '0',
+          width: '100%',
+          height: '100%',
+          display: 'block'
+        });
+        container.appendChild(canvas);
+      } else {
+        console.error('Canvas not available or not HTMLCanvasElement');
+        return;
+      }
 
     const vertex = /* glsl */ `
       attribute vec2 position;
@@ -243,14 +289,14 @@ const Prism = ({
     const resize = () => {
       const w = container.clientWidth || 1;
       const h = container.clientHeight || 1;
-      renderer.setSize(w, h);
+      renderer!.setSize(w, h);
       iResBuf[0] = gl.drawingBufferWidth;
       iResBuf[1] = gl.drawingBufferHeight;
       offsetPxBuf[0] = offX * dpr;
       offsetPxBuf[1] = offY * dpr;
       program.uniforms.uPxScale.value = 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE);
     };
-    const ro = new ResizeObserver(resize);
+    ro = new ResizeObserver(resize);
     ro.observe(container);
     resize();
 
@@ -287,16 +333,10 @@ const Prism = ({
     };
 
     const NOISE_IS_ZERO = NOISE < 1e-6;
-    let raf = 0;
     const t0 = performance.now();
     const startRAF = () => {
       if (raf) return;
       raf = requestAnimationFrame(render);
-    };
-    const stopRAF = () => {
-      if (!raf) return;
-      cancelAnimationFrame(raf);
-      raf = 0;
     };
 
     const rnd = () => Math.random();
@@ -313,7 +353,6 @@ const Prism = ({
       targetPitch = 0;
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-    const pointer = { x: 0, y: 0, inside: true };
     const onMove = (e: MouseEvent) => {
       const ww = Math.max(1, window.innerWidth);
       const wh = Math.max(1, window.innerHeight);
@@ -325,14 +364,7 @@ const Prism = ({
       pointer.y = Math.max(-1, Math.min(1, ny));
       pointer.inside = true;
     };
-    const onLeave = () => {
-      pointer.inside = false;
-    };
-    const onBlur = () => {
-      pointer.inside = false;
-    };
 
-    let onPointerMove: ((e: MouseEvent) => void) | null = null;
     if (animationType === 'hover') {
       onPointerMove = (e: MouseEvent) => {
         onMove(e);
@@ -393,7 +425,7 @@ const Prism = ({
         if (TS < 1e-6) continueRAF = false;
       }
 
-      renderer.render({ scene: mesh });
+      renderer!.render({ scene: mesh });
       if (continueRAF) {
         raf = requestAnimationFrame(render);
       } else {
@@ -414,9 +446,13 @@ const Prism = ({
       startRAF();
     }
 
+    } catch (error) {
+      console.error('Error initializing Prism component:', error);
+    }
+
     return () => {
       stopRAF();
-      ro.disconnect();
+      ro?.disconnect();
       if (animationType === 'hover') {
         if (onPointerMove) window.removeEventListener('pointermove', onPointerMove as any);
         window.removeEventListener('mouseleave', onLeave);
@@ -427,7 +463,20 @@ const Prism = ({
         if (io) io.disconnect();
         delete (container as any).__prismIO;
       }
-      if (gl.canvas.parentElement === container) container.removeChild(gl.canvas);
+      if (gl && gl.canvas) {
+        const canvas = gl.canvas as HTMLCanvasElement;
+        if (canvas.parentElement === container) {
+          container.removeChild(canvas);
+        }
+      }
+      if (renderer) {
+        try {
+          // Properly dispose of renderer
+          renderer.setSize(0, 0);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
     };
   }, [
     height,
