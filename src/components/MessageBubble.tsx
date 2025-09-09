@@ -1,6 +1,6 @@
 import React from 'react';
 import { Brain, Lightbulb, Target, FileText, MessageCircle } from 'lucide-react';
-import { AIMessage } from '@/hooks/useAIMessages';
+import { AIMessage } from '@/contexts/AIMessagesContext';
 
 interface MessageBubbleProps {
   message: AIMessage;

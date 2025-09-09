@@ -51,10 +51,18 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     updatePictureInPictureContent
   } = usePictureInPicture({ width: 400, height: 500 });
 
+  // Force sync when component mounts or becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      console.log('🎯 [FloatingAI] Component visible, forcing immediate sync');
+      forceRefresh();
+    }
+  }, [isVisible, forceRefresh]);
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (isVisible && messagesEndRef.current) {
-      console.log('🔄 Auto-scrolling to latest message. Total messages:', messages.length);
+    if (isVisible && messagesEndRef.current && messages.length > 0) {
+      console.log('🔄 [FloatingAI] Auto-scrolling to latest message. Total:', messages.length);
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages.length, isVisible]);
@@ -62,7 +70,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
   // Mark messages as read when chat is visible and expanded
   useEffect(() => {
     if (!isMinimized && isVisible && unreadCount > 0) {
-      console.log('✅ Marking messages as read. Unread count:', unreadCount);
+      console.log('✅ [FloatingAI] Marking messages as read. Unread count:', unreadCount);
       markAsRead();
     }
   }, [isMinimized, isVisible, unreadCount, markAsRead]);
@@ -70,20 +78,11 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
   // Auto-show chat when new messages arrive and chat is hidden
   useEffect(() => {
     if (!isVisible && messages.length > lastMessageCount && messages.length > 0) {
-      console.log('🔔 New message arrived, auto-showing chat');
+      console.log('🔔 [FloatingAI] New message arrived, auto-showing chat');
       setLastMessageCount(messages.length);
       onShow();
     }
   }, [messages.length, isVisible, lastMessageCount, onShow]);
-
-  // Smart refresh when chat becomes visible - more immediate for better UX
-  useEffect(() => {
-    if (isVisible && !isMinimized) {
-      console.log('👁️ Chat became visible, triggering immediate refresh');
-      // Immediate refresh when chat becomes visible for better user experience
-      forceRefresh();
-    }
-  }, [isVisible, isMinimized, forceRefresh]);
 
   // Callback to handle content updates for PiP (like in successful implementation)
   const onContentUpdate = useCallback(() => {
@@ -101,16 +100,17 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   }, [messages.length, isPiPActive, onContentUpdate]);
 
-  // Log messages updates for debugging
+  // Enhanced debug logging for message updates
   useEffect(() => {
-    console.log('💬 FloatingAIChat messages updated:', {
+    console.log('💬 [FloatingAI] Messages state updated:', {
       count: messages.length,
       isVisible,
       isConnected,
       unreadCount,
-      isPiPActive
+      isPiPActive,
+      lastMessage: messages[messages.length - 1]?.message?.substring(0, 50) + '...' || 'None'
     });
-  }, [messages.length, isVisible, isConnected, unreadCount, isPiPActive]);
+  }, [messages.length, isVisible, isConnected, unreadCount, isPiPActive, messages]);
 
   const handlePictureInPicture = () => {
     if (isPiPActive) {
