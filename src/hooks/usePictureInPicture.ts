@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface UsePictureInPictureProps {
   width?: number;
@@ -9,12 +10,35 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
   const [isPiPSupported, setIsPiPSupported] = useState(false);
   const [isPiPActive, setIsPiPActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPiPUpdatePaused, setIsPiPUpdatePaused] = useState(false);
   const pipWindowRef = useRef<Window | null>(null);
   const sourceElementRef = useRef<HTMLElement | null>(null);
+  const stylesCache = useRef<string | null>(null);
+  const lastContentHash = useRef<string>('');
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check if Picture-in-Picture is supported
     setIsPiPSupported('documentPictureInPicture' in window);
+    
+    // Listen for window focus/blur to pause updates
+    const handleWindowBlur = () => {
+      console.log('🔇 Main window blurred, pausing PiP updates');
+      setIsPiPUpdatePaused(true);
+    };
+    
+    const handleWindowFocus = () => {
+      console.log('🔊 Main window focused, resuming PiP updates');
+      setIsPiPUpdatePaused(false);
+    };
+    
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
+    
+    return () => {
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
   }, []);
 
   const openPictureInPicture = useCallback(async (sourceElement: HTMLElement) => {
@@ -35,21 +59,30 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
         height,
       });
 
-      // Copy styles from main document
-      const styleSheets = Array.from(document.styleSheets);
-      styleSheets.forEach((styleSheet) => {
-        try {
-          const cssRules = Array.from(styleSheet.cssRules)
-            .map((rule) => rule.cssText)
-            .join('');
-          const style = document.createElement('style');
-          style.textContent = cssRules;
-          pipWindow.document.head.appendChild(style);
-        } catch (e) {
-          // Some stylesheets might not be accessible due to CORS
-          console.warn('Could not copy stylesheet:', e);
-        }
-      });
+      // Copy styles from main document (use cache if available)
+      if (!stylesCache.current) {
+        console.log('💾 Caching styles for PiP');
+        const styleSheets = Array.from(document.styleSheets);
+        const allStyles: string[] = [];
+        
+        styleSheets.forEach((styleSheet) => {
+          try {
+            const cssRules = Array.from(styleSheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join('');
+            allStyles.push(cssRules);
+          } catch (e) {
+            // Some stylesheets might not be accessible due to CORS
+            console.warn('Could not copy stylesheet:', e);
+          }
+        });
+        
+        stylesCache.current = allStyles.join('');
+      }
+      
+      const style = document.createElement('style');
+      style.textContent = stylesCache.current;
+      pipWindow.document.head.appendChild(style);
 
       // Add Tailwind CSS link
       const tailwindLink = document.createElement('link');
@@ -77,6 +110,8 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
         setIsPiPActive(false);
         pipWindowRef.current = null;
         sourceElementRef.current = null;
+        lastContentHash.current = '';
+        setIsPiPUpdatePaused(false);
       });
 
       return true;
@@ -92,29 +127,72 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
       pipWindowRef.current.close();
       pipWindowRef.current = null;
       sourceElementRef.current = null;
+      lastContentHash.current = '';
       setIsPiPActive(false);
+      setIsPiPUpdatePaused(false);
+      
+      // Clear any pending timeouts
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+        updateTimeoutRef.current = null;
+      }
     }
   }, []);
 
-  const updatePictureInPictureContent = useCallback(() => {
-    if (pipWindowRef.current && sourceElementRef.current) {
-      console.log('🔄 Updating PiP content with 100ms timeout');
-      
-      // Use 100ms timeout like in the successful implementation
-      setTimeout(() => {
-        if (pipWindowRef.current && sourceElementRef.current) {
-          const targetElement = pipWindowRef.current.document.body.firstElementChild;
-          if (targetElement) {
-            // Update the content by cloning the source element fresh
-            const updatedClone = sourceElementRef.current.cloneNode(true) as HTMLElement;
-            pipWindowRef.current.document.body.removeChild(targetElement);
-            pipWindowRef.current.document.body.appendChild(updatedClone);
-            console.log('✅ PiP content updated successfully');
-          }
-        }
-      }, 100);
+  // Debounced and optimized update function
+  const debouncedUpdate = useDebouncedCallback(() => {
+    if (!pipWindowRef.current || !sourceElementRef.current || isPiPUpdatePaused) {
+      console.log('🚫 PiP update skipped (paused or no refs)');
+      return;
     }
-  }, []);
+
+    try {
+      // Generate content hash for change detection
+      const messagesContainer = sourceElementRef.current.querySelector('[data-messages-container]');
+      const currentContent = messagesContainer?.innerHTML || sourceElementRef.current.innerHTML;
+      const contentHash = btoa(currentContent).slice(0, 20); // Simple hash
+      
+      if (contentHash === lastContentHash.current) {
+        console.log('🔍 PiP content unchanged, skipping update');
+        return;
+      }
+      
+      console.log('🔄 Updating PiP content (optimized)');
+      lastContentHash.current = contentHash;
+      
+      const targetElement = pipWindowRef.current.document.body.firstElementChild;
+      if (targetElement && messagesContainer) {
+        // Only update the messages container instead of the whole element
+        const targetMessagesContainer = targetElement.querySelector('[data-messages-container]');
+        if (targetMessagesContainer) {
+          targetMessagesContainer.innerHTML = messagesContainer.innerHTML;
+          console.log('✅ PiP messages container updated');
+        } else {
+          // Fallback to full clone if messages container not found
+          const updatedClone = sourceElementRef.current.cloneNode(true) as HTMLElement;
+          pipWindowRef.current.document.body.removeChild(targetElement);
+          pipWindowRef.current.document.body.appendChild(updatedClone);
+          console.log('✅ PiP full content updated (fallback)');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error updating PiP content:', error);
+    }
+  }, 500); // 500ms debounce instead of 100ms immediate
+
+  const updatePictureInPictureContent = useCallback(() => {
+    if (isPiPActive && !isPiPUpdatePaused) {
+      // Clear any existing timeout
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      
+      // Schedule debounced update
+      updateTimeoutRef.current = setTimeout(() => {
+        debouncedUpdate();
+      }, 50); // Small delay to batch rapid calls
+    }
+  }, [isPiPActive, isPiPUpdatePaused, debouncedUpdate]);
 
   // Keep the old function for backward compatibility
   const updatePiPContent = useCallback((newContent: string) => {
@@ -124,11 +202,12 @@ export const usePictureInPicture = ({ width = 400, height = 300 }: UsePictureInP
   return {
     isPiPSupported,
     isPiPActive,
+    isPiPUpdatePaused,
     error,
     openPictureInPicture,
     closePictureInPicture,
     updatePiPContent,
-    updatePictureInPictureContent, // New main function with timeout
+    updatePictureInPictureContent,
     pipWindow: pipWindowRef.current,
   };
 };

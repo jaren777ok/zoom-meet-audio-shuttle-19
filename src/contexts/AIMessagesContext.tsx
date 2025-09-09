@@ -147,11 +147,11 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
     // Initial fetch
     fetchMessages(true);
 
-    // Setup 10-second auto-refresh interval for message recovery
+    // Setup 30-second auto-refresh interval for message recovery (reduced frequency)
     autoRefreshIntervalRef.current = setInterval(() => {
-      console.log('⏰ [Global] Auto-refresh interval triggered (10s)');
+      console.log('⏰ [Global] Auto-refresh interval triggered (30s)');
       fetchMessages(true);
-    }, 10000); // 10 seconds
+    }, 30000); // 30 seconds - reduced from 10s for better performance
 
     console.log('🔄 [Global] Setting up AI messages subscription for user:', user.id, new Date().toISOString());
     

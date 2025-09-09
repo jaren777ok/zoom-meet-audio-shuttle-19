@@ -76,11 +76,16 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   }, [messages.length, isVisible, lastMessageCount, onShow]);
 
-  // Force refresh when chat becomes visible (recovery mechanism)
+  // Smart refresh when chat becomes visible (reduced frequency)
   useEffect(() => {
     if (isVisible && !isMinimized) {
-      console.log('👁️ Chat became visible, forcing refresh for recovery');
-      forceRefresh();
+      console.log('👁️ Chat became visible, scheduling smart refresh');
+      // Use debounced refresh to prevent excessive calls
+      const timeoutId = setTimeout(() => {
+        forceRefresh();
+      }, 1000); // 1 second delay to batch rapid visibility changes
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [isVisible, isMinimized, forceRefresh]);
 
@@ -92,14 +97,11 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   }, [isPiPActive, updatePictureInPictureContent]);
 
-  // Auto-sync PiP when messages change (replicate successful pattern)
+  // Optimized auto-sync PiP when messages change
   useEffect(() => {
     if (isPiPActive && messages.length > 0) {
-      console.log('📱 Messages changed in PiP mode, auto-syncing content');
-      // Sync after DOM update, just like in the successful implementation
-      setTimeout(() => {
-        onContentUpdate();
-      }, 100);
+      console.log('📱 Messages changed in PiP mode, scheduling optimized sync');
+      onContentUpdate();
     }
   }, [messages.length, isPiPActive, onContentUpdate]);
 
@@ -215,7 +217,7 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
               ref={chatContainerRef}
               className="h-full flex flex-col"
             >
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2" data-messages-container>
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                     <MessageSquare className="w-8 h-8 mb-2 opacity-50" />
