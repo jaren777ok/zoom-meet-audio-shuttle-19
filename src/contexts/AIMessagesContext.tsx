@@ -117,7 +117,7 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
       
       // Only set disconnected if we haven't had a recent successful fetch
       const timeSinceLastFetch = Date.now() - lastSuccessfulFetch;
-      if (timeSinceLastFetch > 30000) { // 30 seconds
+      if (timeSinceLastFetch > 15000) { // 15 seconds - more responsive for 10s polling
         setIsConnected(false);
       }
     }
@@ -147,11 +147,11 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
     // Initial fetch
     fetchMessages(true);
 
-    // Setup 30-second auto-refresh interval for message recovery (reduced frequency)
+    // Setup 10-second auto-refresh interval for message recovery
     autoRefreshIntervalRef.current = setInterval(() => {
-      console.log('⏰ [Global] Auto-refresh interval triggered (30s)');
-      fetchMessages(true);
-    }, 30000); // 30 seconds - reduced from 10s for better performance
+      console.log('⏰ [Global] Auto-refresh interval triggered (10s)');
+      fetchMessages(false); // Don't force refresh on interval to avoid disruption
+    }, 10000); // 10 seconds as requested by user
 
     console.log('🔄 [Global] Setting up AI messages subscription for user:', user.id, new Date().toISOString());
     
@@ -234,7 +234,7 @@ export const AIMessagesProvider: React.FC<AIMessagesProviderProps> = ({ children
           
           // Only set disconnected if we haven't had a recent successful fetch
           const timeSinceLastFetch = Date.now() - lastSuccessfulFetch;
-          if (timeSinceLastFetch > 30000) { // 30 seconds
+          if (timeSinceLastFetch > 15000) { // 15 seconds - more responsive for 10s polling
             setIsConnected(false);
           }
           setError('Connection failed');

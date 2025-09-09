@@ -76,16 +76,12 @@ export const FloatingAIChat: React.FC<FloatingAIChatProps> = ({
     }
   }, [messages.length, isVisible, lastMessageCount, onShow]);
 
-  // Smart refresh when chat becomes visible (reduced frequency)
+  // Smart refresh when chat becomes visible - more immediate for better UX
   useEffect(() => {
     if (isVisible && !isMinimized) {
-      console.log('👁️ Chat became visible, scheduling smart refresh');
-      // Use debounced refresh to prevent excessive calls
-      const timeoutId = setTimeout(() => {
-        forceRefresh();
-      }, 1000); // 1 second delay to batch rapid visibility changes
-      
-      return () => clearTimeout(timeoutId);
+      console.log('👁️ Chat became visible, triggering immediate refresh');
+      // Immediate refresh when chat becomes visible for better user experience
+      forceRefresh();
     }
   }, [isVisible, isMinimized, forceRefresh]);
 
